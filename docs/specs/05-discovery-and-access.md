@@ -32,6 +32,10 @@ Cada modo pode coexistir; o dono escolhe o que **habilita** por player.
 
 Coleta e retenção de localização devem seguir [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) e bases legais aprovadas pelo negócio.
 
+## Telão (display público)
+
+Especificação completa do **modo telão** — representação visual no espaço, fotos, QR e habilitação por contexto — em **[12-telao-display-publico.md](12-telao-display-publico.md)**.
+
 ## Fora de escopo
 
 - Mapa estilo “Pokemon Go” de todos os players do mundo.

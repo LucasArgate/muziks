@@ -9,12 +9,13 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 3. [03-domain-model.md](03-domain-model.md) — entidades e invariantes
 4. [04-rules-firewall.md](04-rules-firewall.md) — semântica do “firewall” de som
 5. [05-discovery-and-access.md](05-discovery-and-access.md) — GPS, slug, link, QR
-6. [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) — fila, votos, fichas
-7. [07-ux-copy-and-states.md](07-ux-copy-and-states.md) — estados de UI e tom de voz
-8. [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) — NFR, LGPD, a11y
-9. [09-frontend-architecture.md](09-frontend-architecture.md) — front, pastas, Atomic + shadcn
-10. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
-11. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
+6. [12-telao-display-publico.md](12-telao-display-publico.md) — modo telão / tela pública (após descoberta)
+7. [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) — fila, votos, fichas
+8. [07-ux-copy-and-states.md](07-ux-copy-and-states.md) — estados de UI e tom de voz
+9. [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) — NFR, LGPD, a11y
+10. [09-frontend-architecture.md](09-frontend-architecture.md) — front, pastas, Atomic + shadcn
+11. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
+12. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
 
 ## Convenções
 
@@ -31,5 +32,6 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 ## Documentação relacionada
 
 - [Manifesto do produto](../MANIFESTO.md)
+- [Evidências e inferências (design thinking)](../design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
 - [Atomic Design no Muziks](../ATOMIC-DESIGN.md)
 - [AGENTS.md](../../AGENTS.md) — orientação para agentes e tooling (`pnpm`, shadcn, lint)

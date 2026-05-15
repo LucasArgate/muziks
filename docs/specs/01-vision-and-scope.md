@@ -12,6 +12,8 @@ O Muziks é um **player democrático e geoposicionado**: o público pode **influ
 
 ## Mapeamento manifesto → specs
 
+Contexto de campo e inferências que antecedem o manifesto (histórias, design thinking): [design-thinking-evidence-and-inferences.md](../design-thinking-evidence-and-inferences.md).
+
 | Princípio (manifesto) | Onde detalhar |
 |----------------------|---------------|
 | Dono manda na política | [04-rules-firewall.md](04-rules-firewall.md), [03-domain-model.md](03-domain-model.md) |
@@ -22,6 +24,7 @@ O Muziks é um **player democrático e geoposicionado**: o público pode **influ
 | Votos no ranking | [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) |
 | Fichas no voto | [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) |
 | Privacidade e abuso | [05-discovery-and-access.md](05-discovery-and-access.md), [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) |
+| Telão / tela pública (opcional) | [12-telao-display-publico.md](12-telao-display-publico.md); [05-discovery-and-access.md](05-discovery-and-access.md) (QR); [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) (foto, consentimento) |
 
 ## MVP (produto mínimo viável)
 
@@ -35,6 +38,10 @@ Definição: o menor conjunto que demonstra **“público participa; espaço man
 - **Participação do público** via pelo menos **um** modo de descoberta: **link compartilhável** (QR é variação do mesmo deep link). **GPS + raio** e **nome único** podem entrar no MVP ou imediatamente após, conforme decisão em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — até lá, tratam-se como requisitos de produto já especificados, não como “opcionais de visão”.
 - **Feedback amigável** quando uma ação não é permitida (copy e estados em [07-ux-copy-and-states.md](07-ux-copy-and-states.md)).
 - **PWA** instalável com shell utilizável offline quando fizer sentido tecnicamente ([10-pwa-strategy.md](10-pwa-strategy.md)).
+
+**Alto valor, pode entrar logo após o núcleo (tração):**
+
+- **Modo telão / tela pública** — ver [12-telao-display-publico.md](12-telao-display-publico.md): representação visual no espaço (fila, escolhas, fotos com consentimento), **QR** para entrada em massa, habilitação por contexto (ex.: bares universitários, eventos). Histórico de pesquisa de empatia (design thinking) na aceleração apontou o telão como peça central de aderência e expansão orgânica.
 
 **Fora do escopo inicial (explícito):**
 

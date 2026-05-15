@@ -4,6 +4,8 @@
 
 O Muziks renasce uma ideia simples e antiga: **a fila de música não precisa ser só do dono do som**. Em 2015 já se intuía que lugares, carros e encontros poderiam abrir o player — com limites claros — para quem está por perto ou foi convidado. Hoje isso volta como produto: um **player democrático e geoposicionado**, onde a comunidade influencia a ordem do que toca, e o **dono do player mantém controle fino**, como um firewall de som.
 
+O problema não é “falta de música”: é **falta de acordo explícito** quando várias pessoas **compartilham** o mesmo som. Sem política, abrir a fila vira **disputa de controle**, **fila opaca** ou **quem chegou primeiro** — e escolhas que parecem triviais tornam-se **choques de identidade e convivência** no espaço, em vez de convite seguro a participar. **Democratizar sem regra** destrói confiança: soluções são desmontadas, grupos **chocam**, o ambiente deixa de ser sustentável. O Muziks existe para **compartilhar o som com limites claros** — política antes de volume.
+
 ## O que é o Muziks
 
 O Muziks é um player de música pensado para **espaços físicos e contextos móveis**: bares, Ubers, caronas, chácaras, eventos. Ele permite que **pessoas de fora escolham ou votem** nas faixas que entram na fila, desde que respeitem **regras definidas pelo dono do player** — não é anarquia; é **democracia com política**.
@@ -66,4 +68,4 @@ Geolocalização e links públicos exigem **controle de abuso**: quem pode ver o
 
 ---
 
-*Este manifesto descreve a intenção do produto. Detalhes de implementação, integrações e termos legais evoluem no repositório e na documentação complementar.*
+*Este manifesto descreve a intenção do produto. Relatos de campo, notas de pesquisa de empatia (design thinking) e inferências que sustentam esta intenção — à parte das histórias concretas — estão em [design-thinking-evidence-and-inferences.md](design-thinking-evidence-and-inferences.md). Detalhes de implementação, integrações e termos legais evoluem no repositório, em [`docs/specs/`](specs/README.md) e na documentação complementar.*
