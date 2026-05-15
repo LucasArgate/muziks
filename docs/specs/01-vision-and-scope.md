@@ -65,3 +65,7 @@ Definição: o menor conjunto que demonstra **“público participa; espaço man
 - Dono consegue **publicar** um player e **restringir** o que entra na experiência de escolha.
 - Participante consegue **entrar**, **entender** por que algo foi bloqueado e **votar** quando aplicável.
 - Documentação em `docs/specs/` permanece **fonte única** para perguntas “o produto faz X?” durante implementação.
+
+## Métricas, fases de crescimento e loops
+
+Para **KPIs por fase** (validação → tração → escala), retenção (D14/D28/D90 e janelas iniciais), engajamento, viralidade **player ↔ participante** e **instrumentação mínima** que viabiliza cohorts com rigor, ver [13-kpis-fases-e-loops.md](13-kpis-fases-e-loops.md).
