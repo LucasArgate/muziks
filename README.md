@@ -22,10 +22,12 @@ Democracia na fila com **firewall de som**: o público participa; o espaço mand
 ## Documentação
 
 - [**Manifesto do produto**](docs/MANIFESTO.md) — princípios e promessa do Muziks
+- [**Especificação do cliente (PWA)**](docs/ESPECIFICACAO-FRONTEND.md) — React, TypeScript, Tailwind, shadcn, PWA e tooling previstos
+- [**Atomic Design**](docs/ATOMIC-DESIGN.md) — convenção de pastas para UI quando o código existir
 
 ## Estado do projeto
 
-Renascimento de um conceito de **2015**; este repositório concentra os **fundamentos** (visão, docs) e, em seguida, a implementação.
+Renascimento de um conceito de **2015**. Por ora este repositório concentra **fundamentos em texto** (manifesto, especificação técnica do front, padrão de componentes). A implementação do app entra quando vocês decidirem abrir essa fase.
 
 ## Licença
 
