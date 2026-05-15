@@ -10,7 +10,7 @@
 
 ## Atomic Design (não duplicar aqui)
 
-A convenção de pastas **atoms → pages** e a relação com shadcn estão em [docs/ATOMIC-DESIGN.md](../ATOMIC-DESIGN.md). Agentes e devs devem ler esse arquivo antes de criar componentes.
+A convenção de pastas **atoms → pages** e a relação com shadcn estão em [ATOMIC-DESIGN.md](../tech/ATOMIC-DESIGN.md). Agentes e devs devem ler esse arquivo antes de criar componentes.
 
 ## Convenções complementares (Muziks)
 

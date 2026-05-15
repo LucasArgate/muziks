@@ -12,7 +12,7 @@ O Muziks é um **player democrático e geoposicionado**: o público pode **influ
 
 ## Mapeamento manifesto → specs
 
-Contexto de campo e inferências que antecedem o manifesto (histórias, design thinking): [design-thinking-evidence-and-inferences.md](../design-thinking-evidence-and-inferences.md).
+Contexto de campo e inferências que antecedem o manifesto (histórias, design thinking): [design-thinking-evidence-and-inferences.md](../disruption/design-thinking-evidence-and-inferences.md).
 
 | Princípio (manifesto) | Onde detalhar |
 |----------------------|---------------|

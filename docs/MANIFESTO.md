@@ -68,4 +68,4 @@ Geolocalização e links públicos exigem **controle de abuso**: quem pode ver o
 
 ---
 
-*Este manifesto descreve a intenção do produto. Relatos de campo, notas de pesquisa de empatia (design thinking) e inferências que sustentam esta intenção — à parte das histórias concretas — estão em [design-thinking-evidence-and-inferences.md](design-thinking-evidence-and-inferences.md). Detalhes de implementação, integrações e termos legais evoluem no repositório, em [`docs/specs/`](specs/README.md) e na documentação complementar.*
+*Este manifesto descreve a intenção do produto. Relatos de campo, notas de pesquisa de empatia (design thinking) e inferências que sustentam esta intenção — à parte das histórias concretas — estão em [design-thinking-evidence-and-inferences.md](disruption/design-thinking-evidence-and-inferences.md). Detalhes de implementação, integrações e termos legais evoluem no repositório, em [`docs/specs/`](specs/README.md) e na documentação complementar.*

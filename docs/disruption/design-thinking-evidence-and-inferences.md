@@ -1,6 +1,6 @@
 # Evidências e inferências (design thinking)
 
-Este arquivo **não** é o [Manifesto](MANIFESTO.md). Junta **relatos de campo**, **contexto de pesquisa** e **inferências** que alimentaram o produto — matéria demasiado concreta para o manifesto, que deve ficar na **essência** e nos **princípios**.
+Este arquivo **não** é o [Manifesto](../MANIFESTO.md). Junta **relatos de campo**, **contexto de pesquisa** e **inferências** que alimentaram o produto — matéria demasiado concreta para o manifesto, que deve ficar na **essência** e nos **princípios**.
 
 ## Método e limitações
 
@@ -35,11 +35,12 @@ Ao longo do tempo surgiram **várias situações semelhantes** (conflitos leves 
 1. **Abrir o som sem acordo explícito** gera mais fricção do que fechar: disputa de controle, fila opaca ou “primeiro a chegar” — e **confiança** no espaço e no dono do som **quebra** depressa.
 2. **Música em espaço compartilhado não é neutra**: liga-se a identidade de grupo, rivalidade saudável ou não, e **convivência**; sem **política** (o quê, quando, quem manda), escolhas pequenas tornam-se **incidentes**.
 3. **Democratizar a fila sem regra** é armadilha para o dono, para o estabelecimento e para quem só quer participar sem drama — alinha com a promessa do manifesto: **democracia com política**.
-4. A pesquisa apontou também necessidades **executáveis** (ex.: **telão**, QR, feedback social visível) — estão em **[specs/12-telao-display-publico.md](specs/12-telao-display-publico.md)** e restantes **`docs/specs/`**, não no manifesto.
+4. A pesquisa apontou também necessidades **executáveis** (ex.: **telão**, QR, feedback social visível) — estão em **[12-telao-display-publico.md](../specs/12-telao-display-publico.md)** e restantes **[`docs/specs/`](../specs/README.md)**, não no manifesto.
 
 ---
 
 ## Ligações
 
-- [Manifesto Muziks](MANIFESTO.md) — intenção e princípios.
-- [Especificações](specs/README.md) — comportamento de produto e engenharia.
+- [Manifesto Muziks](../MANIFESTO.md) — intenção e princípios.
+- [Especificações](../specs/README.md) — comportamento de produto e engenharia.
+- [Mapa de disrupções: dores e soluções](mapa-dores-e-solucoes.md) — cruza estes relatos e inferências com o manifesto e as specs.

@@ -32,6 +32,8 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 ## Documentação relacionada
 
 - [Manifesto do produto](../MANIFESTO.md)
-- [Evidências e inferências (design thinking)](../design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
-- [Atomic Design no Muziks](../ATOMIC-DESIGN.md)
+- [Evidências e inferências (design thinking)](../disruption/design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
+- [Mapa de disrupções: dores e soluções](../disruption/mapa-dores-e-solucoes.md)
+- [Especificação do cliente (PWA)](../tech/ESPECIFICACAO-FRONTEND.md)
+- [Atomic Design no Muziks](../tech/ATOMIC-DESIGN.md)
 - [AGENTS.md](../../AGENTS.md) — orientação para agentes e tooling (`pnpm`, shadcn, lint)
