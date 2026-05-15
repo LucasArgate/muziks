@@ -1,0 +1,78 @@
+# Backend, dados e integrações (decisões abertas)
+
+Este documento lista **o que ainda não está fechado** para o Muziks existir de ponta a ponta, com **critérios** para decidir. Nada aqui bloqueia leitura das outras specs; elas descrevem comportamento desejado **assumindo** que haverá serviços que suportem o domínio ([03-domain-model.md](03-domain-model.md)).
+
+## 1. Backend e persistência
+
+**Pergunta:** Onde vivem player, política, fila, votos e fichas?
+
+**Opções típicas:** API própria (REST/JSON-RPC/GraphQL), BaaS (Firebase, Supabase, etc.), serverless + DB.
+
+**Critérios de escolha:**
+
+- Latência e **tempo real** (WebSocket/SSE/polling) para fila e votos.
+- Modelo de dados expressivo para **regras em camadas** e **calendário** ([04-rules-firewall.md](04-rules-firewall.md)).
+- Custo operacional vs velocidade de MVP.
+- Portabilidade (evitar lock-in extremo se for anti-objetivo do time).
+
+**Saída esperada:** decisão documentada neste arquivo (migrar para [09](09-frontend-architecture.md) ou nova spec de API quando fechar).
+
+## 2. Autenticação e identidade
+
+**Pergunta:** Participantes são anônimos (sessão), magic link, OAuth social, ou mistura?
+
+**Critérios:**
+
+- Equilíbrio entre **baixo atrito** e **anti-fraude** ([06-queue-voting-and-chips.md](06-queue-voting-and-chips.md)).
+- LGPD e minimização de dados ([08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md)).
+
+## 3. Fonte do catálogo musical
+
+**Pergunta:** De onde vêm gênero/artista/faixa para política e busca?
+
+**Opções:** integração com provedor de streaming, base própria, upload, híbrido.
+
+**Critérios:**
+
+- Capacidade de aplicar **firewall** com metadados confiáveis ([04-rules-firewall.md](04-rules-firewall.md)).
+- **Compliance** com termos do provedor e com execução pública (fora do escopo de “ficha de voto”, mas crítico para o negócio).
+
+## 4. Reprodução de áudio
+
+**Pergunta:** Onde o áudio toca — apenas no dispositivo do dono, multi-dispositivo, ou integração com sistema do estabelecimento?
+
+**Critérios:** latência, licença, complexidade de instalação no bar/carro.
+
+## 5. Modelo exato da fila
+
+**Pergunta:** Proposta entra direto vs estado “pendente”? Dono pode reordenar à mão sempre?
+
+**Critérios:** UX do público vs controle do dono ([06-queue-voting-and-chips.md](06-queue-voting-and-chips.md)).
+
+## 6. Fichas: ledger e fraude
+
+**Pergunta:** Quem emite saldo, como auditar, como impedir duplicação?
+
+**Critérios:** simplicidade de MVP vs risco financeiro/reputacional.
+
+## 7. API pública e versionamento
+
+**Pergunta:** Contrato da API, autenticação de dono vs público, limites.
+
+**Critérios:** segurança ([08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md)), DX do front.
+
+## 8. Notificações push (futuro)
+
+**Pergunta:** Usar Web Push para “sua faixa subiu”?
+
+**Critérios:** valor vs permissões iOS; privacidade.
+
+---
+
+## Próximos passos sugeridos
+
+1. Fechar **backend + auth + modelo de fila** (itens 1, 2, 5) — desbloqueia MVP técnico.
+2. Fechar **catálogo + reprodução** (itens 3, 4) — desbloqueia demo pública realista.
+3. Tratar **fichas** como camada opcional após voto estável (item 6).
+
+Quando cada item fechar, **remover ou encurtar** a seção correspondente aqui e registrar a decisão na spec mais próxima (domínio, PWA, NFR).

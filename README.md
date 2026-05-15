@@ -21,6 +21,7 @@ Democracia na fila com **firewall de som**: o público participa; o espaço mand
 
 ## Documentação
 
+- [**Especificações (produto e engenharia)**](docs/specs/README.md) — escopo, domínio, regras, PWA e decisões abertas
 - [**Manifesto do produto**](docs/MANIFESTO.md) — princípios e promessa do Muziks
 - [**Especificação do cliente (PWA)**](docs/ESPECIFICACAO-FRONTEND.md) — React, TypeScript, Tailwind, shadcn, PWA e tooling previstos
 - [**Atomic Design**](docs/ATOMIC-DESIGN.md) — convenção de pastas para UI quando o código existir
