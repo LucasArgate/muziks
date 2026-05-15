@@ -1,9 +1,6 @@
 # Orientação para agentes (Muziks)
 
-- **Pacote:** use `pnpm` (instalar, scripts, adicionar deps).
-- **Front:** React (Vite), TypeScript, Tailwind, **shadcn/ui** em `src/components/ui/`.
-- **Estrutura de UI:** Atomic Design — leia `docs/ATOMIC-DESIGN.md` antes de criar componentes novos.
-- **Aliases:** `@/` aponta para `src/` (ex.: `@/components`, `@/lib/utils`).
-- **Novos componentes shadcn:** `pnpm dlx shadcn@latest add <nome>` (mantém `ui/` alinhado ao gerador).
-- **Não** subir servidor de dev aqui; o mantenedor roda localmente.
-- **Testes:** não criar arquivos de teste neste repo; validar com `pnpm lint` quando houver mudança em código.
+- **Escopo atual:** repositório focado em **documentação e especificações** (produto + front). **Não** criar scaffold de app, `package.json` ou pastas `src/` a menos que o pedido seja explicitamente implementar código.
+- **Quando houver implementação:** seguir [`docs/ESPECIFICACAO-FRONTEND.md`](docs/ESPECIFICACAO-FRONTEND.md) (PWA, React, TypeScript, Tailwind, shadcn) e [`docs/ATOMIC-DESIGN.md`](docs/ATOMIC-DESIGN.md) para estrutura de componentes.
+- **Pacote:** quando existir app, usar **`pnpm`** para dependências e scripts.
+- **Testes:** não criar arquivos de teste automatizados neste repo, salvo pedido explícito em contrário.
