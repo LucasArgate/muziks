@@ -83,7 +83,7 @@ Para a **tese do estabelecimento**, o caminho B quase sempre é **Connect + API*
 
 1. **Tratar Spotify como integração primária de catálogo** no roadmap imediato (Caminho A), com **ISRC** como chave interna quando existir.
 2. **Desenhar o domínio já com eventos** (`Queue*`, `Policy*`, `SpotifyCommand*`, `SpotifyState*`) para que o Caminho B seja **só um novo consumidor**, não um refator grande.
-3. **Caminho B** como incremento pós-MVP ou piloto fechado: OAuth dono + Connect + poller de estado + política de reconciliação com a fila Muziks.
+3. **Caminho B (execução)** — **fechado para MVP-B** como variante **Web Playback SDK no Player Master** + Web API + Supabase (não só Connect externo). Ver [06-arquitetura-playback-spotify.md](06-arquitetura-playback-spotify.md).
 4. **Catálogo complementar (Deezer):** busca estruturada, metadados e experimentação (Python, ML, *vector DB*) como **integração secundária** — ver [04-viabilidade-integracao-secundaria-deezer.md](04-viabilidade-integracao-secundaria-deezer.md).
 
-Quando isso virar decisão normativa fechada, **espelhar** um resumo em [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) (secções 3 e 4) e reduzir ambiguidade lá.
+Reprodução normativa: [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) §4.

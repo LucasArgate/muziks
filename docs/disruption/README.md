@@ -12,6 +12,7 @@ Esta pasta agrupa o **mapa de desrupções** que o Muziks pretende endereçar: s
 | [karaoke-era-ia-e-llms-de-borda.md](karaoke-era-ia-e-llms-de-borda.md) | Hipótese (futura): karaokê, LLMs/modelos em borda na web, sensibilidades e engajamento |
 | [conexao-emocao-economia-da-fila.md](conexao-emocao-economia-da-fila.md) | Conexão → emoção → atitude; tensão entre democracia da fila, monetização do participante e sustentabilidade |
 | [firewall-curador-com-agentes.md](firewall-curador-com-agentes.md) | Hipótese (futura): agentes como curador do firewall — *mood* da fila, pedidos inusitados, essência do espaço |
+| [hub-local-webrtc-e-fanout.md](hub-local-webrtc-e-fanout.md) | Experimento (futuro): Hub local no mesmo player — fan-out WebRTC da leitura da fila; votos no servidor |
 
 ## O que conta como “disrupção” aqui
 

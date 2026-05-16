@@ -2,20 +2,21 @@
 
 Este documento lista **o que ainda não está fechado** para o Muziks existir de ponta a ponta, com **critérios** para decidir. Nada aqui bloqueia leitura das outras specs; elas descrevem comportamento desejado **assumindo** que haverá serviços que suportem o domínio ([03-domain-model.md](03-domain-model.md)).
 
-## 1. Backend e persistência
+## 1. Backend e persistência — **fechado (PoC)**
 
-**Pergunta:** Onde vivem player, política, fila, votos e fichas?
+**Decisão:** player, política, fila e votos vivem em **PostgreSQL (Supabase)** na PoC; API em **Next.js** (`apps/web` — API Routes / Server Actions); monorepo **Turborepo**; deploy **Vercel** + Supabase Free (100% *free tier* na validação inicial).
 
-**Opções típicas:** API própria (REST/JSON-RPC/GraphQL), BaaS (Firebase, Supabase, etc.), serverless + DB.
+| Aspecto | Escolha |
+|---------|---------|
+| Persistência | Supabase (Postgres); schema em `packages/db/migrations` |
+| API na PoC | Dentro de `apps/web` — sem `apps/api` até gatilho de extração |
+| Fila (leitura) | HTTP + polling 3–5 s; cache na borda |
+| Votos (escrita) | HTTP POST + rate-limit + fila de eventos serializada |
+| Migração futura | AWS RDS + WS sob demanda; estratégia strangler — ver [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
 
-**Critérios de escolha:**
+**Gatilho preparação Fase infra B:** **5 players constantes** (definição em STACK §2.1).
 
-- Latência e **tempo real** (WebSocket/SSE/polling) para fila e votos.
-- Modelo de dados expressivo para **regras em camadas** e **calendário** ([04-rules-firewall.md](04-rules-firewall.md)).
-- Custo operacional vs velocidade de MVP.
-- Portabilidade (evitar lock-in extremo se for anti-objetivo do time).
-
-**Saída esperada:** decisão documentada neste arquivo (migrar para [09](09-frontend-architecture.md) ou nova spec de API quando fechar).
+Detalhe completo de stack, fases e CI de dados: [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md). Estrutura do monorepo: [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md).
 
 ## 2. Autenticação e identidade
 
@@ -49,11 +50,21 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 
 **Requisitos de implementação (quando o catálogo for fechado):** ingerir ISRC sempre que a fonte o fornecer; manter tabela de **alias** `provedor + id nativo → isrc`; definir política para **faixas sem ISRC** (só ID nativo, possível enriquecimento posterior). Referência normativa do esquema: [IFPI — ISRC](https://isrc.ifpi.org/). O ISRC **não** substitui licença de uso nem ECAD; apenas alinha **identidade técnica** — ver [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 
-## 4. Reprodução de áudio
+## 4. Reprodução de áudio — **fechado (MVP-B)**
 
-**Pergunta:** Onde o áudio toca — apenas no dispositivo do dono, multi-dispositivo, ou integração com sistema do estabelecimento?
+**Decisão:** o áudio toca no **Player Master** (navegador do **dono** ou do **telão** em Chrome/kiosk), via **Spotify Web Playback SDK**; fila e votos permanecem no **Postgres (Supabase)**; estado de sessão e comandos remotos usam **Supabase Realtime** (baixa cardinalidade). O público **não** reproduz áudio nem precisa Premium.
 
-**Critérios:** latência, licença, complexidade de instalação no bar/carro — alinhamento à tese de produto em [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) (reprodução via provedor do usuário; Muziks como orquestração de fila e política).
+| Aspecto | Escolha |
+|---------|---------|
+| Motor de áudio | Spotify Web Playback SDK no cliente Master |
+| Controle remoto / fila nativa | Spotify Web API (Player) com token do **dono** |
+| Transição automática | `PlaybackManager` no Master (`player_state_changed`, ~5 s antes do fim) |
+| Sync telão / dono / comandos | Realtime `player_sessions` + `playback_commands` |
+| Leitura da fila (massa) | Polling HTTP 3–5 s (inalterado na PoC) |
+
+Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md). Viabilidade e EDA: [../mvp/03-viabilidade-integracao-spotify-eda.md](../mvp/03-viabilidade-integracao-spotify-eda.md). Compliance: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
+
+**Escopo:** reprodução integrada entra no **MVP-B** (piloto com som), não no MVP-A (só fila/votos) — [../mvp/congelamento-mvp-e-arquitetura.md](../mvp/congelamento-mvp-e-arquitetura.md).
 
 ## 5. Modelo exato da fila
 
@@ -91,21 +102,16 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 
 **Hipótese de produto:** [firewall-curador-com-agentes.md](../disruption/firewall-curador-com-agentes.md). **Fora do MVP** ([01-vision-and-scope.md](01-vision-and-scope.md)).
 
-## 10. Rajada, tempo real e custo (direção PoC)
+## 10. Rajada, tempo real e custo — **fechado (PoC)**
 
-**Contexto:** exports 2016–2017 mostram picos de **centenas de pedidos por bar por dia** em janelas curtas ([03-ponte-pedidos-e-sazonalidade](../analytics/reports/03-ponte-pedidos-e-sazonalidade.md)).
+Decisão registrada em [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3 (HTTP vote, polling fila, sem Realtime por participante). Custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
 
-**Direção para fechar (MVP em *free tier*):**
+## 10.1 Sincronização local da fila (experimento — fora do MVP)
 
-| Caminho | Uso |
-|---------|-----|
-| **HTTP `POST` /vote** | Escrita com validação de política + identidade |
-| **Rate-limit** | Por `participant_id`, IP e opcionalmente dispositivo — proteger contra “super usuários” e brigading |
-| **Fila de votos** | Inserir evento; worker ou transação serializada aplica contagem — evita lock storm no mesmo `queue_item` |
-| **HTTP `GET` /queue** + **Cache-Control** | Leitura para clientes e telão; polling **3–5 s** |
-| **Supabase Realtime** | Evitar subscrição **por participante** no salão; reservar para admin ou adiar |
+**Hipótese:** no mesmo espaço físico (mesmo player), propagar **snapshots de leitura** da fila via **WebRTC DataChannel** entre telão e celulares, reduzindo GET repetidos — **sem** alterar POST de voto nem fonte de verdade no Postgres.
 
-Detalhe de custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
+- Detalhe, invariantes e spikes: [hub-local-webrtc-e-fanout.md](../disruption/hub-local-webrtc-e-fanout.md).
+- **Não** implementar na PoC salvo conclusão positiva do spike E1 (telão âncora).
 
 ## 11. Busca tolerante a erros (fuzzy)
 
@@ -121,8 +127,8 @@ Detalhe de custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-c
 
 ## Próximos passos sugeridos
 
-1. Fechar **backend + auth + modelo de fila + rajada/polling** (itens 1, 2, 5, 10) — desbloqueia MVP técnico.
-2. Fechar **catálogo + reprodução** (itens 3, 4) — desbloqueia demo pública realista.
+1. Fechar **auth + modelo de fila** (itens 2, 5) — backend base, rajada e reprodução MVP-B já fechados (itens 1, 4, 10).
+2. Fechar **catálogo** (item 3) — desbloqueia busca/firewall com metadados confiáveis.
 3. Tratar **fichas** como camada opcional após voto estável (item 6).
 
 Quando cada item fechar, **remover ou encurtar** a seção correspondente aqui e registrar a decisão na spec mais próxima (domínio, PWA, NFR).

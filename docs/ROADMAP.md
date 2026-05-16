@@ -30,11 +30,20 @@ Cada fase tem **critério de saída** objetivo. **Datas** de início/fim e de **
 
 **Saída:** conjunto mínimo de specs **estáveis o suficiente** para “congelar” um **MVP técnico** (lista de escopo em [01-vision-and-scope.md](specs/01-vision-and-scope.md)) sem ambiguidade crítica em fila, regras e descoberta do player; **hipóteses de receita e *go-to-market*** registradas em [business/](business/README.md) quando forem discutidas (não substituem specs normativas).
 
-### Fase 1 — Arquitetura e stack *(próximo bloco)*
+### Fase 1 — Arquitetura e stack *(documentação fechada; código pendente)*
 
-**O quê:** fechar decisões em [11-backend-and-integrations-open.md](specs/11-backend-and-integrations-open.md), alinhar [09-frontend-architecture.md](specs/09-frontend-architecture.md) e [ESPECIFICACAO-FRONTEND.md](tech/ESPECIFICACAO-FRONTEND.md) com **contratos** (API, identidade, sessão, eventos) e **ambientes** (dev, staging, produção).
+**O quê:** decisões de backend base e infra registradas; front alinhado ao monorepo Next.js; processo e ambientes definidos.
 
-**Saída:** documento ou specs atualizadas com **stack**, **limites de responsabilidade** entre serviços e **definição de “pronto para codar”** o primeiro incremento.
+**Saída (entregue no repo):**
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [STACK-E-FASES-DE-MIGRACAO.md](tech/STACK-E-FASES-DE-MIGRACAO.md) | PoC free (Vercel + Supabase), gatilho 5 players, AWS, migração CI/CD |
+| [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) | Linear, GitFlow vs GitHub Actions, ambientes por domínio |
+| [MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) | `apps/web`, `apps/blog`, packages, domínios |
+| [11-backend-and-integrations-open.md](specs/11-backend-and-integrations-open.md) | §1 e §10 fechados; demais integrações em aberto |
+
+**Próximo:** contratos finos (auth, fila) e **primeiro incremento de código** (Fase 2). Calendário: *TBD* no quadro abaixo.
 
 ### Fase 2 — Primeiro software tocável *(MVP interno)*
 
@@ -135,6 +144,9 @@ A ideia atravessa anos porque o problema é **social e político**, não só té
 | [14-fronteiras-legais-direitos-autorais.md](specs/14-fronteiras-legais-direitos-autorais.md) | Guardrails antes de datas agressivas |
 | [design-thinking-evidence-and-inferences.md](disruption/design-thinking-evidence-and-inferences.md) | Base empática para priorizar pilotos |
 | [business/README.md](business/README.md) | Receita, rentabilidade (incl. OSS/freemium + infra), *go-to-market*; complementa [mvp/02-viabilidade-custos-comparativo.md](mvp/02-viabilidade-custos-comparativo.md) |
+| [STACK-E-FASES-DE-MIGRACAO.md](tech/STACK-E-FASES-DE-MIGRACAO.md) | Stack PoC, fases de infra, migração de dados |
+| [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) | Linear, branches, CI/CD, ambientes |
+| [MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) | Estrutura Turborepo e domínios |
 
 ---
 

@@ -111,10 +111,13 @@ Alinhar com a escolha de stack em [congelamento-mvp-e-arquitetura.md](congelamen
 
 ### Hospedagem do frontend (opções a comparar — confirmar termos atuais)
 
+**Decisão PoC:** deploy em **Vercel**; **DNS e borda já na Cloudflare** (proxy na frente do origin). Matriz completa de recursos CF (R2, Workers, Pages, etc.): [STACK-E-FASES-DE-MIGRACAO.md §1.4](../tech/STACK-E-FASES-DE-MIGRACAO.md).
+
 | Opção | O que cobre bem na POC | Limite / ressalva (referência; validar no site) |
 |--------|-------------------------|--------------------------------------------------|
-| [**Vercel**](https://vercel.com/docs/plans/hobby) — plano **Hobby** | Next.js com zero config, *preview deployments*, edge leve | **Uso comercial** (piloto em bar que cobra consumo, marca patrocinadora, etc.) **não** é permitido no Hobby; plano **Pro** ou outro host se o piloto for “de negócio”. Transferência rápida da ordem de **~100 GB/mês** no referencial público de documentação. |
-| [**Cloudflare Pages**](https://developers.cloudflare.com/pages/platform/limits/) | Sites estáticos + *functions*; bom *egress* no plano gratuito | Build limits e CPU por request — conferir ToS para o seu tipo de uso. |
+| [**Vercel**](https://vercel.com/docs/plans/hobby) — plano **Hobby** | Next.js com zero config, *preview deployments*, edge leve — **host principal PoC** | **Uso comercial** (piloto em bar que cobra consumo, marca patrocinadora, etc.) **não** é permitido no Hobby; plano **Pro** ou outro host se o piloto for “de negócio”. Transferência rápida da ordem de **~100 GB/mês** no referencial público de documentação. |
+| [**Cloudflare**](https://developers.cloudflare.com/) — **DNS + proxy** (Free) | CDN, SSL, DDoS na frente da Vercel; domínios já na CF | Não confundir com host: origin continua Vercel na PoC. Cache: cuidado em rotas dinâmicas de fila/voto. |
+| [**Cloudflare Pages**](https://developers.cloudflare.com/pages/platform/limits/) | Sites estáticos + Next.js; bom *egress* no plano gratuito (~500 GB/mês ref.) | **Alternativa** ao deploy Vercel se bandwidth ou conta única CF priorizar; build limits e CPU por request — conferir ToS. |
 | [**Netlify**](https://www.netlify.com/pricing/) | SPA/PWA, *serverless functions* | Quotas de build e *bandwidth* no *free*; verificar uso comercial no plano gratuito. |
 | [**Render**](https://render.com/docs/free) | *Web service* gratuito (com *spin-down*) | Cold start; pode incomodar demo ao vivo se o serviço dormir. |
 | **GitHub Pages** | Só **estático** (export estático do Next) | Sem API routes nativas no mesmo domínio sem truques; POC “só cliente” ok. |

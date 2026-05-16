@@ -39,4 +39,6 @@ Especificação completa do **modo telão** — representação visual no espaç
 ## Fora de escopo
 
 - Mapa estilo “Pokemon Go” de todos os players do mundo.
-- Precisão de indoor (BLE) — futuro opcional.
+- Precisão de indoor (BLE) — futuro opcional para **descoberta** do player (proximidade ao estabelecimento).
+
+**Nota (ortogonal):** [Hub local WebRTC](../disruption/hub-local-webrtc-e-fanout.md) trata de **sincronizar leitura da fila** entre dispositivos já no mesmo player (fan-out na LAN), não de descoberta por BLE nem de substituir slug/link/QR.

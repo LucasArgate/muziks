@@ -41,4 +41,7 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 - [Mapa de disrupções: dores e soluções](../disruption/mapa-dores-e-solucoes.md)
 - [Especificação do cliente (PWA)](../tech/ESPECIFICACAO-FRONTEND.md)
 - [Atomic Design no Muziks](../tech/ATOMIC-DESIGN.md)
+- [Stack, fases de infra e migração](../tech/STACK-E-FASES-DE-MIGRACAO.md)
+- [Processo de desenvolvimento](../tech/PROCESSO-DESENVOLVIMENTO.md) — Linear, GitFlow, GitHub Actions, ambientes
+- [Monorepo Turborepo](../tech/MONOREPO-TURBOREPO.md)
 - [AGENTS.md](../../AGENTS.md) — orientação para agentes e tooling (`pnpm`, shadcn, lint)

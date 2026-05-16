@@ -13,6 +13,7 @@ O [Manifesto](../MANIFESTO.md) e as [especificações em `specs/`](../specs/READ
 | [03-viabilidade-integracao-spotify-eda.md](03-viabilidade-integracao-spotify-eda.md) | Spotify Connect, catálogo vs orquestração, eventos no servidor, limites da API |
 | [04-viabilidade-integracao-secundaria-deezer.md](04-viabilidade-integracao-secundaria-deezer.md) | Deezer como secundário: busca/metadados, Python, ML/vector DB opcional |
 | [05-identidade-fosso-participante-voto.md](05-identidade-fosso-participante-voto.md) | OAuth para participante (não streaming); sinais secundários; dono inalterado |
+| [06-arquitetura-playback-spotify.md](06-arquitetura-playback-spotify.md) | **Decisão fechada** MVP-B: Web Playback SDK, fila Supabase, auto-next, scopes OAuth, abstrações front |
 
 **Evidência histórica (rajada, ICP, super usuários):** [analytics/reports/05-insights-para-muziks-hoje.md](../analytics/reports/05-insights-para-muziks-hoje.md) — PoC: backend blindado, painel firewall, **3–5** bares ICP.
 
@@ -30,3 +31,6 @@ O [Manifesto](../MANIFESTO.md) e as [especificações em `specs/`](../specs/READ
 - [01-vision-and-scope.md](../specs/01-vision-and-scope.md) — visão e fronteiras de escopo no repo
 - [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) — integrações; alinhar com o que for fechado aqui
 - [ESPECIFICACAO-FRONTEND.md](../tech/ESPECIFICACAO-FRONTEND.md) — PWA, React, TS, Tailwind, shadcn
+- [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) — PoC free, 5 players, AWS, CI/CD de dados
+- [PROCESSO-DESENVOLVIMENTO.md](../tech/PROCESSO-DESENVOLVIMENTO.md) — Linear, branches, ambientes
+- [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md) — estrutura `apps/` e `packages/`

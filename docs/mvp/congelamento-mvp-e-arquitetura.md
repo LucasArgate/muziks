@@ -21,13 +21,21 @@ Demonstrar o núcleo do manifesto — **“Público participa; o espaço manda n
 - **PWA** (React + TypeScript + Tailwind + shadcn/ui) seguindo **Atomic Design** (ver [`docs/tech/ESPECIFICACAO-FRONTEND.md`](../tech/ESPECIFICACAO-FRONTEND.md) e [`docs/tech/ATOMIC-DESIGN.md`](../tech/ATOMIC-DESIGN.md)).
 - **Modo telão básico**: fila pública visível.
 
+### Fases do MVP (playback)
+
+| Fase | O que valida | Playback |
+|------|----------------|----------|
+| **MVP-A** | Fila, votos, política, telão visual, link/QR | **Sem** áudio orquestrado pelo app |
+| **MVP-B** | Piloto com som no espaço (ICP) | **Com** arquitetura fechada — [06-arquitetura-playback-spotify.md](06-arquitetura-playback-spotify.md) |
+
 ### Fora do MVP (adiar)
 
 - **Fichas / economia de chips** — tratar como feature opcional **pós-MVP**.
 - **Geolocalização completa** (GPS + raio) — primeiro **link/QR**; GPS como evolução documentada.
-- **Integração profunda com streaming** (reprodução real controlada pelo app) — fora do primeiro corte de validação.
 - **Notificações push** avançadas.
 - **Moderação avançada / anti-fraude enterprise**.
+
+*(Reprodução integrada não é MVP-A; no MVP-B usa Spotify Web Playback SDK + Supabase — ver doc 06.)*
 
 ### Critério de saída do MVP
 
@@ -60,19 +68,21 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 
 **Critérios:** open source, Brasil, **custo baixo** no início, escala futura, manutenibilidade e facilidade de contribuição.
 
-### 2.1 Recomendação principal (stack sugerida)
+### 2.1 Stack fechada (PoC)
 
-| Camada | Tecnologia recomendada | Motivo (hoje + futuro) |
-|--------|------------------------|------------------------|
-| **Frontend** | React + TypeScript + Vite + Tailwind + shadcn/ui + PWA | Já alinhado às specs do Muziks; boa DX e ecossistema |
-| **Backend** | **NestJS** (Node.js) *ou* **Next.js** App Router (API Routes + Server Actions) | NestJS: estrutura mais “enterprise” e amigável a OSS modular. Next.js: monorepo fullstack mais simples no MVP |
-| **Banco de dados** | **PostgreSQL** (Supabase ou Neon) | Modelo relacional forte para regras em camadas + calendário; Supabase oferece realtime útil no início |
-| **Atualização da fila** | **Polling HTTP** + cache na borda (Vercel); Realtime só se necessário e em baixa cardinalidade (ex.: dono) | Rajadas de fim de semana esgotam *free tier* com WebSocket por participante — ver [02-viabilidade-custos](02-viabilidade-custos-comparativo.md) |
-| **Processamento de votos** | Fila assíncrona / serialização de escritas no Postgres | Dezenas de votos simultâneos na mesma faixa não podem travar o banco |
-| **Auth** | Supabase Auth *ou* Clerk *ou* NextAuth v5 | Magic links + OAuth (Google/Apple); minimizar dados pessoais (LGPD) |
-| **Armazenamento** | Supabase Storage *ou* AWS S3 | Capas, ícones, assets leves |
-| **Deploy** | Vercel (frontend) + Railway / Fly.io / Render (backend) *ou* stack concentrada no Supabase | Custo inicial baixo; caminho de escala conhecido |
-| **Catálogo musical** | **ISRC** como chave principal + integração inicial com **Spotify API** + **Deezer** como secundário ([04](04-viabilidade-integracao-secundaria-deezer.md)) | Identificação estável de faixas; execução remota e eventos Spotify em [03](03-viabilidade-integracao-spotify-eda.md); busca/metadados/ML enriquecido via Deezer no [04](04-viabilidade-integracao-secundaria-deezer.md) |
+| Camada | Tecnologia | Motivo (hoje + futuro) |
+|--------|------------|------------------------|
+| **Monorepo** | **Turborepo** + `pnpm` | Apps `web`, `blog`; packages compartilhados — [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md) |
+| **App produto** | **Next.js** (App Router) em `apps/web` | PWA em `player.muziks.app/{slug}`; API Routes na PoC |
+| **Blog** | **Next.js** em `apps/blog` | `blog.muziks.com.br`; deploy Vercel separado |
+| **Banco** | **PostgreSQL** (Supabase Free) | Migrations em `packages/db` |
+| **Fila (leitura)** | Polling HTTP 3–5 s + cache Vercel | Sem WS por participante — [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
+| **Votos** | HTTP POST + rate-limit + fila de eventos | Rajada de fim de semana |
+| **Auth** | Supabase Auth (OAuth Google/Apple) | LGPD; ver [05-identidade-fosso-participante-voto.md](05-identidade-fosso-participante-voto.md) |
+| **Deploy** | **Vercel** (Hobby PoC interna; Pro piloto comercial) + Supabase | **100% free tier** na validação inicial |
+| **DNS + borda** | **Cloudflare** (DNS já apontado) | Proxy/CDN/SSL na frente da Vercel; R2/Pages/Workers como opções — [STACK §1.4](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
+| **Catálogo** | ISRC + Spotify + Deezer secundário | [03](03-viabilidade-integracao-spotify-eda.md), [04](04-viabilidade-integracao-secundaria-deezer.md) |
+| **Playback (MVP-B)** | Web Playback SDK (Master) + Web API + Supabase Realtime (sessão) | [06](06-arquitetura-playback-spotify.md) |
 
 ### Por que esta combinação?
 
@@ -89,15 +99,20 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 | **Máxima portabilidade / OSS** | **NestJS** + Prisma + PostgreSQL + **Socket.io** |
 | **Escala grande (futuro)** | **Redis** (filas, rate limit), **RabbitMQ** ou **Kafka** (eventos), etc. — adicionar quando métricas e orçamento justificarem |
 
-### Escolha recomendada *para agora*
+### Escolha *para agora*
 
-**Next.js 15 (App Router) + Supabase** para o MVP.
+**Turborepo + Next.js (`apps/web`) + Supabase Free + Vercel** — PoC 100% *free tier*.
 
-Se surgir necessidade de mais controle de processos, filas ou limites de vendor lock-in, **migrar o backend** para **NestJS** mantendo o **mesmo banco** e contratos de API estáveis.
+**Gatilho preparação infra Fase B:** **5 players constantes** (definição em [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §2.1) — inventário de quotas, staging, runbooks, desenho AWS.
+
+Extração futura: `apps/api` ou NestJS/AWS mantendo `packages/db` e contratos HTTP — ver [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md).
+
+**Processo de dev:** Linear, GitFlow (blog/docs), GitHub Actions + releases (`web`) — [PROCESSO-DESENVOLVIMENTO.md](../tech/PROCESSO-DESENVOLVIMENTO.md).
 
 ---
 
 ## 3. Manutenção deste documento
 
 - Mudanças de escopo do MVP ou de stack **devem** ser refletidas aqui e, quando normativas, propagadas para as specs em [`docs/specs/`](../specs/README.md) (em especial `01-vision-and-scope.md` e `11-backend-and-integrations-open.md`).
+- **Stack, fases e migração:** [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md).
 - **Custos e viabilidade (estimativa maio/2026):** [02-viabilidade-custos-comparativo.md](02-viabilidade-custos-comparativo.md).
