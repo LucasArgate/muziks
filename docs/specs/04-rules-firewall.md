@@ -44,4 +44,4 @@ Além das camadas:
 ## Fora desta spec
 
 - Motor de inferência de gênero a partir de áudio — não é requisito.
-- Negociação automática com direitos autorais — [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
+- Negociação automática com direitos autorais — [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md); fronteiras de produto e licenciamento — [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).

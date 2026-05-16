@@ -22,6 +22,7 @@ Democracia na fila com **firewall de som**: o público participa; o espaço mand
 ## Documentação
 
 - [**Especificações (produto e engenharia)**](docs/specs/README.md) — escopo, domínio, regras, PWA e decisões abertas
+- [**Fronteiras legais e direitos autorais**](docs/specs/14-fronteiras-legais-direitos-autorais.md) — o Muziks não vende obras nem substitui ECAD/streaming; base para termos legais
 - [**Manifesto do produto**](docs/MANIFESTO.md) — princípios e promessa do Muziks
 - [**Evidências e inferências (design thinking)**](docs/disruption/design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
 - [**Disrupções: mapa de dores e soluções**](docs/disruption/mapa-dores-e-solucoes.md) — liga evidências de campo a princípios e specs

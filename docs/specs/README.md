@@ -14,9 +14,10 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 8. [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) — fila, votos, fichas
 9. [07-ux-copy-and-states.md](07-ux-copy-and-states.md) — estados de UI e tom de voz
 10. [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) — NFR, LGPD, a11y
-11. [09-frontend-architecture.md](09-frontend-architecture.md) — front, pastas, Atomic + shadcn
-12. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
-13. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
+11. [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) — o que o Muziks não licencia, ECAD (Brasil), provedores de streaming, guardrails para termos legais
+12. [09-frontend-architecture.md](09-frontend-architecture.md) — front, pastas, Atomic + shadcn
+13. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
+14. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
 
 ## Convenções
 
@@ -32,6 +33,7 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 
 ## Documentação relacionada
 
+- [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) — fronteiras legais, ECAD (Brasil), streaming; base para termos legais
 - [Manifesto do produto](../MANIFESTO.md)
 - [Evidências e inferências (design thinking)](../disruption/design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
 - [Mapa de disrupções: dores e soluções](../disruption/mapa-dores-e-solucoes.md)

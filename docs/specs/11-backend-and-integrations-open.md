@@ -35,13 +35,13 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 **Critérios:**
 
 - Capacidade de aplicar **firewall** com metadados confiáveis ([04-rules-firewall.md](04-rules-firewall.md)).
-- **Compliance** com termos do provedor e com execução pública (fora do escopo de “ficha de voto”, mas crítico para o negócio).
+- **Compliance** com termos do provedor e com execução pública (fora do escopo de “ficha de voto”, mas crítico para o negócio) — guardrails em [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 
 ## 4. Reprodução de áudio
 
 **Pergunta:** Onde o áudio toca — apenas no dispositivo do dono, multi-dispositivo, ou integração com sistema do estabelecimento?
 
-**Critérios:** latência, licença, complexidade de instalação no bar/carro.
+**Critérios:** latência, licença, complexidade de instalação no bar/carro — alinhamento à tese de produto em [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) (reprodução via provedor do usuário; Muziks como orquestração de fila e política).
 
 ## 5. Modelo exato da fila
 

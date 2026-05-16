@@ -24,6 +24,7 @@ Contexto de campo e inferências que antecedem o manifesto (histórias, design t
 | Votos no ranking | [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) |
 | Fichas no voto | [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) |
 | Privacidade e abuso | [05-discovery-and-access.md](05-discovery-and-access.md), [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) |
+| Fronteiras legais, direitos autorais, ECAD (Brasil), streaming | [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) |
 | Telão / tela pública (opcional) | [12-telao-display-publico.md](12-telao-display-publico.md); [05-discovery-and-access.md](05-discovery-and-access.md) (QR); [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) (foto, consentimento) |
 
 ## MVP (produto mínimo viável)
@@ -51,7 +52,7 @@ Definição: o menor conjunto que demonstra **“público participa; espaço man
 
 ## Premissas
 
-- O **dono do player** é o responsável legal/operacional pelo ambiente físico e pelo volume; o Muziks fornece **ferramentas de política e UX**, não substitui compliance local.
+- O **dono do player** é o responsável legal/operacional pelo ambiente físico e pelo volume; o Muziks fornece **ferramentas de política e UX**, não substitui compliance local. Quadro de responsabilidades e narrativa para termos legais: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 - Haverá **backend ou serviços** para estado compartilhado (fila, votos, política); o detalhe é aberto em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
 
 ## Não-objetivos (para evitar escopo oculto)
