@@ -2,6 +2,8 @@
 
 ## Por que existe
 
+**Por que a música conecta.** Ela é sentida em **qualquer lugar**, **qualquer cultura**, **qualquer língua**, **qualquer nação**: quando toca uma música e as pessoas reconhecem, até um ambiente estranho se torna **sensorial** — o espaço convida o corpo e memória, e as pessoas podem se sentir **mais à vontade**. **Consequentemente**, **voltam mais**, **consomem mais** (onde houver oferta ao redor do som) e **vivem e sentem** o instante com mais presença. O Muziks não inventa esse vínculo: **assume** esse chão humano e pergunta, em seguida, **como** compartilhar a fila com acordo explícito para que a conexão não vire disputa.
+
 O Muziks renasce uma ideia simples e antiga: **a fila de música não precisa ser só do dono do som**. Em 2015 já se intuía que lugares, carros e encontros poderiam abrir o player — com limites claros — para quem está por perto ou foi convidado. Hoje isso volta como produto: um **player democrático e geoposicionado**, onde a comunidade influencia a ordem do que toca, e o **dono do player mantém controle fino**, como um firewall de som.
 
 O problema não é “falta de música”: é **falta de acordo explícito** quando várias pessoas **compartilham** o mesmo som. Sem política, abrir a fila vira **disputa de controle**, **fila opaca** ou **quem chegou primeiro** — e escolhas que parecem triviais tornam-se **choques de identidade e convivência** no espaço, em vez de convite seguro a participar. **Democratizar sem regra** destrói confiança: soluções são desmontadas, grupos **chocam**, o ambiente deixa de ser sustentável. O Muziks existe para **compartilhar o som com limites claros** — política antes de volume.
