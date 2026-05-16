@@ -15,7 +15,7 @@
 | **Monorepo** | Turborepo + `pnpm` | Ver [MONOREPO-TURBOREPO.md](MONOREPO-TURBOREPO.md) |
 | **App produto** | Next.js (App Router) em `apps/web` | Deploy Vercel; domínio `player.muziks.app/{slug}` |
 | **Blog** | Next.js em `apps/blog` | Deploy Vercel separado; `blog.muziks.com.br` |
-| **Banco** | PostgreSQL via **Supabase Free** | Auth, Storage; schema em `packages/db` |
+| **Banco** | PostgreSQL via **Supabase Free** | Auth, Storage; schema e ORM em `packages/db` (**Drizzle**) |
 | **API na PoC** | API Routes / Server Actions em `apps/web` | Sem `apps/api` até gatilho de extração |
 | **Tempo real (fila)** | HTTP + polling **3–5 s** | Sem WebSocket por participante no salão |
 | **Tempo real (playback MVP-B)** | **Supabase Realtime** (sessão + comandos) | Só dono/telão/Master — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
@@ -26,7 +26,7 @@
 
 ### 1.2 Portabilidade
 
-- O schema **deve** viver em migrations versionadas em `packages/db/migrations` (Supabase CLI, Drizzle ou Prisma — escolher **uma** ferramenta no primeiro incremento de código e manter).
+- O schema **deve** viver em migrations versionadas em `packages/db` com **Drizzle** (`drizzle-kit` para generate/migrate; SQL em `packages/db/migrations` ou pasta gerada pelo kit — manter uma convenção no primeiro incremento).
 - Lógica crítica de domínio **não deve** existir apenas no Dashboard Supabase (triggers ad hoc sem migration).
 - Contratos de API estáveis desde a PoC facilitam migração **strangler** para `apps/api` ou AWS sem reescrever o front.
 

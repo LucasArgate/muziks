@@ -22,7 +22,7 @@ muziks/                          ← raiz do monorepo
 │   ├── utils/                   ← helpers puros (cn, formatadores)
 │   ├── types/                   ← tipos de domínio compartilhados
 │   ├── spotify/                 ← abstrações Spotify (Deezer futuro: pkg ou subpasta)
-│   └── db/                      ← schema, migrations Supabase, client
+│   └── db/                      ← schema Drizzle, migrations, client Postgres
 ├── docs/                        ← especificações (permanecem na raiz)
 ├── turbo.json
 ├── pnpm-workspace.yaml
@@ -82,7 +82,7 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 | **`utils`** | Funções puras, `cn`, formatadores | Todos os apps |
 | **`types`** | Tipos de domínio (Player, Queue, Vote, …) | `web`, `api`, `db` |
 | **`spotify`** | Cliente tipado, rate-limit, mapeamento ISRC; **sem secrets** | `web`, futuro `api` |
-| **`db`** | Migrations, seed scripts, client ORM | `web`, futuro `api` |
+| **`db`** | **Drizzle** schema, migrations (`drizzle-kit`), seed scripts, client | `web`, futuro `api` |
 
 Secrets (`SUPABASE_SERVICE_ROLE`, keys Spotify) ficam apenas nos **apps**, nunca em packages publicáveis.
 

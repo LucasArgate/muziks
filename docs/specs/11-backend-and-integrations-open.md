@@ -8,7 +8,7 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 
 | Aspecto | Escolha |
 |---------|---------|
-| Persistência | Supabase (Postgres); schema em `packages/db/migrations` |
+| Persistência | Supabase (Postgres); **Drizzle** em `packages/db` (schema + migrations) |
 | API na PoC | Dentro de `apps/web` — sem `apps/api` até gatilho de extração |
 | Fila (leitura) | HTTP + polling 3–5 s; cache na borda |
 | Votos (escrita) | HTTP POST + rate-limit + fila de eventos serializada |

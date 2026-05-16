@@ -75,7 +75,7 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 | **Monorepo** | **Turborepo** + `pnpm` | Apps `web`, `blog`; packages compartilhados — [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md) |
 | **App produto** | **Next.js** (App Router) em `apps/web` | PWA em `player.muziks.app/{slug}`; API Routes na PoC |
 | **Blog** | **Next.js** em `apps/blog` | `blog.muziks.com.br`; deploy Vercel separado |
-| **Banco** | **PostgreSQL** (Supabase Free) | Migrations em `packages/db` |
+| **Banco** | **PostgreSQL** (Supabase Free) + **Drizzle** em `packages/db` | Migrations versionadas; client compartilhado |
 | **Fila (leitura)** | Polling HTTP 3–5 s + cache Vercel | Sem WS por participante — [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
 | **Votos** | HTTP POST + rate-limit + fila de eventos | Rajada de fim de semana |
 | **Auth** | Supabase Auth (OAuth Google/Apple) | LGPD; ver [05-identidade-fosso-participante-voto.md](05-identidade-fosso-participante-voto.md) |
@@ -96,7 +96,7 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 | Perfil | Abordagem |
 |--------|-----------|
 | **Máxima velocidade no MVP** | Tudo em **Supabase** (BaaS) + **Next.js** fullstack |
-| **Máxima portabilidade / OSS** | **NestJS** + Prisma + PostgreSQL + **Socket.io** |
+| **Máxima portabilidade / OSS** | **NestJS** + **Drizzle** + PostgreSQL + **Socket.io** (mesmo `packages/db` do monorepo) |
 | **Escala grande (futuro)** | **Redis** (filas, rate limit), **RabbitMQ** ou **Kafka** (eventos), etc. — adicionar quando métricas e orçamento justificarem |
 
 ### Escolha *para agora*
