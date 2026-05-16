@@ -4,7 +4,7 @@ Este documento especifica o **telão** — tela grande no espaço físico que re
 
 ## Origem (contexto histórico do projeto)
 
-Numa **aceleração de startups** da época, conduziu-se **pesquisa de empatia profunda** (design thinking): entrevistas, observação de campo e síntese — não para “validar ideia no ar”, mas para entender **como o som vive no corpo do lugar**. O aprendizado central naquele ciclo foi a necessidade de um **telão**: algo **visível para a sala**, não só para o celular de cada um.
+Numa **aceleração de startups** da época, conduziu-se **pesquisa de empatia profunda** (design thinking): entrevistas, observação de campo e síntese — não para “validar ideia no ar”, mas para **entender e inferir** como a **música conectava pessoas** em lugares ou eventos e como **democratizar o poder de escolha** da música. Nesse quadro, o aprendizado central naquele ciclo — para o que esta spec descreve — foi a necessidade de um **telão**: algo **visível para a sala**, não só para o celular de cada um.
 
 Os **registros detalhados** dessa pesquisa **não foram preservados até hoje**; esta spec consolida o que se pretende **reproduzir** no renascimento do produto.
 
