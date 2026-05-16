@@ -1,26 +1,26 @@
-song_id,nome,artista,quantidade
-132737710,Hear Me Now,Alok,28
-143987374,Rabetão,Mc Lan,28
-126608387,Refém,Dilsinho,27
-366474771,Fazer Falta,Mc Livinho,22
-347672191,A Mala É Falsa (Ao Vivo),Felipe Araújo,21
-141490671,Ninguém É de Ferro,Wesley Safadão,20
-143783500,Despacito,Luis Fonsi,19
-365672691,Cê Acredita,Joao Neto & Frederico,17
-365783551,Oh Nanana,Bonde R300,17
-368585391,Paradinha,Anitta,16
-350428781,Despacito (Remix),Luis Fonsi,16
-139665115,Você Partiu Meu Coração,Nego do Borel,16
-135872996,Malbec (Ao Vivo),Henrique & Diego,16
-131781452,Meu Coração Deu PT (Ao Vivo),Wesley Safadão,15
-141284779,Vidinha de Balada (Ao Vivo),Henrique & Juliano,15
-141145001,Acordando o Prédio,Luan Santana,14
-365750391,Sua Cara (feat. Anitta & Pabll,Major Lazer,14
-126755529,Homem de Família (Ao Vivo),Gusttavo Lima,14
-92428938,Pisando Descalço,Maneva,14
-118424918,Paredes (Ao Vivo),Jorge & Mateus,13
-348359881,Open The Tcheka,Mc Lan,13
-141045101,Cadeira de Aço,Zé Neto & Cristiano,12
-362336881,Ar Condicionado no 15 (Ao Vivo,Wesley Safadão,12
-119976334,Medo Bobo (Ao Vivo),Maiara & Maraisa,11
-124113174,O Mundo Tá Girando,Exaltasamba,11
+nome,artista,quantidade,genero,genero_fonte
+Fazer Falta,Mc Livinho,335,FUNK,exportado
+Rabetão,Mc Lan,307,FUNK,exportado
+Paradinha,Anitta,270,FUNK,exportado
+Você Partiu Meu Coração,Nego do Borel,213,FUNK,exportado
+Highway to Hell,AC/DC,175,ROCK,exportado
+Hear Me Now,Alok,174,ELETRONICO,exportado
+Sua Cara,Major Lazer,166,FUNK,exportado
+Open The Tcheka,Mc Lan,162,FUNK,exportado
+Bumbum Granada,Mc Zaac,152,FUNK,exportado
+Sorte Que Cê Beija Bem (Ao Viv,Maiara & Maraisa,150,SERTANEJO,exportado
+Vai Embrazando,Mc Zaac,149,FUNK,exportado
+50 Reais,Naiara Azevedo,144,SERTANEJO,exportado
+Cê Acredita,Joao Neto & Frederico,142,SERTANEJO,exportado
+10% (Ao Vivo),Maiara & Maraisa,135,SERTANEJO,exportado
+Vidinha de Balada (Ao Vivo),Henrique & Juliano,134,SERTANEJO,exportado
+K.O.,Pabllo Vittar,132,FUNK,exportado
+Back in Black,AC/DC,118,ROCK,exportado
+O Grave Bater,Mc Kevinho,115,FUNK,exportado
+Olha a Explosão,Mc Kevinho,115,FUNK,exportado
+Te Levar Daqui,Charlie Brown Jr.,113,ROCK,exportado
+Sua Amiga Vou Pegar,MC WM,112,FUNK,exportado
+Esqueci Como Namora,Nego do Borel,112,FUNK,exportado
+Lei do Retorno,Mc Don Juan,108,FUNK,exportado
+Medo Bobo (Ao Vivo),Maiara & Maraisa,106,SERTANEJO,exportado
+Cheia de Manias,Raça Negra,105,PAGODE,exportado

@@ -57,4 +57,4 @@ Proxy para KPI **oferta** em [13-kpis-fases-e-loops.md](../../specs/13-kpis-fase
 
 ---
 
-*Gerado em 2026-05-16 12:29 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*
+*Gerado em 2026-05-16 12:54 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*

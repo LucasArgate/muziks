@@ -46,7 +46,19 @@ No Windows, se `python` não estiver no PATH: `py -3 run_all.py`.
 | [02-demanda-participantes.md](reports/02-demanda-participantes.md) | Profundidade, Pareto, multi-bar |
 | [03-ponte-pedidos-e-sazonalidade.md](reports/03-ponte-pedidos-e-sazonalidade.md) | Séries temporais, picos diários |
 | [04-catalogo-busca-vs-tocada.md](reports/04-catalogo-busca-vs-tocada.md) | Termos de busca vs faixas tocadas |
-| [05-insights-para-muziks-hoje.md](reports/05-insights-para-muziks-hoje.md) | Implicações para o produto atual |
+| [05-insights-para-muziks-hoje.md](reports/05-insights-para-muziks-hoje.md) | Síntese acionável (snapshot + PoC) |
+
+### Amostras em `data/sample/`
+
+| CSV | Conteúdo |
+|-----|----------|
+| `snapshot-metricas.csv` | Indicadores-chave (picos, Pareto, Poco Loco, catálogo) |
+| `genero-share-reproducoes.csv` | Mix de gênero (incl. indefinido) |
+| `genero-share-classificados.csv` | Mix só entre plays classificados |
+| `top25-musicas-tocadas.csv` | Top faixas com `genero` e fonte |
+| `top15-artistas-tocadas.csv` | Artistas por reproduções somadas |
+| `top10-bares-pedidos.csv` · `top15-bares-usuarios-acum.csv` | Oferta |
+| `top25-termos-busca.csv` · `usuarios-por-mes.csv` | Demanda / ponte |
 
 ## Ligação ao produto atual
 

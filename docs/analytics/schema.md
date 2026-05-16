@@ -76,11 +76,21 @@ Fact table de pedidos.
 | `EstabelecimentoID` | int | Bar |
 | `Quantidade` | int | Buscas |
 
-### `Muziks - Músicas mais tocadas.csv`
+### `Muziks - Musicas Mais tocadas - Musicas Mais tocadas.csv` (preferido)
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| `SongID` | int | ID Deezer (legado) |
+| `Musica ID` | int | ID Deezer (legado) |
+| `Titulo` | string | Título |
+| `Artista` | string | Artista |
+| `Qtd` | int | Vezes tocada/reproduzida no ranking |
+| `Genero` | string (1 letra) | `F`=Funk, `S`=Sertanejo, `R`=Rock, `E`=Eletrônico, `P`=Pagode — preenchido sobretudo no **topo** do ranking; restante enriquecido no pipeline |
+
+### `Muziks - Músicas mais tocadas.csv` (legado)
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `SongID` | int | ID Deezer |
 | `Nome` | string | Título |
 | `Artista` | string | Artista |
 | `Quantidade` | int | Vezes tocada |
@@ -115,5 +125,5 @@ Ver [specs/13-kpis-fases-e-loops.md](../specs/13-kpis-fases-e-loops.md):
 | Demanda (participantes) | usuários/mês, repeat requesters, histórico |
 | Ponte (sessão) | pedidos/dia |
 | Loop | mesmo cliente em vários estabelecimentos (histórico) |
-| Catálogo / firewall | busca vs músicas tocadas |
+| Catálogo / firewall | busca vs músicas tocadas; **mix de gênero** (export + inferência em `scripts/genre.py`) |
 | Retenção D14/D28 | **não** — snapshot sem cohort longitudinal |

@@ -16,7 +16,9 @@ FILES = {
     "ultimo_acesso": "Muziks - Ultimo Acesso de estabelecimento.csv",
     "repeat_users": "Muziks - Usuários que pediram mais de uma vez.csv",
     "clientes_buscam": "Muziks - Clientes que mais buscam.csv",
-    "musicas": "Muziks - Músicas mais tocadas.csv",
+    # Prefer export with genre column; fallback to legacy aggregate.
+    "musicas": "Muziks - Musicas Mais tocadas - Musicas Mais tocadas.csv",
+    "musicas_legacy": "Muziks - Músicas mais tocadas.csv",
     "busca_global": "Muziks - Termo de busca mais realizado.csv",
     "busca_estab": "Muziks - Termo de busca por estabelecimento.csv",
     "cadastro": "Muziks - Cadastro de Bares.csv",
@@ -35,7 +37,14 @@ def data_path(key: str) -> Path:
 def missing_files(required_only: bool = False) -> list[str]:
     missing = []
     for key, name in FILES.items():
+        if key == "musicas_legacy":
+            continue
         if required_only and key in OPTIONAL_KEYS:
+            continue
+        if key == "musicas":
+            if data_path("musicas").exists() or data_path("musicas_legacy").exists():
+                continue
+            missing.append(f"{FILES['musicas']} ou {FILES['musicas_legacy']}")
             continue
         if not data_path(key).exists():
             missing.append(name)

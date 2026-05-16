@@ -1,15 +1,15 @@
 termo,contagem,termo_norm,match_titulo,match_artista
 mc lan,48,mc lan,False,True
 Despacito,45,despacito,True,True
-alok,34,alok,False,True
+alok,34,alok,True,True
 Racionais,26,racionais,False,True
-Rabetao,23,rabetao,False,False
+Rabetao,23,rabetao,True,False
 Anitta,23,anitta,True,True
 Fazer falta,23,fazer falta,True,False
 Acdc,22,acdc,False,False
 Paradinha,19,paradinha,True,False
 Raimundos,18,raimundos,False,True
-Henrique e juliano,18,henrique e juliano,False,False
+Henrique e juliano,18,henrique e juliano,True,True
 MC kevinho,16,mc kevinho,False,True
 mc livinho,15,mc livinho,False,True
 Sua cara,15,sua cara,True,False
@@ -18,9 +18,9 @@ o rappa,12,o rappa,False,True
 MICHAEL JACKSON,12,michael jackson,False,True
 Lei do retorno,12,lei do retorno,True,False
 Cadeira de aço,12,cadeira de aço,True,False
-Deixe me ir,12,deixe me ir,False,False
+Deixe me ir,12,deixe me ir,True,False
 Vintage,11,vintage,True,True
 Xanaina,10,xanaina,False,False
 You shook me all,9,you shook me all,True,False
-Vai embrazando,9,vai embrazando,True,False
+Vai embrazando,9,vai embrazando,True,True
 Pearl jam,9,pearl jam,False,True

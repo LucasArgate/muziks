@@ -120,10 +120,33 @@ def load_clientes_buscam() -> pd.DataFrame:
 
 
 def load_musicas() -> pd.DataFrame:
-    df = read_csv(data_path("musicas"))
-    df.columns = ["song_id", "nome", "artista", "quantidade"]
+    path = data_path("musicas")
+    if not path.exists():
+        path = data_path("musicas_legacy")
+    df = read_csv(path)
+
+    if "Musica ID" in df.columns or "Musica ID" in [str(c) for c in df.columns]:
+        # New export: Musica ID, Titulo, Artista, Qtd, Genero (+ optional name columns)
+        rename = {
+            "Musica ID": "song_id",
+            "Titulo": "nome",
+            "Artista": "artista",
+            "Qtd": "quantidade",
+            "Genero": "genero_letra",
+        }
+        df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+        extra = [c for c in df.columns if str(c).startswith("Unnamed")]
+        if len(extra) >= 1:
+            df = df.rename(columns={extra[0]: "genero_nome"})
+    else:
+        df.columns = ["song_id", "nome", "artista", "quantidade"]
+
     df["quantidade"] = pd.to_numeric(df["quantidade"], errors="coerce").fillna(0).astype(int)
-    return df.sort_values("quantidade", ascending=False)
+    df = df.sort_values("quantidade", ascending=False)
+
+    from genre import enrich_musicas_genres
+
+    return enrich_musicas_genres(df)
 
 
 def load_busca_global() -> pd.DataFrame:
