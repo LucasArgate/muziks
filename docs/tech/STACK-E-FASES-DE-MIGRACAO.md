@@ -21,6 +21,7 @@
 | **Tempo real (playback MVP-B)** | **Supabase Realtime** (sessão + comandos) | Só dono/telão/Master — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
 | **Escritas (voto)** | HTTP `POST` + rate-limit + fila de eventos | Ver §4 |
 | **DNS + borda** | **Cloudflare** (já em uso) | DNS gerenciado; proxy/CDN/SSL na frente do origin; ver §1.4 |
+| **Artefato de release** | **Docker Hub** (`muziks/web`, …) | Imagem semver por tag Git; staging contínuo; prod pinada — [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) |
 
 **PoC 100% free tier:** Vercel (Hobby para testes internos; **Pro** quando piloto comercial — ver [02-viabilidade-custos](../mvp/02-viabilidade-custos-comparativo.md)) + Supabase Free + **Cloudflare Free** (DNS e borda; recursos adicionais conforme §1.4).
 
@@ -190,7 +191,7 @@ Dimensionar quotas pelo cenário **“50 pessoas votam em 2 minutos no mesmo pla
 | **Schema** | `packages/db/migrations` | `migrate` no pipeline pós-merge em `staging` | `migrate` com aprovação manual ou **tag semver** | GitHub Actions: job `db:migrate` por environment |
 | **Seed** | `pnpm db:seed` (dados sintéticos) | seed fixo de cenários de teste | **nunca** seed destrutivo | script versionado em `packages/db` |
 | **Dados de teste** | fixtures SQL | cópia **anonimizada** opcional de prod (política LGPD) | — | `workflow_dispatch` manual |
-| **Promoção** | — | deploy branch `staging` | tag `v*.*.*` → produção | ver [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) |
+| **Promoção** | — | deploy branch `staging` + imagem `:staging` | tag `v*.*.*` → produção + imagem `muziks/web:vX.Y.Z` | [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) |
 | **Rollback schema** | revert forward-only + restore local | restore snapshot staging | runbook + backup PITR (Pro) | documentar limite do Free: backup manual |
 
 ### 4.2 Regras
@@ -243,6 +244,7 @@ A PoC **continua** com polling HTTP 3–5 s e sem WebSocket por participante (§
 |-----------|----------|
 | [MONOREPO-TURBOREPO.md](MONOREPO-TURBOREPO.md) | Estrutura de apps e packages |
 | [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) | Linear, branches, ambientes, GitHub Actions |
+| [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) | Registry, tags de imagem, release funcional, hotfix |
 | [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) | Integrações ainda abertas (catálogo, fila, fichas) |
 | [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md) | Tabela de custos Free / Pro / AWS |
 | [hub-local-webrtc-e-fanout.md](../disruption/hub-local-webrtc-e-fanout.md) | Experimento Hub local (leitura P2P) |

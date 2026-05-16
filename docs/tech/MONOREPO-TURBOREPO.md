@@ -4,7 +4,7 @@
 
 **Normativo** para quando o código existir. O repositório **hoje** contém apenas `docs/` — este documento descreve o layout ao iniciar implementação ([AGENTS.md](../../AGENTS.md)).
 
-Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md), [ESPECIFICACAO-FRONTEND.md](ESPECIFICACAO-FRONTEND.md), [ATOMIC-DESIGN.md](ATOMIC-DESIGN.md).
+Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md), [ESPECIFICACAO-FRONTEND.md](ESPECIFICACAO-FRONTEND.md), [ATOMIC-DESIGN.md](ATOMIC-DESIGN.md).
 
 ---
 
@@ -23,6 +23,7 @@ muziks/                          ← raiz do monorepo
 │   ├── types/                   ← tipos de domínio compartilhados
 │   ├── spotify/                 ← abstrações Spotify (Deezer futuro: pkg ou subpasta)
 │   └── db/                      ← schema Drizzle, migrations, client Postgres
+├── docker/                      ← Dockerfiles (contexto raiz; ver DOCKER-REGISTRY-E-RELEASES.md)
 ├── docs/                        ← especificações (permanecem na raiz)
 ├── turbo.json
 ├── pnpm-workspace.yaml

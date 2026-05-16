@@ -64,9 +64,9 @@ Filtros Turborepo: `turbo run build --filter=@muziks/web` (ou equivalente).
 | `main` | Produção; protegida; só via PR ou release |
 | `staging` | Integração contínua; deploy automático em staging |
 | `feature/*` | Trabalho por issue Linear |
-| `hotfix/*` | Correção urgente em prod → merge em `main` e `staging` |
+| `hotfix/*` | Correção urgente em prod → tag PATCH `vX.Y.Z+1`, imagem Docker, merge em `main` e `staging` — [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) §4.1 |
 
-**Releases:** tags semver `vMAJOR.MINOR.PATCH` no GitHub disparam deploy de produção e notas de release.
+**Releases:** tags semver `vMAJOR.MINOR.PATCH` no GitHub disparam deploy de produção, **push de imagem Docker** versionada e notas de release — ver [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md).
 
 ### 3.2 Branches — blog (`apps/blog`)
 
@@ -136,8 +136,12 @@ Arquivos em `.github/workflows/` (a criar com o monorepo):
 | `deploy-blog-prod.yml` | Push `main` + paths `apps/blog` | Deploy produção |
 | `deploy-web-staging.yml` | Push `staging` + paths `apps/web` | Build, migrate staging, deploy |
 | `release-web-prod.yml` | Tag `v*` | Migrate prod (approval), deploy prod, GitHub Release |
+| `docker-build-staging.yml` | Push `staging` + paths app | Build e push `muziks/web:staging` (+ `sha-*`) — [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) |
+| `release-docker-prod.yml` | Tag `v*` | Build imagem `muziks/web:vX.Y.Z`, push registry, deploy runtime (approval) |
 
 Path filters evitam rebuild do blog quando só o player mudou.
+
+**Artefato de release funcional:** tag Git + imagem Docker com o **mesmo** semver (sem `latest` em prod). Releases planejadas passam por **staging** validado; hotfix segue §4.1 do doc Docker.
 
 ---
 
@@ -155,14 +159,15 @@ sequenceDiagram
   G->>S: PR para staging
   S->>S: CI migrate plus deploy staging
   S->>M: PR release quando pronto
-  M->>V: Tag vX.Y.Z CI prod
+  M->>V: Tag vX.Y.Z CI prod plus Docker image
 ```
 
 1. Criar issue no Linear.
 2. Branch `feature/MUZ-N-descricao` a partir de `staging` (`web`) ou `develop` (`blog`).
 3. PR → ambiente de preview/staging; revisão humana.
 4. Merge; validar em staging (player) ou preview (blog).
-5. Release tag (player) ou merge `develop` → `main` (blog).
+5. Release tag (player) → imagem `muziks/web:vX.Y.Z` + deploy; ou merge `develop` → `main` (blog).
+6. Hotfix: branch da tag em prod → PATCH → mesma disciplina de imagem → merge `staging` + `main`.
 
 ---
 
@@ -178,4 +183,4 @@ sequenceDiagram
 
 ## Manutenção
 
-Mudanças de ambiente, domínio ou política de branch **devem** atualizar este arquivo e [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) se afetarem migração de dados ou deploy.
+Mudanças de ambiente, domínio, registry Docker ou política de branch **devem** atualizar este arquivo, [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) e [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) se afetarem migração de dados ou deploy.

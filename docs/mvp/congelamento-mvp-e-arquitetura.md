@@ -107,7 +107,7 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 
 Extração futura: `apps/api` ou NestJS/AWS mantendo `packages/db` e contratos HTTP — ver [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md).
 
-**Processo de dev:** Linear, GitFlow (blog/docs), GitHub Actions + releases (`web`) — [PROCESSO-DESENVOLVIMENTO.md](../tech/PROCESSO-DESENVOLVIMENTO.md).
+**Processo de dev:** Linear, GitFlow (blog/docs), GitHub Actions + releases (`web`) + registry Docker para releases funcionais — [PROCESSO-DESENVOLVIMENTO.md](../tech/PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](../tech/DOCKER-REGISTRY-E-RELEASES.md).
 
 ---
 
