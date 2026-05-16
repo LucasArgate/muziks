@@ -17,7 +17,8 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 11. [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) — o que o Muziks não licencia, ECAD (Brasil), provedores de streaming, guardrails para termos legais
 12. [09-frontend-architecture.md](09-frontend-architecture.md) — front, pastas, Atomic + shadcn
 13. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
-14. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
+14. [15-backend-architecture.md](15-backend-architecture.md) — API/backend, Vertical Slice
+15. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
 
 ## Convenções
 
@@ -41,6 +42,7 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 - [Mapa de disrupções: dores e soluções](../disruption/mapa-dores-e-solucoes.md)
 - [Especificação do cliente (PWA)](../tech/ESPECIFICACAO-FRONTEND.md)
 - [Atomic Design no Muziks](../tech/ATOMIC-DESIGN.md)
+- [Vertical Slice Architecture (API/backend)](../tech/VERTICAL-SLICE-ARCHITECTURE.md)
 - [Stack, fases de infra e migração](../tech/STACK-E-FASES-DE-MIGRACAO.md)
 - [Processo de desenvolvimento](../tech/PROCESSO-DESENVOLVIMENTO.md) — Linear, GitFlow, GitHub Actions, ambientes
 - [Monorepo Turborepo](../tech/MONOREPO-TURBOREPO.md)

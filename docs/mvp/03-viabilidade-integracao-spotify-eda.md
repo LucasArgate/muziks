@@ -62,10 +62,12 @@ Isso atende à ideia de **“estabelecer eventos no server e na API de forma nat
 | Mecanismo | Onde roda o áudio | Controle remoto de **outro** aparelho no bar |
 |-----------|-------------------|-----------------------------------------------|
 | **Spotify Connect + Web API** | No dispositivo Spotify (som, caixa, app desktop) | **Sim** (com token e dispositivo ativo) |
-| **Web Playback SDK** | **No browser** (Premium) | **Não** é o mesmo que mandar na caixa; é player *local* na web |
+| **Web Playback SDK** | **No browser** (Premium) | Player Connect **no browser** do telão/dono; controle remoto do público via Muziks + API |
 | **Embed / iframe** | Definido pelo Spotify | **Não** substitui orquestração completa da fila do espaço |
 
-Para a **tese do estabelecimento**, o caminho B quase sempre é **Connect + API**, não só embed.
+**MVP-B (fechado):** o Player Master usa **Web Playback SDK** como dispositivo Connect ativo no Chrome do telão/dono, complementado pela **Web API** — não é cenário “só embed”. Detalhe: [06-arquitetura-playback-spotify.md](06-arquitetura-playback-spotify.md).
+
+Para cenários **sem** browser no bar (som só na caixa via app Spotify nativo), avaliar variante Connect + API pura — fora do primeiro piloto playback.
 
 ---
 

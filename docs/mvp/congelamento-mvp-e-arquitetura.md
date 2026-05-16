@@ -109,6 +109,8 @@ Extração futura: `apps/api` ou NestJS/AWS mantendo `packages/db` e contratos H
 
 **Processo de dev:** Linear, GitFlow (blog/docs), GitHub Actions + releases (`web`) + registry Docker para releases funcionais — [PROCESSO-DESENVOLVIMENTO.md](../tech/PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](../tech/DOCKER-REGISTRY-E-RELEASES.md).
 
+**Backend (organização):** Vertical Slice Architecture — [VERTICAL-SLICE-ARCHITECTURE.md](../tech/VERTICAL-SLICE-ARCHITECTURE.md), [15-backend-architecture.md](../specs/15-backend-architecture.md).
+
 ---
 
 ## 3. Manutenção deste documento

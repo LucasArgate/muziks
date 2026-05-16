@@ -4,7 +4,7 @@
 
 **Normativo** para quando o código existir. O repositório **hoje** contém apenas `docs/` — este documento descreve o layout ao iniciar implementação ([AGENTS.md](../../AGENTS.md)).
 
-Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md), [ESPECIFICACAO-FRONTEND.md](ESPECIFICACAO-FRONTEND.md), [ATOMIC-DESIGN.md](ATOMIC-DESIGN.md).
+Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md), [ESPECIFICACAO-FRONTEND.md](ESPECIFICACAO-FRONTEND.md), [ATOMIC-DESIGN.md](ATOMIC-DESIGN.md), [VERTICAL-SLICE-ARCHITECTURE.md](VERTICAL-SLICE-ARCHITECTURE.md).
 
 ---
 
@@ -72,6 +72,7 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 - **Não** criar na PoC.
 - Extrair quando: gatilho de **5 players constantes** + prep Fase infra B, necessidade de workers/WS dedicados, ou migração AWS.
 - Mesmo `packages/db` e contratos HTTP estáveis desde `web`.
+- Código organizado em **`src/slices/`** (Vertical Slice) — ver [VERTICAL-SLICE-ARCHITECTURE.md](VERTICAL-SLICE-ARCHITECTURE.md). Na PoC, a mesma árvore pode viver em `apps/web/src/slices/`.
 
 ---
 

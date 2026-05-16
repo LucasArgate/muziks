@@ -16,7 +16,7 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 
 **Gatilho preparação Fase infra B:** **5 players constantes** (definição em STACK §2.1).
 
-Detalhe completo de stack, fases e CI de dados: [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md). Estrutura do monorepo: [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md).
+Detalhe completo de stack, fases e CI de dados: [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md). Estrutura do monorepo: [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md). Organização de código server: [15-backend-architecture.md](15-backend-architecture.md), [VERTICAL-SLICE-ARCHITECTURE.md](../tech/VERTICAL-SLICE-ARCHITECTURE.md).
 
 ## 2. Autenticação e identidade
 

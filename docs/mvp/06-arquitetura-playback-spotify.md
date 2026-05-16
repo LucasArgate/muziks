@@ -4,6 +4,28 @@
 
 **Normativo:** trechos com “deve” descrevem requisitos acordados para implementação.
 
+### Índice deste documento (entregáveis de implementação)
+
+| # | Conteúdo | Seção |
+|---|----------|--------|
+| 1 | Diagrama completo da arquitetura | §5 |
+| 2 | Pastas + contratos `SpotifyService`, `PlaybackManager`, `QueueService` | §9.2–9.3 |
+| 3 | Fluxo “próxima música automática” | §7 |
+| 4 | Checklist scopes OAuth Spotify | §10 |
+
+---
+
+## 0. Contexto — dor da versão antiga
+
+Na versão anterior do produto, o maior custo técnico era **gerenciar playback manualmente**:
+
+- seek, next, pause e volume sem SDK nativo;
+- preload ~5 s antes do fim da faixa;
+- transição entre músicas sem gapless confiável;
+- estado sincronizado entre **telão**, **dono** e **público** (múltiplos clientes divergindo).
+
+**Decisão MVP-B:** não reimplementar player com `<audio>` nem fila de áudio própria. O **Spotify Web Playback SDK** no **Player Master** (dono ou telão) assume áudio, preload e gapless; o Muziks concentra-se em **fila, votos, política, sessão compartilhada e comandos remotos**.
+
 ---
 
 ## 1. Posição no MVP
@@ -28,6 +50,18 @@ A dor histórica (seek, next, pause, preload ~5 s antes do fim, transição suav
 | **Transição automática (próxima faixa)** | **Cliente Dono/Telão** (Player Master) | Confiável: quem tem o SDK detecta fim e executa `next` |
 | **Comandos remotos** (play/pause/skip do público) | Supabase (fila de comandos) → Dono executa na Web API / SDK | Público **não** precisa Premium |
 | **Redis** | Fora do MVP-B | Opcional em Fase infra B+ para cache de sessão |
+
+### 2.1 Ajuste fino vs. “Realtime em tudo”
+
+Em rascunhos iniciais da arquitetura híbrida aparecia **Realtime também para a fila pública**. No Muziks isso foi **refinado** para não conflitar com a PoC:
+
+| Dado | Canal | Motivo |
+|------|--------|--------|
+| **Fila + votos** (lista ordenada, ranking) | HTTP + polling **3–5 s** | Muitos participantes no salão; ver STACK |
+| **Estado de playback** (faixa atual, progresso, `device_id`) | **Supabase Realtime** | Poucos assinantes (Master, telão display, painel dono) |
+| **Comandos remotos** (play/pause/skip) | **Realtime** ou poll curto no Master | Master **consome** e executa no SDK |
+
+Ou seja: **fila e regras** no Postgres (fonte de verdade); **Realtime** só onde a cardinalidade é baixa e a latência importa para sync telão/dono.
 
 ---
 
@@ -115,6 +149,25 @@ flowchart TB
 ---
 
 ## 6. Camadas e modelo de dados (backend)
+
+```mermaid
+sequenceDiagram
+  participant Master as Dono/Telao
+  participant SDK as Spotify_SDK
+  participant SB as Supabase
+  participant Pub as Publico
+
+  Master->>SDK: Inicializa Player
+  Master->>SB: player_sessions + device_id
+  SB-->>Pub: Realtime estado sessao
+
+  Note over Master: Musica tocando
+
+  SDK-->>Master: player_state_changed
+  Master->>Master: position >= duration - 5s
+  Master->>SDK: nextTrack ou add queue + skip
+  Master->>SB: atualiza fila e sessao
+```
 
 ### 6.1 Tabelas sugeridas (domínio)
 
@@ -243,6 +296,23 @@ apps/web/src/features/playback/
 - `popHead(playerId): Promise<void>` — após confirmação de play
 - Sem lógica Spotify direta (injeção de URI via PlaybackManager)
 
+**Nota:** `QueueService` no cliente chama **slices HTTP** do backend (votos, cabeça da fila) — não duplicar regra de ranking no front.
+
+### 9.4 Backend — Vertical Slices (servidor)
+
+Lógica server (Server Actions / `apps/api`) segue [VERTICAL-SLICE-ARCHITECTURE.md](../tech/VERTICAL-SLICE-ARCHITECTURE.md). O SDK Spotify e `PlaybackManager` ficam **no cliente Master**; o backend persiste domínio e expõe comandos.
+
+| Slice (`slices/playback/`) | Responsabilidade |
+|----------------------------|------------------|
+| `publish-session-state/` | Upsert `player_sessions` (Master envia estado normalizado) |
+| `enqueue-playback-command/` | Inserir em `playback_commands` (público/dono) |
+| `consume-playback-command/` | Master marca `applied` / falha (opcional se só Realtime) |
+| `get-playback-session/` | Leitura para telão display sem ser Master |
+
+Fila e votos permanecem em `slices/queue/*` — **não** misturar com playback além de “próxima cabeça da fila”.
+
+Adaptador HTTP Spotify (token dono, `transfer`, add queue) pode viver em `packages/spotify` como **strategy**; orquestração por caso de uso na slice.
+
 ---
 
 ## 10. OAuth — scopes necessários
@@ -317,4 +387,6 @@ Tokens: **refresh token** do dono armazenado cifrado (Supabase vault / env serve
 | [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) | Polling fila; Realtime exceção playback |
 | [12-telao-display-publico.md](../specs/12-telao-display-publico.md) | Telão como Master opcional |
 | [09-frontend-architecture.md](../specs/09-frontend-architecture.md) | `features/playback/` |
+| [15-backend-architecture.md](../specs/15-backend-architecture.md) | Slices server |
+| [VERTICAL-SLICE-ARCHITECTURE.md](../tech/VERTICAL-SLICE-ARCHITECTURE.md) | Organização API |
 | [14-fronteiras-legais-direitos-autorais.md](../specs/14-fronteiras-legais-direitos-autorais.md) | Compliance |

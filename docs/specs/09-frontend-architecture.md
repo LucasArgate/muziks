@@ -27,7 +27,7 @@ Estas pastas **complementam** o Atomic Design dentro de `apps/web` (caminhos rel
 | `app/` | Rotas App Router (ex.: `app/[slug]/`, `app/(owner)/`) |
 | `src/lib/` ou import de `@muziks/utils` | Utilitários puros |
 | `src/hooks/` | Hooks reutilizáveis sem UI |
-| `src/features/<nome>/` | Fatias verticais (ex.: `features/player-queue/`) |
+| `src/features/<nome>/` | Fatias verticais de UI (ex.: `features/player-queue/`) — espelham `slices/` do backend ([15-backend-architecture.md](15-backend-architecture.md)) |
 | `packages/ui` | Primitivos shadcn; sem regra de negócio do Muziks |
 
 ## Alias
