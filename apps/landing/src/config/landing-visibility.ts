@@ -1,6 +1,6 @@
 /**
  * Liga/desliga blocos da landing antes de estarem prontos em produção.
- * `true` = visível; `false` = `invisible` (mantém o espaço no layout).
+ * `true` = visível; `false` = oculto (no desktop mantém coluna vazia no grid).
  */
 export const landingVisibility = {
   /** Menu: Aplicativo, Bares, Planos, Blog, Contato */
