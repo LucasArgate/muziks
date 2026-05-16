@@ -91,11 +91,37 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 
 **Hipótese de produto:** [firewall-curador-com-agentes.md](../disruption/firewall-curador-com-agentes.md). **Fora do MVP** ([01-vision-and-scope.md](01-vision-and-scope.md)).
 
+## 10. Rajada, tempo real e custo (direção PoC)
+
+**Contexto:** exports 2016–2017 mostram picos de **centenas de pedidos por bar por dia** em janelas curtas ([03-ponte-pedidos-e-sazonalidade](../analytics/reports/03-ponte-pedidos-e-sazonalidade.md)).
+
+**Direção para fechar (MVP em *free tier*):**
+
+| Caminho | Uso |
+|---------|-----|
+| **HTTP `POST` /vote** | Escrita com validação de política + identidade |
+| **Rate-limit** | Por `participant_id`, IP e opcionalmente dispositivo — proteger contra “super usuários” e brigading |
+| **Fila de votos** | Inserir evento; worker ou transação serializada aplica contagem — evita lock storm no mesmo `queue_item` |
+| **HTTP `GET` /queue** + **Cache-Control** | Leitura para clientes e telão; polling **3–5 s** |
+| **Supabase Realtime** | Evitar subscrição **por participante** no salão; reservar para admin ou adiar |
+
+Detalhe de custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
+
+## 11. Busca tolerante a erros (fuzzy)
+
+**Contexto:** termos de busca com typos e grafias alternativas são frequentes no histórico ([04-catalogo-busca-vs-tocada](../analytics/reports/04-catalogo-busca-vs-tocada.md)).
+
+**Requisitos quando o catálogo fechar:**
+
+- Camada de **fuzzy match** (Levenshtein, trigram ou índice do provedor) sobre título/artista antes de devolver “não encontrado”.
+- Normalização (case, acentos, remoção de “ao vivo”, etc.) alinhada a alias **ISRC** (secção 3).
+- UX de **recovery** quando a busca não casa com play — [07-ux-copy-and-states.md](07-ux-copy-and-states.md).
+
 ---
 
 ## Próximos passos sugeridos
 
-1. Fechar **backend + auth + modelo de fila** (itens 1, 2, 5) — desbloqueia MVP técnico.
+1. Fechar **backend + auth + modelo de fila + rajada/polling** (itens 1, 2, 5, 10) — desbloqueia MVP técnico.
 2. Fechar **catálogo + reprodução** (itens 3, 4) — desbloqueia demo pública realista.
 3. Tratar **fichas** como camada opcional após voto estável (item 6).
 

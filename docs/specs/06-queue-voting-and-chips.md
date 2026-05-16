@@ -21,8 +21,9 @@ A **fila** é a lista ordenada de faixas **aceitas** pelo player para execução
 - Para **analytics** e comparação entre fontes de catálogo, convém que o item votado preserve **ISRC** quando disponível ([03-domain-model.md](03-domain-model.md), [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md)).
 
 - **Empate:** desempate por timestamp do voto, ordem de chegada na fila, ou regra fixa documentada na implementação — deve ser **estável** e **explicável**.
-- **Limite de votos** por sessão ou por janela de tempo — recomendado; números em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
-- **Anti-fraude básico:** captcha leve, cooldown, ou validação server-side — nível MVP discutido em [11](11-backend-and-integrations-open.md).
+- **Limite de votos** por sessão ou por janela de tempo — **obrigatório** no MVP; números em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md). Baseline histórica: top **10%** dos participantes concentrou **~60%** dos pedidos ([02-demanda-participantes](../analytics/reports/02-demanda-participantes.md)) — sem teto, um indivíduo muito ativo pode dominar a fila percebida.
+- **Anti-fraude básico:** cooldown entre votos na mesma faixa, custo crescente do voto repetido (fichas/peso quando ligado), rate-limit server-side — [11](11-backend-and-integrations-open.md).
+- **Super usuários (produto):** participantes de altíssima frequência são **promotores** potenciais; o espaço pode optar por reconhecimento no telão (badge, “top curador da noite”) **sem** aumentar peso ilimitado de voto — ver [12-telao-display-publico.md](12-telao-display-publico.md).
 - **Identidade verificável:** no **momento** em que o voto ou a proposta **alteram** a fila coletiva — após o fluxo **valor → por quê → dados** descrito no MVP — o participante deve estar autenticado com **provedor de identidade** (OAuth); sinais secundários (IP, dispositivo) complementam **sem** substituir o login — ver [../mvp/05-identidade-fosso-participante-voto.md](../mvp/05-identidade-fosso-participante-voto.md).
 
 ## Fichas (chips)

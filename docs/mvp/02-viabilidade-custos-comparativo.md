@@ -21,9 +21,26 @@
 | Sessão média | **5 h** |
 | Sessões / mês | ~**300** (ex.: ~10 sessões/dia) |
 | Votos / mês | ~**6.000–10.000** |
-| Realtime | moderado (votos + atualizações de fila) |
+| Realtime | **leitura** da fila por polling; **escrita** de votos por HTTP (não WS por cliente) |
 
-Esse volume é **baixo** para os padrões atuais de infraestrutura gerenciada; o desafio inicial é mais **produto e adoção** do que custo marginal de cloud.
+Esse volume é **baixo** na média mensal, mas o arquivo legado mostra **rajadas** — centenas de pedidos **num bar num único dia** e picos globais **>1.000/dia** ([03-ponte-pedidos-e-sazonalidade](../analytics/reports/03-ponte-pedidos-e-sazonalidade.md)). O desafio de custo no *free tier* aparece no **pior sábado à noite**, não na média.
+
+### Efeito “rajada” (evidência histórica → arquitetura)
+
+| Fenómeno | Implicação de custo |
+|----------|---------------------|
+| Tráfego concentrado em poucas horas (fim de semana, eventos) | Cotas de **conexões Realtime** e **egress** estouram se cada telemóvel mantiver WebSocket aberto |
+| Muitos votos simultâneos na mesma faixa | Postgres sob **contenção** sem fila de processamento + rate-limit |
+| Telão + dezenas de clientes no salão | Uma fonte de verdade em cache (Edge) + **polling** (ex.: 3–5 s) custa menos que N subscrições Realtime |
+
+**Decisão recomendada para PoC/V1 em tier gratuito:**
+
+1. **Votação:** `POST` HTTP (API Route / Edge) com **rate-limit** por participante e IP.
+2. **Leitura da fila (cliente + telão):** `GET` com **Cache-Control** curto na borda; polling, não Supabase Realtime por utilizador.
+3. **Processamento:** fila assíncrona (tabela `vote_events` + worker leve ou `pg` advisory lock) para serializar picos de escrita — ver [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md).
+4. **Realtime Supabase:** reservar só para **painel do dono** (baixa cardinalidade) ou adiar até Pro.
+
+Dimensionar quotas Supabase/Vercel pelo cenário **“50 pessoas votam em 2 minutos”**, não pelo cenário “10 sessões/dia espalhadas”.
 
 ---
 
@@ -124,7 +141,9 @@ Alinhar com a escolha de stack em [congelamento-mvp-e-arquitetura.md](congelamen
 
 ### O que validar na POC (checklist curto)
 
-- [ ] Pico *concurrent* por player (≤ 20–30) sem erro de conexão Realtime.  
+- [ ] Simular **rajada**: ≥30 votos em menos de 2 min no mesmo player — sem 429 indevido para quem é legítimo, sem timeout no DB.  
+- [ ] Fila/telão estáveis com **polling** (sem WebSocket por participante).  
+- [ ] Pico *concurrent* por player (≤ 50–80 no ICP) sem erro de leitura.  
 - [ ] *Egress* do Supabase ao carregar capas/imagens (cache no cliente/CDN).  
 - [ ] Termos do host do **front** permitem o **tipo** de piloto (interno vs comercial).  
 - [ ] Se usar **Firebase + Supabase**: fluxo de *logout*, expiração de token e *mapping* estável `firebase_uid` → `participant_id` interno.  

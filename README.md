@@ -27,6 +27,7 @@ Player colaborativo com **democracia na fila** e **firewall de som**: quem está
 | MVP e arquitetura de validação | [docs/mvp/README.md](docs/mvp/README.md) |
 | Negócio e *go-to-market* | [docs/business/README.md](docs/business/README.md) |
 | Pesquisa, dores e disrupções | [docs/disruption/README.md](docs/disruption/README.md) |
+| Analytics (arquivo legado 2016–2017) | [docs/analytics/README.md](docs/analytics/README.md) |
 | Legal (licença do repo + marca) | [docs/legal/README.md](docs/legal/README.md) |
 
 **Tech (implementação futura):** [Especificação do cliente (PWA)](docs/tech/ESPECIFICACAO-FRONTEND.md) · [Atomic Design](docs/tech/ATOMIC-DESIGN.md)

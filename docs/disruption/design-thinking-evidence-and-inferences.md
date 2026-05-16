@@ -7,6 +7,7 @@ Este arquivo **não** é o [Manifesto](../MANIFESTO.md). Junta **relatos de camp
 - Trabalho no âmbito de uma **aceleração de startups**, com **pesquisa de empatia** e ciclo de **design thinking** (entrevistas, observação de campo, síntese).
 - Objetivo da pesquisa: **entender e inferir** como a **música conectava pessoas** em lugares ou eventos e como **democratizar o poder de escolha** da música — não apenas “validar uma ideia no papel”.
 - **Registros detalhados e dados quantitativos** dessa fase **não foram preservados** até hoje; o que resta aqui é **memória qualitativa** e conclusões úteis — com o rigor que isso impõe: são **indícios**, não estatística.
+- **Telemetria operacional** do produto antigo (2016–2017) foi **recuperada parcialmente** — ver [analytics/README.md](../analytics/README.md) (pedidos, buscas, bares). Isso **não** repõe a pesquisa de empatia; complementa com baseline histórico.
 
 ---
 

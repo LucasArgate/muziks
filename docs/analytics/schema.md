@@ -2,6 +2,8 @@
 
 Período coberto: **2016–2017** (corte operacional até **jun/2017**). Chaves de junção entre ficheiros: `EstabelecimentoID` / `ID` + `Nome` (normalizar nomes no script — ex. `Nicola` vs `Bar do Nicola`).
 
+**Pseudonimização:** relatórios e `data/sample/` passam por [`scripts/pseudonymize.py`](scripts/pseudonymize.py) — players/contas de teste (`Player_P01`, …), participantes (`Participante_*`) e termos de busca sensíveis. CSVs brutos em `data/` mantêm nomes reais só na máquina local.
+
 ## Ficheiros
 
 ### `Muziks - Hitórico de Pedidos por Cliente vs Estabeleimentos.csv`

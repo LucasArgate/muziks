@@ -117,9 +117,11 @@ O mesmo produto **não** precisa ter o mesmo **pacote** para os dois; confundir 
 
 ### Fase 0 — *Founder-led* (antes de “time”)
 
-- **Vendas:** conversa direta com 5–15 espaços; fechar **piloto escrito** (escopo, duração, o que medir).
+- **Vendas:** conversa direta com **3–5** espaços no **perfil ideal de cliente (ICP)** — alta energia, fluxo jovem/universitário, rotação alta de público no fim de semana (padrão histórico: Poco Loco, 100 Lanchitos, Kabana Bar — ver [01-oferta-players](../analytics/reports/01-oferta-players.md)). **Não** abrir cadastro genérico de bares na PoC.
+- **Proposta de valor:** vender **engajamento e retenção de clientes no salão**, não “um player de música bonito”. O dono que adotou no passado tinha **centenas de pessoas** interagindo, não um widget decorativo.
+- **Piloto escrito:** escopo, duração, o que medir — ver métrica abaixo.
 - **Marketing:** 1 narrativa clara (site + 1 canal — ex.: Instagram de casos ou YouTube curto “antes/depois da fila”).
-- **Métrica:** não “vanity”; alinhar a [13-kpis-fases-e-loops.md](../specs/13-kpis-fases-e-loops.md).
+- **Métrica:** não “vanity” (# bares no CRM, # cadastros pendentes). Alinhar a [13-kpis-fases-e-loops.md](../specs/13-kpis-fases-e-loops.md). **North star do piloto:** ≥1 espaço com **≥50 participantes distintos numa noite** (ou proxy acordado: votos válidos de identidades distintas na janela da sessão).
 
 ### Fase 1 — *Repeatable* (alguns cases)
 

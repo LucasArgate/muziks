@@ -14,6 +14,8 @@ O [Manifesto](../MANIFESTO.md) e as [especificações em `specs/`](../specs/READ
 | [04-viabilidade-integracao-secundaria-deezer.md](04-viabilidade-integracao-secundaria-deezer.md) | Deezer como secundário: busca/metadados, Python, ML/vector DB opcional |
 | [05-identidade-fosso-participante-voto.md](05-identidade-fosso-participante-voto.md) | OAuth para participante (não streaming); sinais secundários; dono inalterado |
 
+**Evidência histórica (rajada, ICP, super usuários):** [analytics/reports/05-insights-para-muziks-hoje.md](../analytics/reports/05-insights-para-muziks-hoje.md) — PoC: backend blindado, painel firewall, **3–5** bares ICP.
+
 **Receita e modelo de negócio** (complementar a custos de infra): pasta [`../business/`](../business/README.md) — mapa de mecanismos além de mensal/fichas, OSS + freemium + *hosted*, e *go-to-market*.
 
 ## Próximos (a adicionar)

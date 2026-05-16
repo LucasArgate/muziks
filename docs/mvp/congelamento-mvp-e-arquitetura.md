@@ -36,9 +36,23 @@ Um dono consegue:
 1. **Criar** um player  
 2. **Definir** política  
 3. **Compartilhar** link/QR  
-4. Participantes **votam** e **veem a fila atualizada em tempo real**
+4. Participantes **votam** e **veem a fila atualizada** com latência aceitável no salão (polling na borda, não WebSocket por cliente no pico)
 
 Isso valida a hipótese principal com **baixo risco** antes de investir em economia de fichas, GPS rígido ou playback integrado.
+
+### PoC guiada por dados (piloto fechado)
+
+Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insights-para-muziks-hoje.md)): volume real concentrou-se em **poucos** espaços de alta energia; cadastro amplo de bares “pendentes” não gerou tração.
+
+**Incluído na PoC (além do escopo técnico acima):**
+
+| Entregável | Notas |
+|------------|--------|
+| **Backend blindado** | Voto via HTTP + rate-limit + fila de processamento de escritas |
+| **Painel do dono** | Firewall (gênero/artista/faixa/dia) como **obrigatório** no piloto, não opcional |
+| **Onboarding B2B cirúrgico** | **3–5** estabelecimentos no perfil ICP (fluxo jovem / universitário / alta rotação), sem cadastro público de novos bares |
+
+**Métrica de sucesso do piloto (negócio):** pelo menos um espaço com **≥50 participantes distintos numa noite** com votação válida — não “quantos bares ativamos no CRM”.
 
 ---
 
@@ -53,7 +67,8 @@ Isso valida a hipótese principal com **baixo risco** antes de investir em econo
 | **Frontend** | React + TypeScript + Vite + Tailwind + shadcn/ui + PWA | Já alinhado às specs do Muziks; boa DX e ecossistema |
 | **Backend** | **NestJS** (Node.js) *ou* **Next.js** App Router (API Routes + Server Actions) | NestJS: estrutura mais “enterprise” e amigável a OSS modular. Next.js: monorepo fullstack mais simples no MVP |
 | **Banco de dados** | **PostgreSQL** (Supabase ou Neon) | Modelo relacional forte para regras em camadas + calendário; Supabase oferece realtime útil no início |
-| **Realtime** | Supabase Realtime *ou* Socket.io / Pusher / Ably | Votos e fila precisam de atualização quase instantânea |
+| **Atualização da fila** | **Polling HTTP** + cache na borda (Vercel); Realtime só se necessário e em baixa cardinalidade (ex.: dono) | Rajadas de fim de semana esgotam *free tier* com WebSocket por participante — ver [02-viabilidade-custos](02-viabilidade-custos-comparativo.md) |
+| **Processamento de votos** | Fila assíncrona / serialização de escritas no Postgres | Dezenas de votos simultâneos na mesma faixa não podem travar o banco |
 | **Auth** | Supabase Auth *ou* Clerk *ou* NextAuth v5 | Magic links + OAuth (Google/Apple); minimizar dados pessoais (LGPD) |
 | **Armazenamento** | Supabase Storage *ou* AWS S3 | Capas, ícones, assets leves |
 | **Deploy** | Vercel (frontend) + Railway / Fly.io / Render (backend) *ou* stack concentrada no Supabase | Custo inicial baixo; caminho de escala conhecido |

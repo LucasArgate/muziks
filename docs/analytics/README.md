@@ -34,7 +34,8 @@ No Windows, se `python` não estiver no PATH: `py -3 run_all.py`.
 ## O que entra no git
 
 - `reports/*.md`, `data/sample/*.csv`, documentação e scripts.
-- **Nunca:** CSV brutos completos, Facebook IDs, nomes de clientes, telefones, e-mails ou senhas do cadastro.
+- **Nunca:** CSV brutos completos, Facebook IDs, nomes reais de participantes/donos, telefones, e-mails ou senhas do cadastro.
+- Relatórios e amostras usam **pseudónimos** (`Player_P01`, `Participante_*`, `Conta_D*`) — ver `scripts/pseudonymize.py`.
 
 ## Relatórios
 

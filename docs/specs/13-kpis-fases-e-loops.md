@@ -116,6 +116,17 @@ Uma métrica âncora **composta**, além do painel detalhado:
 
 Objetivo: uma leitura que **exige** oferta e demanda saudáveis ao mesmo tempo.
 
+### Meta de piloto (fase A / PoC) — derivada do arquivo legado
+
+Não usar “bares cadastrados” ou “players criados” como sucesso. Sugestão explícita até haver baseline própria:
+
+| Métrica | Definição operacional sugerida |
+|---------|--------------------------------|
+| **Noite qualificada** | Uma sessão/noturno em que o player teve **≥50 participantes distintos** com ≥1 voto válido (ou ≥1 ação de fila aceita) |
+| **Piloto bem-sucedido** | ≥1 espaço ICP atinge **noite qualificada** em **2 fins de semana** dentro de 4–6 semanas de piloto |
+
+Complementa a leitura 80/20 da oferta ([01-oferta-players](../analytics/reports/01-oferta-players.md)): poucos espaços geram quase todo o valor — o GTM deve **espelhar** essa concentração, não diluir esforço em cadastros inativos.
+
 ## KPIs sugeridos por fase
 
 Alinhamento conceitual aos objetivos em [01-vision-and-scope.md](01-vision-and-scope.md) (validar tração, reduzir atrito, engajar público). **Valores-alvo numéricos** ficam fora desta spec até haver baseline.

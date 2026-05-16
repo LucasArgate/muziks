@@ -21,4 +21,5 @@ Esta pasta responde à pergunta **“onde entra o dinheiro?”** de forma **sepa
 ## Manutenção
 
 - Tratar números e “o mercado aceita X” como **hipóteses** até haver pilotos e dados; atualizar quando houver evidência.
+- Baseline histórico (2016–2017, agregado, sem PII): [analytics/README.md](../analytics/README.md) — útil para ICP, piloto 3–5 bares, métrica “noite qualificada” (≥50 participantes) e add-ons (ex. relatórios); ver [05-insights](../analytics/reports/05-insights-para-muziks-hoje.md). Não usar como TAM atual.
 - Decisões que **virarem regra de produto** (ex.: “só plano Y tem feature Z”) devem **espelhar** ou **originar** mudança nas specs, não ficar só nesta pasta.
