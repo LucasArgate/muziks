@@ -16,15 +16,18 @@ export function LandingDjSection() {
           titleId="dj-section-title"
         />
         <p className="mt-6 text-base leading-relaxed text-on-surface-variant md:text-lg">
-          Baixe agora o nosso app e escolha as músicas que tocam no bar onde você está.
+          Estamos preparando o aplicativo. Em breve você escolhe as músicas que tocam no bar
+          onde está — com a fila democrática do seu espaço.
         </p>
         <GlassPanel variant="functional" className="mx-auto mt-10 max-w-md p-8">
-          <p className="text-sm text-on-surface-variant">
+          <p className="text-sm leading-relaxed text-on-surface-variant">
             O player colaborativo vive em{" "}
             <Link href="https://muziks.app" className="font-medium text-primary hover:underline">
               muziks.app
             </Link>
-            — peça o link do seu espaço ou escaneie o QR na mesa.
+            {" — "}
+            música compartilhada com regras claras. Peça o link do seu espaço ou escaneie o QR na
+            mesa.
           </p>
         </GlassPanel>
       </div>

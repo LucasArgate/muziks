@@ -6,7 +6,7 @@ import { LandingHero } from "@/src/components/organisms/landing-hero";
 
 export function LandingPageTemplate() {
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-dvh overflow-x-clip bg-surface">
       <LandingHeader />
       <main>
         <LandingHero />

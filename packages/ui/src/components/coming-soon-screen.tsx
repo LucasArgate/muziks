@@ -18,12 +18,12 @@ export function ComingSoonScreen({
   return (
     <main
       className={cn(
-        "relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-16",
+        "relative flex min-h-dvh flex-col items-center justify-center overflow-x-clip px-6 py-8",
         className,
       )}
     >
       <div
-        className="pointer-events-none absolute left-1/2 top-1/3 h-[480px] w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[100px]"
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[min(400px,70vw)] w-[min(400px,70vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[80px]"
         aria-hidden
       />
       <div className="relative z-10 w-full max-w-md">

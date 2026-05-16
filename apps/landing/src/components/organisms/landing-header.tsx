@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MuziksLogo } from "@muziks/ui";
+import { landingVisibility } from "@/src/config/landing-visibility";
 import { GithubLink } from "@/src/components/molecules/github-link";
 import { LandingNav, type LandingNavItem } from "@/src/components/molecules/landing-nav";
 
@@ -23,7 +24,12 @@ export function LandingHeader({ navItems = defaultNavItems }: LandingHeaderProps
           <MuziksLogo />
         </Link>
         <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
-          <LandingNav items={navItems} />
+          <div
+            className={landingVisibility.nav ? undefined : "hidden"}
+            aria-hidden={!landingVisibility.nav}
+          >
+            <LandingNav items={navItems} />
+          </div>
           <GithubLink />
         </div>
       </div>
