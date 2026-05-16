@@ -18,8 +18,7 @@ A **fila** é a lista ordenada de faixas **aceitas** pelo player para execução
 - Voto **não** substitui política: não faz faixa bloqueada entrar na fila.
 - Voto **não** representa compra de obra nem licença pública — comunicação ao usuário deve ser consistente com o [Manifesto](../MANIFESTO.md).
 - O sistema deve evitar que o participante **interpreta** voto como “direito de tocar” — é **priorização** dentro do permitido.
-
-**Edge cases (produto):**
+- Para **analytics** e comparação entre fontes de catálogo, convém que o item votado preserve **ISRC** quando disponível ([03-domain-model.md](03-domain-model.md), [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md)).
 
 - **Empate:** desempate por timestamp do voto, ordem de chegada na fila, ou regra fixa documentada na implementação — deve ser **estável** e **explicável**.
 - **Limite de votos** por sessão ou por janela de tempo — recomendado; números em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).

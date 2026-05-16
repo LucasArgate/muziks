@@ -48,9 +48,16 @@ Aplicação das dimensões **gênero**, **artista**, **música** como política 
 
 Uma faixa **conhecida do sistema** com metadados mínimos para decisão de política: identificadores de gênero, artista e faixa (origem externa ou interna — aberto em [11](11-backend-and-integrations-open.md)).
 
+**Identidade da gravação:** sempre que possível, o domínio deve ancorar a faixa num **ISRC** (*International Standard Recording Code* — código internacional único por **gravação** / fonograma). Cada provedor de streaming expõe **IDs próprios** (URI, track id, etc.); o Muziks trata o **ISRC como língua comum** entre fornecedores: mapeia `providerTrackId` → `isrc`, persiste ambos e usa o ISRC para **política**, **filas**, **votos** e **condensação de comportamento** (ex.: mesma gravação sugerida via Spotify e enfileirada depois via outro app) sem depender de título ou artista como chave frágil.
+
+**Invariantes (desejáveis):**
+
+- Duas entradas de catálogo com o **mesmo ISRC** referem a **mesma gravação** para efeitos de regras, estatísticas agregadas e deduplicação de fila, mesmo que os metadados exibidos (capa, duração) difiram ligeiramente entre APIs.
+- Se o provedor **não** devolver ISRC, o sistema mantém **ID do provedor** como chave operacional e marca **baixa confiança** para agregação cross-provider até haver resolução manual ou base auxiliar (detalhe em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md)).
+
 ### QueueItem (item de fila)
 
-Uma faixa **na fila** daquele player, com posição/ranking e metadados para votação.
+Uma faixa **na fila** daquele player, com posição/ranking e metadados para votação. Deve carregar, quando existir, o **ISRC** herdado do `CatalogItem` (ou resolvido na proposta), para manter **endereçamento estável** entre sessões e integrações.
 
 **Invariantes:**
 

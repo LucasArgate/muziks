@@ -37,6 +37,16 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 - Capacidade de aplicar **firewall** com metadados confiáveis ([04-rules-firewall.md](04-rules-firewall.md)).
 - **Compliance** com termos do provedor e com execução pública (fora do escopo de “ficha de voto”, mas crítico para o negócio) — guardrails em [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 
+### ISRC como “fosso” e lingua franca entre fornecedores
+
+O **ISRC** (*International Standard Recording Code*) é o identificador **global** da **gravação** (fonograma), independente de loja ou app. Tratá-lo como **chave canónica interna** do Muziks cria uma **vantagem estrutural**: metadados vindos de **Spotify, Apple Music, YouTube Music, Deezer**, etc. **convergem** para o mesmo endereço lógico, o que:
+
+- permite **interfaces e APIs globais** (“esta faixa” = este ISRC), com mapeamento opcional para o URI que cada SDK exige na hora de tocar;
+- aumenta **precisão na curadoria** (bloqueio/liberação por faixa não se perde ao trocar de provedor ou ao corrigir grafia de título);
+- viabiliza **condensação de comportamentos** — votos, pedidos repetidos, heatmaps e cohorts por **obra gravada** real, em vez de duplicar contagens por ID regional do catálogo.
+
+**Requisitos de implementação (quando o catálogo for fechado):** ingerir ISRC sempre que a fonte o fornecer; manter tabela de **alias** `provedor + id nativo → isrc`; definir política para **faixas sem ISRC** (só ID nativo, possível enriquecimento posterior). Referência normativa do esquema: [IFPI — ISRC](https://isrc.ifpi.org/). O ISRC **não** substitui licença de uso nem ECAD; apenas alinha **identidade técnica** — ver [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
+
 ## 4. Reprodução de áudio
 
 **Pergunta:** Onde o áudio toca — apenas no dispositivo do dono, multi-dispositivo, ou integração com sistema do estabelecimento?

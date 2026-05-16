@@ -44,3 +44,5 @@ Ao longo do tempo surgiram **várias situações semelhantes** (conflitos leves 
 - [Manifesto Muziks](../MANIFESTO.md) — intenção e princípios.
 - [Especificações](../specs/README.md) — comportamento de produto e engenharia.
 - [Mapa de disrupções: dores e soluções](mapa-dores-e-solucoes.md) — cruza estes relatos e inferências com o manifesto e as specs.
+- [Artista ao vivo: temperatura e fila](artista-ao-vivo-temperatura-e-fila.md) — hipótese de produto (palco + fila digital), fora dos relatos de campo deste ficheiro.
+- [Karaokê na era da IA e LLMs de borda](karaoke-era-ia-e-llms-de-borda.md) — hipótese de produto (implementação futura), fora dos relatos de campo deste ficheiro.

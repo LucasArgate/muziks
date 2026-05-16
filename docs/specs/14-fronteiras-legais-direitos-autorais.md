@@ -30,6 +30,12 @@ Exemplos de serviços onde o usuário pode reproduzir música mediante **conta e
 
 **Marcas, planos e condições mudam.** Qualquer integração técnica deve respeitar os **Termos de Uso** e as **APIs** de cada provedor.
 
+### ISRC: mesma língua para metadados (produto, não licença)
+
+O **ISRC** (*International Standard Recording Code*) identifica **uma gravação** de forma **internacional e estável**. Usá-lo como **chave canónica** no domínio Muziks faz com que gênero, artista, título e regras de *firewall* se apliquem à **mesma obra gravada** quer o dado venha de um ou outro fornecedor — **interfaces e estratégias de endereçamento** podem ser globais na camada do produto, com ganho de **precisão em curadoria** e em **agregar comportamento** (votos, pedidos, analytics) sem confundir remixes, *covers* ou reedições que compartilham título.
+
+Isso **não** concede direito de reprodução nem substitui contrato com titulares ou com o ECAD; apenas alinha **identificação técnica** entre catálogos. Detalhes de modelo e integração: [03-domain-model.md](03-domain-model.md), [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md). Esquema e registro: [IFPI — ISRC](https://isrc.ifpi.org/).
+
 ## Acesso ao catálogo e planos (responsabilidade do usuário)
 
 - O usuário (em especial o **dono do player** em contexto comercial) deve manter **conta, plano e tipo de uso** compatíveis com o **contexto real de uso** — por exemplo, distinção entre **consumo pessoal** e **sonorização comercial / ambiente público**, quando o provedor assim exigir nos seus contratos.

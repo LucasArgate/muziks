@@ -1,6 +1,6 @@
 # Mapa de dores e soluções (disrupções)
 
-Este documento liga **dores** (o que quebra convivência, confiança ou tração) às **respostas já descritas** no Muziks. A coluna **Evidência** aponta para [design-thinking-evidence-and-inferences.md](./design-thinking-evidence-and-inferences.md) sempre que o caso veio de campo ou de pesquisa qualitativa.
+Este documento liga **dores** (o que quebra convivência, confiança ou tração) às **respostas já descritas** no Muziks. A coluna **Evidência** aponta para [design-thinking-evidence-and-inferences.md](./design-thinking-evidence-and-inferences.md) quando o caso veio de campo ou de pesquisa qualitativa, ou para notas de disrupção dedicadas quando a matéria é **hipótese de produto** já estruturada fora desse ficheiro.
 
 ## Fluxo (evidência → entrega)
 
@@ -33,6 +33,8 @@ flowchart LR
 | Abuso via localização, links ou enumeração; stalking ou spam remoto | Produto | Riscos listados nas specs de descoberta | Facilidade para o público e segurança para o dono evoluem juntas | Raio configurável, revogação, rate limit, degradar GPS; NFR de privacidade | [05-discovery-and-access.md](../specs/05-discovery-and-access.md); [08-nfr-privacy-accessibility.md](../specs/08-nfr-privacy-accessibility.md); [MANIFESTO.md](../MANIFESTO.md) (princípio 8) |
 | Dados brutos e quantitativos da pesquisa antiga inexistentes | Conhecimento | [Método e limitações](./design-thinking-evidence-and-inferences.md#método-e-limitações) | Decisões continuam válidas como **indícios**, não como estatística reprodutível | Manter relatos e inferências explícitos; este mapa assinala lacunas; evitar afirmações numéricas inventadas | [design-thinking-evidence-and-inferences.md](./design-thinking-evidence-and-inferences.md); esta tabela |
 | Detalhe de produto dilui o manifesto; leitores confundem intenção com comportamento | Docs | Ajuste feito na sessão de specs (telão só em spec) | Manifesto = essência; specs = comportamento executável | Regra de ouro: narrativa longa e requisitos em `docs/specs/`; manifesto permanece enxuto | [MANIFESTO.md](../MANIFESTO.md); [12-telao-display-publico.md](../specs/12-telao-display-publico.md) |
+| Show ao vivo desconectado da fila digital: artista sem “temperatura” legível; janela do evento não ancora dados; pedidos opacos ou risco de partilhar o mesmo controlo do player | Produto | [Artista ao vivo: temperatura e fila](./artista-ao-vivo-temperatura-e-fila.md) | O palco precisa de sinais agregados e de um canal de pedido **sem** colapsar política nem controlo num único telefone anónimo | Modo apresentação com janela temporal; resumos de gênero/artistas; convite (link/QR) a vista só-leitura; opcional pedidos dirigidos ao artista com firewall | [artista-ao-vivo-temperatura-e-fila.md](./artista-ao-vivo-temperatura-e-fila.md); [04](../specs/04-rules-firewall.md); [05](../specs/05-discovery-and-access.md); [06](../specs/06-queue-voting-and-chips.md); [12](../specs/12-telao-display-publico.md); [02](../specs/02-personas-and-journeys.md) |
+| Karaokê e participação vocal na web: sinais musicais e sensibilidades difíceis de medir sem stack pesada ou servidor; engajamento platô face a soluções nativas fechadas | Produto / Engenharia | [Karaokê na era da IA e LLMs de borda](./karaoke-era-ia-e-llms-de-borda.md) | Modelos em **borda** no browser alteram o trade-off: medição e classificação auxiliar podem ser **locais** (privacidade, latência), com custo alto de produto e engenharia | Camada **opcional** futura de IA em edge alinhada à PWA; reforça fossos de player, telão e pessoas; aumenta engajamento sem substituir política nem licenciamento | [karaoke-era-ia-e-llms-de-borda.md](./karaoke-era-ia-e-llms-de-borda.md); [10](../specs/10-pwa-strategy.md); [12](../specs/12-telao-display-publico.md); [08](../specs/08-nfr-privacy-accessibility.md); [11](../specs/11-backend-and-integrations-open.md); [14](../specs/14-fronteiras-legais-direitos-autorais.md) |
 
 ## Lacunas explícitas (ainda sem resposta fechada no texto)
 
@@ -40,6 +42,8 @@ Estes itens são **dores ou riscos reconhecidos** cuja solução depende de deci
 
 - **Licenciamento de execução pública e integração com provedores** — critérios e opções em [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) e fora de escopo parcial em [01-vision-and-scope.md](../specs/01-vision-and-scope.md).
 - **Valores numéricos** (raios min/max, limites de taxa) — deixados para implementação após jurídico/ops; ver [05](../specs/05-discovery-and-access.md) e [11](../specs/11-backend-and-integrations-open.md).
+- **Modo apresentação ao vivo** (janela temporal, vista do artista, pedidos ao palco, revogação de convite) — hipótese e racional em [artista-ao-vivo-temperatura-e-fila.md](./artista-ao-vivo-temperatura-e-fila.md); requisitos normativos a consolidar numa spec em `docs/specs/`.
+- **Karaokê / IA em borda** (modelos no cliente, moderação assistida, *scoring* musical, opt-in, telemetria) — hipótese e racional em [karaoke-era-ia-e-llms-de-borda.md](./karaoke-era-ia-e-llms-de-borda.md); **implementação futura**; spec dedicada quando houver decisão de investimento.
 
 ## Ligações rápidas
 

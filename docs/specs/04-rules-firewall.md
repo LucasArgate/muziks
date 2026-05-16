@@ -8,7 +8,7 @@ Garantir que **toda escolha pública** seja avaliada contra a **política do don
 
 1. **Gênero** — piso ou teto amplo.
 2. **Artista** — refinamento dentro do universo de gêneros permitidos (ou exceções explícitas).
-3. **Música (faixa)** — controle fino por título/ID.
+3. **Música (faixa)** — controle fino por título/ID; **preferencialmente por ISRC** quando o catálogo expuser *International Standard Recording Code*, para mesma regra valer em qualquer fornecedor ([03-domain-model.md](03-domain-model.md), [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md)).
 
 Além das camadas:
 
