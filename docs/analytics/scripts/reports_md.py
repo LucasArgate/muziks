@@ -341,7 +341,17 @@ def report_04(data: dict) -> str:
         for g in ["FUNK", "SERTANEJO", "ROCK", "ELETRONICO", "PAGODE"]:
             sub = musicas[musicas["genero"] == g].head(5)[["nome", "artista", "quantidade"]]
             if len(sub):
-                lines.extend([f"#### Top 5 — {g}", "", md_table(sub), ""])
+                block = [f"#### Top 5 — {g}", "", md_table(sub)]
+                if g == "ROCK":
+                    block.extend([
+                        "",
+                        "*Observação do autor:* «Pisando Descalço» (Maneva) **não** é rock de fato; "
+                        "entrou neste bloco porque o fornecedor de metadados na época **não** classificava "
+                        "o gênero com precisão (reggae/MPB no caso). Reforça a necessidade de firewall "
+                        "editável pelo dono e de gênero vindo do provedor **com** override local no MVP.",
+                    ])
+                block.append("")
+                lines.extend(block)
 
     lines.extend([
         "## Top 20 músicas tocadas",

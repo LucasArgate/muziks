@@ -58,6 +58,8 @@ Códigos no export: `F`=Funk, `S`=Sertanejo, `R`=Rock, `E`=Eletrônico, `P`=Pago
 | Pisando Descalço | Maneva | 73 |
 | Pais E Filhos | Legião Urbana | 72 |
 
+*Observação do autor:* «Pisando Descalço» (Maneva) **não** é rock de fato; entrou neste bloco porque o fornecedor de metadados na época **não** classificava o gênero com precisão (reggae/MPB no caso). Reforça a necessidade de firewall editável pelo dono e de gênero vindo do provedor **com** override local no MVP.
+
 #### Top 5 — ELETRONICO
 
 | nome | artista | quantidade |
@@ -174,4 +176,4 @@ Heurística: substring entre termo e título/artista do ranking de tocadas.
 
 ---
 
-*Gerado em 2026-05-16 12:54 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*
+*Gerado em 2026-05-16 13:04 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*
