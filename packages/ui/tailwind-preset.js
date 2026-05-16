@@ -25,6 +25,11 @@ module.exports = {
       },
       backdropBlur: {
         glass: "16px",
+        liquid: "28px",
+      },
+      backgroundImage: {
+        "glass-liquid":
+          "linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 50%, rgba(0,102,178,0.08) 100%)",
       },
     },
   },

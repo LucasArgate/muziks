@@ -1,10 +1,5 @@
-import { ComingSoonScreen } from "@muziks/ui";
+import { LandingPageTemplate } from "@/src/components/templates/landing-page-template";
 
 export default function HomePage() {
-  return (
-    <ComingSoonScreen
-      title="Em breve"
-      subtitle="Estamos preparando o Muziks — música compartilhada com regras claras."
-    />
-  );
+  return <LandingPageTemplate />;
 }
