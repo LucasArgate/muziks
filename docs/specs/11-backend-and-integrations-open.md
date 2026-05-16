@@ -79,6 +79,18 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 
 **Critérios:** valor vs permissões iOS; privacidade.
 
+## 9. Curadoria contextual com agentes (futuro)
+
+**Pergunta:** Oferecer camada opcional de **agente curador** sobre o firewall estático (*mood* da fila, pedidos no limite, “essência do espaço”)?
+
+**Critérios:**
+
+- **Previsibilidade** e precedência: regras duras (dia, gênero, artista, faixa) **sempre** vencem o agente ([04-rules-firewall.md](04-rules-firewall.md)).
+- **Transparência** para participante e dono (motivo humano, log, opt-out total).
+- Custo, latência, privacidade ([08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md)); não confundir com licenciamento de obra ([14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md)).
+
+**Hipótese de produto:** [firewall-curador-com-agentes.md](../disruption/firewall-curador-com-agentes.md). **Fora do MVP** ([01-vision-and-scope.md](01-vision-and-scope.md)).
+
 ---
 
 ## Próximos passos sugeridos

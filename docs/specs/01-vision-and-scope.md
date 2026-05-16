@@ -49,6 +49,7 @@ Definição: o menor conjunto que demonstra **“público participa; espaço man
 - Resolver **licenciamento de execução pública** ou integração comercial completa com provedores de streaming — o produto **não** vende música; fichas pagam **mecanismo de voto/participação** ([Manifesto](../MANIFESTO.md)).
 - **Anti-fraude enterprise** (nível bancário); no MVP basta consciência de risco e hooks especificados em [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md) e [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
 - **Moderação de comunidade** avançada (denúncias, tribunais) além de revogação de link e ajuste de política pelo dono.
+- **Curadoria por agentes** sobre o firewall (*mood* da fila, pedidos inusitados, “essência do espaço”) — hipótese pós-MVP; ver [firewall-curador-com-agentes.md](../disruption/firewall-curador-com-agentes.md).
 
 ## Premissas
 

@@ -41,6 +41,10 @@ Além das camadas:
 - Nunca exibir **código interno** como resposta primária (“ERR_POLICY_3”).
 - Preferir **uma frase curta** + **o que pode fazer a seguir** (ex.: “Este espaço não aceita este estilo hoje (terça). Quer ver o que está liberado?”).
 
+## Evolução (hipótese — fora do MVP)
+
+Camada **opcional** de **curadoria com agentes**: após passar nas regras estáticas, um agente pode julgar pedidos **inusitados** com base no *mood* da fila e na **essência do espaço** configurada pelo dono — sem substituir bloqueios duros nem o veto do dono. Racional, riscos e desenho em [firewall-curador-com-agentes.md](../disruption/firewall-curador-com-agentes.md).
+
 ## Fora desta spec
 
 - Motor de inferência de gênero a partir de áudio — não é requisito.
