@@ -21,6 +21,7 @@ Democracia na fila com **firewall de som**: o público participa; o espaço mand
 
 ## Documentação
 
+- [**Roadmap da jornada**](docs/ROADMAP.md) — fases, calendário (datas a calibrar), ciclos IA-first e ritos com time e stakeholders
 - [**Especificações (produto e engenharia)**](docs/specs/README.md) — escopo, domínio, regras, PWA e decisões abertas
 - [**Fronteiras legais e direitos autorais**](docs/specs/14-fronteiras-legais-direitos-autorais.md) — o Muziks não vende obras nem substitui ECAD/streaming; base para termos legais
 - [**Manifesto do produto**](docs/MANIFESTO.md) — princípios e promessa do Muziks
@@ -31,7 +32,7 @@ Democracia na fila com **firewall de som**: o público participa; o espaço mand
 
 ## Estado do projeto
 
-Renascimento de um conceito de **2015**. Por ora este repositório concentra **fundamentos em texto** (manifesto, especificação técnica do front, padrão de componentes). A implementação do app entra quando vocês decidirem abrir essa fase.
+Renascimento de um conceito de **2015** (raízes que remontam a **2013** no propósito de conectar pessoas no som). Por ora este repositório concentra **fundamentos em texto** (manifesto, especificação técnica do front, padrão de componentes). O mapa de fases, aprendizado e lançamento está em [**docs/ROADMAP.md**](docs/ROADMAP.md); a implementação do app entra quando a fase correspondente for aberta explicitamente.
 
 ## Licença
 
