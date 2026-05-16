@@ -71,3 +71,11 @@ Geolocalização e links públicos exigem **controle de abuso**: quem pode ver o
 ---
 
 *Este manifesto descreve a intenção do produto. Relatos de campo, notas de pesquisa de empatia (design thinking) e inferências que sustentam esta intenção — à parte das histórias concretas — estão em [design-thinking-evidence-and-inferences.md](disruption/design-thinking-evidence-and-inferences.md). Detalhes de implementação e integrações evoluem no repositório, em [`docs/specs/`](specs/README.md). **Fronteiras legais, direitos autorais e papel do Muziks** (base para termos legais e copy) estão em [14-fronteiras-legais-direitos-autorais.md](specs/14-fronteiras-legais-direitos-autorais.md); demais documentação complementar segue nas pastas do projeto.*
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/muziks-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/muziks-dark.png">
+    <img src="images/muziks-dark.png" alt="Logotipo Muziks" width="400" />
+  </picture>
+</p>
