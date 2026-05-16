@@ -18,6 +18,8 @@
 | Playback com som no espaço | §7 + [mvp/06-arquitetura-playback-spotify.md](mvp/06-arquitetura-playback-spotify.md) |
 | Modelo de domínio e regras | §5 + [specs/03-domain-model.md](specs/03-domain-model.md) |
 | Onde colocar código no monorepo | §9 + [tech/MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) |
+| UI do player (fila, hero, hosts) | [specs/16-ui-player-e-fila.md](specs/16-ui-player-e-fila.md) |
+| Identidade e sistema visual | [DESIGN.md](DESIGN.md) |
 | Comportamentos de produto (normativo) | [specs/README.md](specs/README.md) |
 
 **Regra de manutenção:** mudanças de escopo MVP, stack ou integrações **devem** atualizar o documento especializado correspondente e, em seguida, este resumo (§ relevante + §12).
@@ -262,7 +264,8 @@ Fluxo **valor → por quê → dados** antes do OAuth. IdPs: Google, Apple, Meta
 | Camada | Tecnologia |
 |--------|------------|
 | Monorepo | **Turborepo** + `pnpm` |
-| App produto | **Next.js** App Router — `apps/web` → `player.muziks.app/{slug}` |
+| App participante | **Next.js** App Router — `apps/web` → `muziks.app/{slug}` |
+| App master (Spotify) | **Next.js** — `apps/player` → `player.muziks.com/{slug}` |
 | Blog | **Next.js** — `apps/blog` → `blog.muziks.com.br` |
 | Banco / Auth / Storage | **Supabase** (Free) + **Drizzle** em `packages/db` |
 | API (PoC) | API Routes / Server Actions em `apps/web` |
@@ -304,7 +307,8 @@ Extração: `apps/api` ou NestJS mantendo `packages/db` e contratos HTTP (strang
 
 ```
 muziks/
-├── apps/web/          ← PWA, fila, telão, painel dono, slices server na PoC
+├── apps/web/          ← muziks.app — PWA, fila, telão, participante
+├── apps/player/       ← player.muziks.com — master Spotify (placeholder)
 ├── apps/blog/
 ├── apps/admin/        ← placeholder
 ├── apps/api/          ← placeholder (pós-gatilho 5 players)
@@ -319,7 +323,7 @@ muziks/
 
 ### 9.2 Frontend — Atomic Design
 
-Componentes por camada (átomo → página); features em `apps/web/src/features/`. [tech/ATOMIC-DESIGN.md](tech/ATOMIC-DESIGN.md), [specs/09-frontend-architecture.md](specs/09-frontend-architecture.md).
+Componentes por camada (átomo → página); features em `apps/web/src/features/`. Layout do player participante (hero, fila, avatares) e split **muziks.app** / **player.muziks.com**: [specs/16-ui-player-e-fila.md](specs/16-ui-player-e-fila.md). Convenções: [tech/ATOMIC-DESIGN.md](tech/ATOMIC-DESIGN.md), [specs/09-frontend-architecture.md](specs/09-frontend-architecture.md).
 
 ### 9.3 Backend — Vertical Slice Architecture
 

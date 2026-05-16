@@ -29,7 +29,7 @@ Pedido explícito ao titular (contacto a definir no repositório ou canal oficia
 
 ## Logotipo e identidade visual
 
-**TBD:** quando existir kit de marca (logotipo, cores, variantes), este documento será atualizado com regras de uso e formatos permitidos.
+Variantes do logotipo (fundo claro/escuro, ícone): [`docs/images/identity/`](../images/identity/) (`muziks-dark.png`, `muziks-white.png`, `Muziks-152.png`). Regras detalhadas de uso comercial e kit completo permanecem a formalizar neste documento.
 
 ## Isenção
 

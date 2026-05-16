@@ -74,8 +74,8 @@ Geolocalização e links públicos exigem **controle de abuso**: quem pode ver o
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="images/muziks-white.png">
-    <source media="(prefers-color-scheme: light)" srcset="images/muziks-dark.png">
-    <img src="images/muziks-dark.png" alt="Logotipo Muziks" width="400" />
+    <source media="(prefers-color-scheme: dark)" srcset="images/identity/muziks-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/identity/muziks-dark.png">
+    <img src="images/identity/muziks-dark.png" alt="Logotipo Muziks" width="400" />
   </picture>
 </p>

@@ -16,9 +16,10 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 10. [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) — NFR, LGPD, a11y
 11. [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) — o que o Muziks não licencia, ECAD (Brasil), provedores de streaming, guardrails para termos legais
 12. [09-frontend-architecture.md](09-frontend-architecture.md) — front, pastas, Atomic + shadcn
-13. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
-14. [15-backend-architecture.md](15-backend-architecture.md) — API/backend, Vertical Slice
-15. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
+13. [16-ui-player-e-fila.md](16-ui-player-e-fila.md) — UI do player participante (hero, fila, avatares, hosts)
+14. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
+15. [15-backend-architecture.md](15-backend-architecture.md) — API/backend, Vertical Slice
+16. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
 
 ## Convenções
 
@@ -38,8 +39,11 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 - [Identidade como fosso — participante e voto](../mvp/05-identidade-fosso-participante-voto.md) — OAuth para fila/voto; sinais secundários; dono do player
 - [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) — fronteiras legais, ECAD (Brasil), streaming; base para termos legais
 - [Manifesto do produto](../MANIFESTO.md)
+- [Design — identidade e sistema visual](../DESIGN.md)
 - [Evidências e inferências (design thinking)](../disruption/design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
 - [Mapa de disrupções: dores e soluções](../disruption/mapa-dores-e-solucoes.md)
+- [UI do player e fila](16-ui-player-e-fila.md) — layout participante, legado, hosts
+- [Screenshots legados](../images/screens/README.md)
 - [Especificação do cliente (PWA)](../tech/ESPECIFICACAO-FRONTEND.md)
 - [Atomic Design no Muziks](../tech/ATOMIC-DESIGN.md)
 - [Vertical Slice Architecture (API/backend)](../tech/VERTICAL-SLICE-ARCHITECTURE.md)

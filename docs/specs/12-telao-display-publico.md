@@ -39,6 +39,7 @@ Em **Uber, chácara discreta, contexto só PWA**, o produto pode viver **sem** t
 
 ## Relação com outros documentos
 
+- UI mobile do participante (fila, pilha de avatares de quem escolheu): [16-ui-player-e-fila.md](16-ui-player-e-fila.md) — mesma fonte de dados de “quem escolheu”, com regras de opt-in compartilhadas entre celular e telão.
 - Descoberta e QR: [05-discovery-and-access.md](05-discovery-and-access.md) (visão geral; este doc aprofunda o **telão**).
 - Tração pós-MVP: [01-vision-and-scope.md](01-vision-and-scope.md).
 - Backend e sync: [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) (fila em polling); estado de **playback** e faixa em destaque no MVP-B: [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) (Realtime de sessão; telão pode ser Player Master ou display).

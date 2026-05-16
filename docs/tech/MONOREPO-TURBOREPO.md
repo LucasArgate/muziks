@@ -13,7 +13,8 @@ Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md)
 ```
 muziks/                          ← raiz do monorepo
 ├── apps/
-│   ├── web/                     ← player.muziks.app/{slug} — PWA, fila, participante, telão
+│   ├── web/                     ← muziks.app/{slug} — PWA, fila, participante, telão
+│   ├── player/                  ← player.muziks.com/{slug} — master Spotify (placeholder)
 │   ├── blog/                    ← blog.muziks.com.br
 │   ├── admin/                   ← futuro painel admin (placeholder)
 │   └── api/                     ← futuro backend dedicado (placeholder)
@@ -39,9 +40,12 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 | Domínio | App | Host / path | Ambientes | Projeto Vercel |
 |---------|-----|-------------|-----------|----------------|
 | **muziks.com.br** | `apps/blog` | **blog.muziks.com.br** | dev + prod | Separado |
-| **muziks.app** | `apps/web` | **player.muziks.app/{universal-slug-player-name}** | dev + staging + prod | Separado |
+| **muziks.app** | `apps/web` | **muziks.app/{universal-slug-player-name}** | dev + staging + prod | Separado |
+| **player.muziks.com** | `apps/player` | **player.muziks.com/{universal-slug-player-name}** | dev + staging + prod | Separado (ou multi-host em `web` até `player` existir) |
 
 - O **slug universal** do player identifica o contexto na URL pública — alinhar a [05-discovery-and-access.md](../specs/05-discovery-and-access.md).
+- UI do participante (hero, fila, avatares): [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
+- **Legado:** `player.muziks.app` era host único; substituído pelo split acima.
 - Apex `muziks.com.br` pode redirecionar para o blog (registros na **Cloudflare** → origin Vercel).
 - **Dois projetos Vercel** — políticas de branch e CI distintas ([PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md)).
 - **DNS** já na Cloudflare; proxy laranja na frente da Vercel. Recursos CF adicionais (R2, Pages, Workers): [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) §1.4.
@@ -54,7 +58,12 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 
 - Next.js App Router, PWA, participante, fila, telão, painel do dono (pode viver em `app/(owner)/` na PoC).
 - API Routes / Server Actions; Supabase como BaaS.
-- Roteamento: `player.muziks.app/[slug]/...`
+- Roteamento: `muziks.app/[slug]/...` — layout em [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
+
+### 3.1b `apps/player` (placeholder — master Spotify)
+
+- Host `player.muziks.com/[slug]/...`; login Spotify e playback ([06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)).
+- Até o app existir: rotas master podem viver em `apps/web` com middleware por host ou subdomínio.
 
 ### 3.2 `apps/blog` (PoC ou logo após `web`)
 

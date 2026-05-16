@@ -17,11 +17,18 @@ Este documento **define decisões de arquitetura** para o Muziks no navegador. N
 | Estilo | **Tailwind CSS** | Base exigida pelo **shadcn/ui**; consistência visual com pouca folha solta. |
 | Componentes primitivos | **shadcn/ui** (Radix + tokens) | Acessibilidade e padrão visual sem inventar design system do zero; componentes **copiados** no repo (`components/ui`), não “caixa preta” de lib opaca. |
 
+### Material Design 3 (referência visual)
+
+- **Princípios MD3** (motion, elevação, tipografia, densidade tátil, botões circulares) orientam o produto — **sem** adotar MUI como biblioteca.
+- **Materiais Muziks:** **Glassmorphism** (UI funcional) e **Liquid Glass** (hero e momentos de destaque) — [DESIGN.md](../DESIGN.md) §3.
+- **Tema:** dark-first; tokens Tailwind espelhando papéis MD3 (`surface`, `on-surface`, `primary`) — paleta e marca em [DESIGN.md](../DESIGN.md).
+- **Layout do player participante** (hero, fila, pilha de avatares): [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
+
 ## Bundler e tooling (quando houver código)
 
-- **Vite** como bundler/dev server do front — encaixa bem com React, TypeScript e plugins de PWA.
+- **Next.js** como empacotador do app (App Router) — prevalece sobre rascunhos com Vite; ver [09-frontend-architecture.md](../specs/09-frontend-architecture.md).
 - **pnpm** como gerenciador de pacotes do monorepo/app (política do projeto).
-- **Plugin de PWA** (ex.: `vite-plugin-pwa` ou equivalente na época da implementação) para gerar/registrar service worker e manifest a partir da build.
+- **PWA no Next.js** (ex.: `@ducanh2912/next-pwa` ou equivalente na época da implementação) para service worker e manifest a partir da build.
 - **Lint** (ESLint + regras React/TS) na implementação; **não** obrigar criação de arquivos de teste automatizados neste produto, salvo decisão futura explícita.
 
 ## Organização de pastas (alvo)

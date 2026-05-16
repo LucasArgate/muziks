@@ -73,7 +73,8 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 | Camada | Tecnologia | Motivo (hoje + futuro) |
 |--------|------------|------------------------|
 | **Monorepo** | **Turborepo** + `pnpm` | Apps `web`, `blog`; packages compartilhados — [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md) |
-| **App produto** | **Next.js** (App Router) em `apps/web` | PWA em `player.muziks.app/{slug}`; API Routes na PoC |
+| **App participante** | **Next.js** (App Router) em `apps/web` | PWA em `muziks.app/{slug}`; API Routes na PoC |
+| **App master** | **Next.js** em `apps/player` (placeholder) | `player.muziks.com/{slug}`; Spotify — [06-arquitetura-playback-spotify.md](06-arquitetura-playback-spotify.md) |
 | **Blog** | **Next.js** em `apps/blog` | `blog.muziks.com.br`; deploy Vercel separado |
 | **Banco** | **PostgreSQL** (Supabase Free) + **Drizzle** em `packages/db` | Migrations versionadas; client compartilhado |
 | **Fila (leitura)** | Polling HTTP 3–5 s + cache Vercel | Sem WS por participante — [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |

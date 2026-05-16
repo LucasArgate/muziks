@@ -2,9 +2,9 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/muziks-white.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/muziks-dark.png">
-    <img src="docs/images/muziks-dark.png" alt="Logotipo Muziks" width="400" />
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/identity/muziks-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/identity/muziks-dark.png">
+    <img src="docs/images/identity/muziks-dark.png" alt="Logotipo Muziks" width="400" />
   </picture>
 </p>
 
