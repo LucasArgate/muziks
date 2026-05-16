@@ -4,7 +4,7 @@
 
 Este é o **mapa da jornada** do Muziks: onde estamos, para onde vamos em etapas **viáveis**, como **aprender** com uso real e como **operar** em modo **IA-first** (humano e máquina em parceria explícita). Ele **não** substitui o [Manifesto](MANIFESTO.md) nem as [especificações](specs/README.md); organiza **tempo, ritos e entregas** em torno da promessa central: **conectar pessoas** no som, com **acordo explícito** e política clara.
 
-**Estado hoje (repositório):** predominância de **análise, especificação, abstração, hipóteses e viabilidade** — o produto ainda **não** existe como software publicado; o trabalho atual solidifica **decisões** e **fronteiras** para que a implementação não reabra o mesmo debate a cada sprint.
+**Estado hoje (repositório):** specs e stack **fechadas** na documentação; **implementação iniciada** — monorepo Turborepo, GitFlow (`develop` + `feature/*`) e processo em [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) §0. O produto ainda **não** está publicado em produção; o foco passa ao **primeiro incremento de código** (Fase 2).
 
 ---
 
@@ -30,7 +30,7 @@ Cada fase tem **critério de saída** objetivo. **Datas** de início/fim e de **
 
 **Saída:** conjunto mínimo de specs **estáveis o suficiente** para “congelar” um **MVP técnico** (lista de escopo em [01-vision-and-scope.md](specs/01-vision-and-scope.md)) sem ambiguidade crítica em fila, regras e descoberta do player; **hipóteses de receita e *go-to-market*** registradas em [business/](business/README.md) quando forem discutidas (não substituem specs normativas).
 
-### Fase 1 — Arquitetura e stack *(documentação fechada; código pendente)*
+### Fase 1 — Arquitetura e stack *(concluída na documentação; código em andamento)*
 
 **O quê:** decisões de backend base e infra registradas; front alinhado ao monorepo Next.js; processo e ambientes definidos.
 
@@ -39,13 +39,13 @@ Cada fase tem **critério de saída** objetivo. **Datas** de início/fim e de **
 | Documento | Conteúdo |
 |-----------|----------|
 | [STACK-E-FASES-DE-MIGRACAO.md](tech/STACK-E-FASES-DE-MIGRACAO.md) | PoC free (Vercel + Supabase), gatilho 5 players, AWS, migração CI/CD |
-| [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) | Linear, GitFlow vs GitHub Actions, ambientes por domínio |
+| [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) | Linear, git workflow (GitFlow + GitHub), ambientes; §5 GitHub Actions futuro |
 | [MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) | `apps/web`, `apps/blog`, packages, domínios |
 | [11-backend-and-integrations-open.md](specs/11-backend-and-integrations-open.md) | §1 e §10 fechados; demais integrações em aberto |
 
-**Próximo:** contratos finos (auth, fila) e **primeiro incremento de código** (Fase 2). Calendário: *TBD* no quadro abaixo.
+**Em curso:** scaffold do monorepo e features em `feature/MUZ-*` → `develop` ([AGENTS.md](../AGENTS.md)).
 
-### Fase 2 — Primeiro software tocável *(MVP interno)*
+### Fase 2 — Primeiro software tocável *(MVP interno)* — **iniciada**
 
 **O quê:** implementação mínima end-to-end (ex.: um fluxo dono + participante + política + fila em cenário controlado), sem pretensão de escala.
 

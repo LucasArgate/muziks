@@ -2,7 +2,7 @@
 
 **Propósito:** definir o **hub de imagens Docker** como artefato imutável de **releases funcionais** dos apps (`apps/web`, futuro `apps/api`, opcional `apps/blog`), alinhado a [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) (branches, tags semver, hotfix) e [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) (migrations por ambiente).
 
-**Normativo:** convenções com “deve” aplicam-se quando o monorepo de código e os workflows existirem.
+**Normativo:** convenções com “deve” aplicam-se quando houver releases com imagem Docker; dependem de **GitHub Actions** (§5 de [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md)), não do git workflow de branches.
 
 ---
 

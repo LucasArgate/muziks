@@ -2,7 +2,7 @@
 
 **Propósito:** definir a estrutura de pastas, domínios, grafo de dependências e o que implementar na PoC vs placeholders futuros.
 
-**Normativo** para quando o código existir. O repositório **hoje** contém apenas `docs/` — este documento descreve o layout ao iniciar implementação ([AGENTS.md](../../AGENTS.md)).
+**Normativo** para implementação em curso. O repositório recebe o monorepo (`apps/`, `packages/`) conforme este layout; specs permanecem em `docs/`. Branches e CI: [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) §0 ([AGENTS.md](../../AGENTS.md)).
 
 Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md), [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md), [ESPECIFICACAO-FRONTEND.md](ESPECIFICACAO-FRONTEND.md), [ATOMIC-DESIGN.md](ATOMIC-DESIGN.md), [VERTICAL-SLICE-ARCHITECTURE.md](VERTICAL-SLICE-ARCHITECTURE.md).
 
