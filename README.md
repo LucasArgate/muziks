@@ -1,7 +1,11 @@
 # Muziks
 
 <p align="center">
-  <img src="docs/images/muziks.png" alt="Logotipo Muziks" width="400" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/muziks-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/muziks-dark.png">
+    <img src="docs/images/muziks-dark.png" alt="Logotipo Muziks" width="400" />
+  </picture>
 </p>
 
 Repositório dos **fundamentos** do produto Muziks: visão, especificações, MVP, viabilidade de negócio e pesquisa de campo — em texto, para alinhar decisões antes e durante a implementação. O código da aplicação entra quando a [fase correspondente do roadmap](docs/ROADMAP.md) for aberta explicitamente (ver [AGENTS.md](AGENTS.md)).
