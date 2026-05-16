@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Muziks",
+  title: "Muziks — música compartilhada no seu bar",
   description:
-    "Música compartilhada com regras claras — democracia da fila com política.",
+    "Ideal para criar playlists e música ambiente de acordo com o gosto dos seus clientes. Fila democrática com regras claras.",
   openGraph: {
     title: "Muziks",
     description:
