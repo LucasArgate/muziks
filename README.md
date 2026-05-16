@@ -30,7 +30,7 @@ Player colaborativo com **democracia na fila** e **firewall de som**: quem está
 | Analytics (arquivo legado 2016–2017) | [docs/analytics/README.md](docs/analytics/README.md) |
 | Legal (licença do repo + marca) | [docs/legal/README.md](docs/legal/README.md) |
 
-**Tech (implementação futura):** [Especificação do cliente (PWA)](docs/tech/ESPECIFICACAO-FRONTEND.md) · [Atomic Design](docs/tech/ATOMIC-DESIGN.md)
+**Tech (implementação futura):** [Especificação do cliente (PWA)](docs/tech/ESPECIFICACAO-FRONTEND.md) · [Atomic Design](docs/tech/ATOMIC-DESIGN.md) · [Comunicação e operação (Discord, notificações, MCP admin)](docs/tech/MEIOS-DE-COMUNICACAO-E-OPERACAO.md)
 
 ## Agentes e contribuição
 

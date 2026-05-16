@@ -146,6 +146,7 @@ A ideia atravessa anos porque o problema é **social e político**, não só té
 | [business/README.md](business/README.md) | Receita, rentabilidade (incl. OSS/freemium + infra), *go-to-market*; complementa [mvp/02-viabilidade-custos-comparativo.md](mvp/02-viabilidade-custos-comparativo.md) |
 | [STACK-E-FASES-DE-MIGRACAO.md](tech/STACK-E-FASES-DE-MIGRACAO.md) | Stack PoC, fases de infra, migração de dados |
 | [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) | Linear, branches, CI/CD, ambientes |
+| [MEIOS-DE-COMUNICACAO-E-OPERACAO.md](tech/MEIOS-DE-COMUNICACAO-E-OPERACAO.md) | Discord, centrais de notificação, MCP admin |
 | [MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) | Estrutura Turborepo e domínios |
 
 ---

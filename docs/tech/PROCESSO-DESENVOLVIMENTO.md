@@ -4,7 +4,7 @@
 
 **Normativo:** convenções marcadas com “deve” aplicam-se quando o monorepo de código existir.
 
-Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [MONOREPO-TURBOREPO.md](MONOREPO-TURBOREPO.md), [ROADMAP.md](../ROADMAP.md).
+Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [MONOREPO-TURBOREPO.md](MONOREPO-TURBOREPO.md), [MEIOS-DE-COMUNICACAO-E-OPERACAO.md](MEIOS-DE-COMUNICACAO-E-OPERACAO.md), [ROADMAP.md](../ROADMAP.md).
 
 ---
 
@@ -28,6 +28,11 @@ Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md)
 
 - Debate de redação de manifesto/spec sem entrega de código (pode ser issue `spec` se precisar de dono).
 - Análises pontuais em `docs/analytics/` — rastrear no git/PR.
+
+### 1.4 Comunidade e alertas (Discord)
+
+- Servidor **Muziks** no Discord, centrais de notificação (`ops-*`, `community`) e agentes **MCP admin** (consulta/extração) estão definidos em [MEIOS-DE-COMUNICACAO-E-OPERACAO.md](MEIOS-DE-COMUNICACAO-E-OPERACAO.md).
+- **Linear** permanece fonte de verdade para trabalho; Discord é **coordenação e alerta**, não substitui issue nem spec no git.
 
 ---
 

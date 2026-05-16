@@ -99,7 +99,7 @@ O mesmo produto **não** precisa ter o mesmo **pacote** para os dois; confundir 
 
 ### Dev ou entusiasta (baixo toque humano)
 
-- **Self-host**, Docker, variáveis de ambiente, exemplos, Discord/GitHub Discussions.
+- **Self-host**, Docker, variáveis de ambiente, exemplos, [servidor Discord](../tech/MEIOS-DE-COMUNICACAO-E-OPERACAO.md) / GitHub Discussions.
 - **Preço:** R$ 0 no software; opcionalmente **sponsor** ou **donation**.
 - **Objetivo:** distribuição, *issues* de qualidade, parceiros técnicos, **reduzir CAC** indireto (“quem instalou foi o DJ da região”).
 
