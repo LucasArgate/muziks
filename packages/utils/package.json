@@ -1,0 +1,21 @@
+{
+  "name": "@muziks/utils",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo utils: no build step",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@muziks/config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

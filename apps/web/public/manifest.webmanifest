@@ -1,0 +1,17 @@
+{
+  "name": "Muziks",
+  "short_name": "Muziks",
+  "description": "Player colaborativo com democracia na fila.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/brand/Muziks-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    }
+  ]
+}
