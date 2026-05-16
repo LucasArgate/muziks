@@ -90,12 +90,6 @@ Heurística: substring entre termo e título/artista do ranking de tocadas.
 
 *Gap busca→play pode indicar catálogo incompleto, typos ou faixas bloqueadas — relevante para copy cortês e recovery.*
 
-## Implicações para o MVP
-
-- **Busca fuzzy** obrigatória no catálogo (ambiente escuro, digitação rápida) — [11-backend-and-integrations-open.md](../../specs/11-backend-and-integrations-open.md).
-- **Firewall** para mistura caótica de gêneros no mesmo espaço — [04-rules-firewall.md](../../specs/04-rules-firewall.md).
-- Hits do momento + cauda longa: curadoria preserva a **vibe** do local, não só bloqueio explícito.
-
 ---
 
-*Gerado em 2026-05-16 12:13 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*
+*Gerado em 2026-05-16 12:29 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*

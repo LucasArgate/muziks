@@ -32,4 +32,4 @@ Derivados do arquivo 2016–2017 — validar em pilotos antes de virar meta num�
 
 ---
 
-*Gerado em 2026-05-16 12:13 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*
+*Gerado em 2026-05-16 12:29 por `docs/analytics/scripts/run_all.py`. Dados legados 2016–2017; nomes de pessoas pseudonimizados.*
