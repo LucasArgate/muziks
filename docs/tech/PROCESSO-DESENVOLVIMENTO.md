@@ -2,9 +2,46 @@
 
 **Propósito:** definir gestão de trabalho (Linear), modelos de branch (GitFlow vs trunk), automação CI/CD (GitHub Actions) e **matriz de ambientes** por superfície do Muziks.
 
-**Normativo:** convenções marcadas com “deve” aplicam-se quando o monorepo de código existir.
+**Normativo:** convenções de **git workflow** (branches, PRs, §0–§3) estão **em vigor** desde o início da implementação. **GitHub Actions** (§5, arquivos em `.github/workflows/`) é planejamento de CI/CD — **não** é o que se chama “git workflow” neste doc e **não** precisa existir para começar a codar.
 
 Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md), [MONOREPO-TURBOREPO.md](MONOREPO-TURBOREPO.md), [MEIOS-DE-COMUNICACAO-E-OPERACAO.md](MEIOS-DE-COMUNICACAO-E-OPERACAO.md), [ROADMAP.md](../ROADMAP.md).
+
+---
+
+## 0. Bootstrap do monorepo (implementação)
+
+Com o repositório saindo da fase só-`docs/`, o **git workflow** (GitFlow + regras no GitHub: `develop`, `feature/*`, PR, proteção de `main`) passa a valer para todo código em `apps/` e `packages/`. Specs e docs continuam via PR para `main` (§7). Automação **GitHub Actions** (§5) fica para quando o monorepo tiver apps a buildar/deployar.
+
+### 0.1 Criar `develop` e primeira feature
+
+| Passo | Ação |
+|-------|------|
+| 1 | A partir de `main` atualizada, criar branch long-lived **`develop`** e publicar (`git push -u origin develop`). |
+| 2 | Para cada entrega, criar **`feature/MUZ-<n>-<slug-curto>`** a partir de **`develop`** (issue Linear `MUZ-<n>` no nome ou no PR). |
+| 3 | Abrir PR **`feature/*` → `develop`**; revisão humana; merge após aprovação (checks de Actions, quando existirem, são adicionais). |
+| 4 | Promoção periódica ou release: PR **`develop` → `main`** quando o incremento estiver estável (blog/docs) ou conforme §3.1 quando `staging` existir para o app produto. |
+
+**Exemplos de nome:** `feature/MUZ-12-monorepo-scaffold`, `feature/MUZ-15-packages-db-drizzle`.
+
+### 0.2 Branch de integração por fase
+
+| Fase | Branch de integração | Features partem de |
+|------|----------------------|-------------------|
+| **Bootstrap** (scaffold Turborepo, `packages/*`, primeiros apps) | `develop` | `develop` |
+| **`apps/web` / `apps/player` com deploy staging** | `staging` (criar a partir de `develop` quando houver ambiente staging, §4) | `staging` |
+| **`apps/blog`** | `develop` (permanente) | `develop` |
+| **Specs / `docs/`** | — | `main` (PR direto, sem `develop` obrigatório) |
+
+Quando `staging` for criada para o app participante, **novas** features de `apps/web` e `apps/player` **devem** bifurcar de `staging`, não de `develop`. O bootstrap em `develop` permanece válido até esse corte.
+
+### 0.3 O que ativa agora vs em seguida
+
+| Regra | Quando |
+|-------|--------|
+| Nomes de branch, PR, vínculo Linear | **Imediato** |
+| Proteção de `main` (sem push direto) | **Imediato** (configurar no GitHub) |
+| GitHub Actions §5 (`ci.yml`, deploy, Docker) | **Depois** — quando houver app a buildar; opcional no bootstrap |
+| Branch `staging` + deploy automático | Quando `apps/web` tiver ambiente staging (§4) |
 
 ---
 
@@ -12,7 +49,7 @@ Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md)
 
 ### 1.1 Projeto
 
-- Criar time/projeto **Muziks** no [Linear](https://linear.app) quando iniciar implementação de código.
+- Time/projeto **Muziks** no [Linear](https://linear.app) — **obrigatório** para rastrear features em código (§0).
 - **Specs normativas** permanecem no git (`docs/specs/`); Linear é para **execução**, priorização e rastreio de entregas.
 
 ### 1.2 Convenções
@@ -36,17 +73,20 @@ Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md)
 
 ---
 
-## 2. GitFlow vs GitHub Workflow (esclarecimento)
+## 2. GitFlow, git workflow e GitHub Actions (esclarecimento)
 
-São conceitos **diferentes** e **complementares**:
+Três coisas **distintas**. O que você configura **agora** no GitHub para começar a implementar é o **git workflow** (§2, coluna do meio) — **não** arquivos em `.github/workflows/`.
 
-| Termo | O que é | Exemplo no Muziks |
-|-------|---------|-------------------|
-| **GitFlow** | **Modelo de branches** no Git: `main`, `develop`, `feature/*`, `release/*`, `hotfix/*` | `apps/blog`, alterações em `docs/` |
-| **GitHub Actions** (“GitHub Workflow”) | **Automação CI/CD**: build, lint, deploy, releases | `apps/web` — pipeline por ambiente + releases com tag |
-| **Trunk-based** | `main` + feature flags; poucas branches long-lived | Opcional na Fase C; **não** na Fase A |
+| Termo | O que é | No Muziks | Fase bootstrap |
+|-------|---------|-----------|----------------|
+| **GitFlow** | **Nomenclatura e papéis** das branches: `main`, `develop`, `feature/*`, `release/*`, `hotfix/*` | Blog, bootstrap do monorepo, docs | ✅ Em vigor |
+| **Git workflow** (no GitHub) | **Como trabalhar no repositório:** branch padrão/integração (`develop`), PR `feature/*` → `develop`, `main` protegida, revisão antes de merge | Configuração do repo (branch rules, PR) alinhada ao §0 | ✅ **Em vigor** — é isto que “passa a valer” ao iniciar código |
+| **GitHub Actions** | **CI/CD automatizado** — YAML em `.github/workflows/`: lint, build, deploy, releases | `apps/web` com staging + tag semver; ver §5 | ⏳ Futuro — **não** confundir com “git workflow” |
+| **Trunk-based** | `main` + feature flags; poucas branches long-lived | Opcional na Fase infra C | ❌ Não na PoC |
 
-**GitFlow não substitui CI/CD** — define *como* ramificar; Actions define *o que* rodar em cada push/PR/tag.
+**Não confundir:** no dia a dia, “workflow do processo de dev” = **git workflow** (branches + PR). **GitHub Actions** = pipelines de build/deploy (§5), complementares e posteriores.
+
+**GitFlow não substitui CI/CD** — define *como* ramificar; Actions define *o que* rodar automaticamente em cada push/PR/tag, quando existir.
 
 ---
 
@@ -135,9 +175,11 @@ Deploy continua disparado pela **Vercel** (GitHub Actions → Vercel); Cloudflar
 
 ---
 
-## 5. GitHub Actions (esboço)
+## 5. GitHub Actions (esboço — CI/CD, não é git workflow)
 
-Arquivos em `.github/workflows/` (a criar com o monorepo):
+Planejamento de **automação** em `.github/workflows/`. **Independente** do git workflow (§2): dá para codar e fazer PR só com branches + revisão; Actions entram quando fizer sentido operacional.
+
+Arquivos a criar **quando** houver apps a buildar/deployar:
 
 | Workflow | Gatilho | Ações |
 |----------|---------|--------|
@@ -161,23 +203,23 @@ Path filters evitam rebuild do blog quando só o player mudou.
 sequenceDiagram
   participant L as Linear
   participant G as Git_feature
-  participant S as staging_branch
+  participant D as develop_or_staging
   participant M as main_tag
   participant V as Vercel_prod
 
   L->>G: Issue MUZ-N
-  G->>S: PR para staging
-  S->>S: CI migrate plus deploy staging
-  S->>M: PR release quando pronto
+  G->>D: PR para develop ou staging
+  D->>D: CI lint deploy preview quando existir
+  D->>M: PR release ou tag quando pronto
   M->>V: Tag vX.Y.Z CI prod plus Docker image
 ```
 
 1. Criar issue no Linear.
-2. Branch `feature/MUZ-N-descricao` a partir de `staging` (`web`) ou `develop` (`blog`).
-3. PR → ambiente de preview/staging; revisão humana.
+2. Branch `feature/MUZ-N-descricao` a partir de **`develop`** (bootstrap monorepo, blog) ou **`staging`** (`web`/`player`, após §0.2).
+3. PR → `develop` ou `staging`; preview/staging quando CI existir; revisão humana.
 4. Merge; validar em staging (player) ou preview (blog).
-5. Release tag (player) → imagem `muziks/web:vX.Y.Z` + deploy; ou merge `develop` → `main` (blog).
-6. Hotfix: branch da tag em prod → PATCH → mesma disciplina de imagem → merge `staging` + `main`.
+5. Release tag (`web`) → imagem `muziks/web:vX.Y.Z` + deploy; ou merge `develop` → `main` (blog / bootstrap).
+6. Hotfix: branch da tag em prod → PATCH → mesma disciplina de imagem → merge `staging` + `main` (e `develop` se ainda integrar blog).
 
 ---
 
