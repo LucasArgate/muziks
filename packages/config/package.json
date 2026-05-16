@@ -1,0 +1,9 @@
+{
+  "name": "@muziks/config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./tsconfig/base": "./tsconfig/base.json",
+    "./eslint/next": "./eslint/next.js"
+  }
+}

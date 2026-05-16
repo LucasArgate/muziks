@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-black: #000000;
+  --brand-white: #ffffff;
+  --brand-blue: #0066b2;
+  --surface: #000000;
+  --surface-container: #121212;
+  --on-surface: #ffffff;
+  --on-surface-variant: #b3b3b3;
+  --outline: #2a2a2a;
+  --primary: #0066b2;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface antialiased;
+  }
+}

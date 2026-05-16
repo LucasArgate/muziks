@@ -1,0 +1,7 @@
+{
+  "extends": "@muziks/config/tsconfig/base",
+  "compilerOptions": {
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}
