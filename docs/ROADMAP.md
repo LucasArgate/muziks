@@ -28,7 +28,7 @@ Cada fase tem **critério de saída** objetivo. **Datas** de início/fim e de **
 
 **O quê:** manifesto, evidências de campo, specs de domínio, NFR, legal, fronteiras de integração abertas documentadas.
 
-**Saída:** conjunto mínimo de specs **estáveis o suficiente** para “congelar” um **MVP técnico** (lista de escopo em [01-vision-and-scope.md](specs/01-vision-and-scope.md)) sem ambiguidade crítica em fila, regras e descoberta do player.
+**Saída:** conjunto mínimo de specs **estáveis o suficiente** para “congelar” um **MVP técnico** (lista de escopo em [01-vision-and-scope.md](specs/01-vision-and-scope.md)) sem ambiguidade crítica em fila, regras e descoberta do player; **hipóteses de receita e *go-to-market*** registradas em [business/](business/README.md) quando forem discutidas (não substituem specs normativas).
 
 ### Fase 1 — Arquitetura e stack *(próximo bloco)*
 
@@ -134,6 +134,7 @@ A ideia atravessa anos porque o problema é **social e político**, não só té
 | [13-kpis-fases-e-loops.md](specs/13-kpis-fases-e-loops.md) | O que medir depois do lançamento |
 | [14-fronteiras-legais-direitos-autorais.md](specs/14-fronteiras-legais-direitos-autorais.md) | Guardrails antes de datas agressivas |
 | [design-thinking-evidence-and-inferences.md](disruption/design-thinking-evidence-and-inferences.md) | Base empática para priorizar pilotos |
+| [business/README.md](business/README.md) | Receita, rentabilidade (incl. OSS/freemium + infra), *go-to-market*; complementa [mvp/02-viabilidade-custos-comparativo.md](mvp/02-viabilidade-custos-comparativo.md) |
 
 ---
 

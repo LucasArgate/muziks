@@ -42,3 +42,4 @@ Em **Uber, chácara discreta, contexto só PWA**, o produto pode viver **sem** t
 - Descoberta e QR: [05-discovery-and-access.md](05-discovery-and-access.md) (visão geral; este doc aprofunda o **telão**).
 - Tração pós-MVP: [01-vision-and-scope.md](01-vision-and-scope.md).
 - Backend (sincronização em tempo real do telão): [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
+- Hipótese de **mídia / *spots*** no mesmo canal (som + telão), valor para o dono e riscos: [02-canal-midia-radio-do-espaco.md](../business/02-canal-midia-radio-do-espaco.md) — quando houver requisitos normativos, refletir aqui ou em fluxo de player.

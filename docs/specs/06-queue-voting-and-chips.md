@@ -23,6 +23,7 @@ A **fila** é a lista ordenada de faixas **aceitas** pelo player para execução
 - **Empate:** desempate por timestamp do voto, ordem de chegada na fila, ou regra fixa documentada na implementação — deve ser **estável** e **explicável**.
 - **Limite de votos** por sessão ou por janela de tempo — recomendado; números em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
 - **Anti-fraude básico:** captcha leve, cooldown, ou validação server-side — nível MVP discutido em [11](11-backend-and-integrations-open.md).
+- **Identidade verificável:** no **momento** em que o voto ou a proposta **alteram** a fila coletiva — após o fluxo **valor → por quê → dados** descrito no MVP — o participante deve estar autenticado com **provedor de identidade** (OAuth); sinais secundários (IP, dispositivo) complementam **sem** substituir o login — ver [../mvp/05-identidade-fosso-participante-voto.md](../mvp/05-identidade-fosso-participante-voto.md).
 
 ## Fichas (chips)
 

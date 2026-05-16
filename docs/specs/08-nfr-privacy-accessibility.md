@@ -24,6 +24,7 @@
 
 - **Geolocalização** — coletar só com **consentimento** explícito; finalidade: descoberta de players e validação de raio; **minimização** (precisão e retenção limitadas).
 - **Identificadores de sessão** — para anti-abuso e continuidade de voto; retenção definida com jurídico.
+- **Identidade de participação (OAuth)** — sub/issuer do provedor como chave de “quem votou”; **não** exigir conta de **streaming** só para votar ou propor faixa. Complementar com sinais como **IP** (ou prefixo) e **id de instalação** de app com finalidade explícita, retenção limitada e transparência — ver [../mvp/05-identidade-fosso-participante-voto.md](../mvp/05-identidade-fosso-participante-voto.md).
 
 **Requisitos normativos de produto:**
 

@@ -10,6 +10,7 @@ Esta pasta agrupa o **mapa de desrupções** que o Muziks pretende endereçar: s
 | [mapa-dores-e-solucoes.md](mapa-dores-e-solucoes.md) | Tabela principal Dor → Tipo → Evidência → Inferência → Solução → Documento |
 | [artista-ao-vivo-temperatura-e-fila.md](artista-ao-vivo-temperatura-e-fila.md) | Hipótese: show ao vivo, temperatura do público, janela temporal e convite só-leitura ao artista |
 | [karaoke-era-ia-e-llms-de-borda.md](karaoke-era-ia-e-llms-de-borda.md) | Hipótese (futura): karaokê, LLMs/modelos em borda na web, sensibilidades e engajamento |
+| [conexao-emocao-economia-da-fila.md](conexao-emocao-economia-da-fila.md) | Conexão → emoção → atitude; tensão entre democracia da fila, monetização do participante e sustentabilidade |
 
 ## O que conta como “disrupção” aqui
 

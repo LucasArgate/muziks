@@ -11,6 +11,8 @@
 
 | Estado | Descrição | Comportamento esperado |
 |--------|-----------|-------------------------|
+| Espectador (público) | Vê fila/estado público do player sem login | Fila e dados não sensíveis; convite claro a participar; **(+)** e busca acessíveis até o portão de compromisso ([../mvp/05-identidade-fosso-participante-voto.md](../mvp/05-identidade-fosso-participante-voto.md)). |
+| Antes de identificar (portão) | Toque em votar/enviar proposta exige login | **Primeiro** explicar em linguagem humana **por quê** a identidade; **depois** OAuth + política; sem culpar o usuário. |
 | Carregando player | Busca política/fila | Skeleton ou spinner; não flicker agressivo. |
 | Player pausado | Dono pausou participação | Mensagem neutra; sem dados de outros usuários. |
 | Acesso revogado | Link/slug inválido ou expirado | Explicar que o espaço encerrou este acesso; oferecer busca se existir. |

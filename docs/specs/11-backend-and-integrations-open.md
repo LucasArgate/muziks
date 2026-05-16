@@ -26,6 +26,8 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 - Equilíbrio entre **baixo atrito** e **anti-fraude** ([06-queue-voting-and-chips.md](06-queue-voting-and-chips.md)).
 - LGPD e minimização de dados ([08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md)).
 
+**Direção sugerida (pacote MVP):** **superfície pública** (fila/estado não sensível, busca exploratória) **sem** login forte; no **ato** de votar ou enviar proposta vinculante — **depois** de explicar o “por quê” — **OAuth** (Google, Apple, Meta/Facebook conforme disponibilidade); **não** exigir Spotify/Deezer só para participar. Sinais secundários (IP, id de instalação) como camada de risco. Detalhe: [../mvp/05-identidade-fosso-participante-voto.md](../mvp/05-identidade-fosso-participante-voto.md).
+
 ## 3. Fonte do catálogo musical
 
 **Pergunta:** De onde vêm gênero/artista/faixa para política e busca?

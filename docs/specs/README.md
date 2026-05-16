@@ -33,6 +33,8 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 
 ## Documentação relacionada
 
+- [MVP congelado e arquitetura (pasta)](../mvp/README.md) — escopo mínimo viável fechado e decisões de stack para validação
+- [Identidade como fosso — participante e voto](../mvp/05-identidade-fosso-participante-voto.md) — OAuth para fila/voto; sinais secundários; dono do player
 - [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md) — fronteiras legais, ECAD (Brasil), streaming; base para termos legais
 - [Manifesto do produto](../MANIFESTO.md)
 - [Evidências e inferências (design thinking)](../disruption/design-thinking-evidence-and-inferences.md) — relatos de campo e síntese à parte do manifesto
