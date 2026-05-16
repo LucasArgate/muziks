@@ -1,0 +1,10 @@
+# Raw exports (PII, Facebook IDs) — keep only on your machine
+data/*.csv
+data/**/*.csv
+!data/sample/
+!data/sample/**
+
+scripts/.venv/
+scripts/__pycache__/
+__pycache__/
+*.pyc
