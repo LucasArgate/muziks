@@ -1,5 +1,9 @@
 # Muziks
 
+<p align="center">
+  <img src="docs/images/muziks.png" alt="Logotipo Muziks" width="400" />
+</p>
+
 Repositório dos **fundamentos** do produto Muziks: visão, especificações, MVP, viabilidade de negócio e pesquisa de campo — em texto, para alinhar decisões antes e durante a implementação. O código da aplicação entra quando a [fase correspondente do roadmap](docs/ROADMAP.md) for aberta explicitamente (ver [AGENTS.md](AGENTS.md)).
 
 ## O que é o Muziks (em resumo)
