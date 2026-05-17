@@ -1,6 +1,8 @@
 const MESSAGES: Record<string, string> = {
+  schema_not_ready:
+    "Banco sem tabelas do app. Rode as migrations (pnpm db:migrate) no projeto Supabase de produção.",
   database_config:
-    "Falha ao conectar ao banco (DATABASE_URL na Vercel). Use a URI Transaction pooler do Supabase Dashboard.",
+    "Falha ao conectar ao banco. Confira DATABASE_URL na Vercel, redeploy e SUPABASE_SERVICE_ROLE_KEY.",
   supabase_admin_config:
     "SUPABASE_SERVICE_ROLE_KEY ausente ou inválida na Vercel.",
   auth_failed: "Não foi possível concluir o login. Tente novamente.",
