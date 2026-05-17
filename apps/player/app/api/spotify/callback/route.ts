@@ -21,7 +21,11 @@ import {
 } from "@/src/lib/spotify-session";
 import type { SupabaseCookieToSet } from "@/src/lib/supabase/cookie-types";
 import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/src/lib/supabase/env";
+import {
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  hasSupabaseServiceRoleKey,
+} from "@/src/lib/supabase/env";
 
 export async function GET(request: NextRequest) {
   const appUrl = getPlayerAppUrlFromRequest(request);
@@ -53,6 +57,10 @@ export async function GET(request: NextRequest) {
 
   if (!oauthState?.codeVerifier) {
     return redirectWithError("invalid_state");
+  }
+
+  if (!hasSupabaseServiceRoleKey()) {
+    return redirectWithError("SUPABASE_SERVICE_ROLE_KEY is not set");
   }
 
   try {
