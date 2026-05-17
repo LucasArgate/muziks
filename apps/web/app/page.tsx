@@ -1,10 +1,5 @@
-import { ComingSoonScreen } from "@muziks/ui";
+import { DiscoveryPage } from "@/src/components/pages/discovery-page";
 
 export default function HomePage() {
-  return (
-    <ComingSoonScreen
-      title="Em breve"
-      subtitle="O player colaborativo está chegando — em breve você entra na fila pelo link do seu espaço."
-    />
-  );
+  return <DiscoveryPage />;
 }

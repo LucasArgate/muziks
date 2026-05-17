@@ -50,6 +50,13 @@
       "when": 1747920000000,
       "tag": "0006_queue_items",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1748006400000,
+      "tag": "0007_discovery_votes",
+      "breakpoints": true
     }
   ]
 }

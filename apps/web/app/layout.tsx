@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description:
     "Player colaborativo — entre na fila pelo link do seu espaço.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/brand/Muziks-152.png",
+    apple: "/brand/Muziks-152.png",
+  },
   openGraph: {
     title: "Muziks App",
     description:

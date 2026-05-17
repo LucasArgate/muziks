@@ -1,0 +1,17 @@
+{
+  "name": "Muziks Player",
+  "short_name": "Muziks",
+  "description": "Player master — controle de reprodução do estabelecimento.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/brand/Muziks-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    }
+  ]
+}

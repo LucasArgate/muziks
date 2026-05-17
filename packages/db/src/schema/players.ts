@@ -1,4 +1,13 @@
-import { pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  doublePrecision,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 import { profiles } from "./profiles";
 
@@ -19,6 +28,12 @@ export const players = pgTable(
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("draft"),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
+    discoveryRadiusM: integer("discovery_radius_m").notNull().default(500),
+    geoDiscoveryEnabled: boolean("geo_discovery_enabled")
+      .notNull()
+      .default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

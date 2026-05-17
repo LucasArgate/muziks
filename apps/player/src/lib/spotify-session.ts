@@ -10,7 +10,10 @@ import {
   getSpotifyClientSecret,
 } from "@/src/config/spotify-env";
 import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
-import { hasValidConnectionForUser } from "@/src/lib/spotify/spotify-token-vault";
+import {
+  hasValidConnectionForUser,
+  persistSpotifyTokens,
+} from "@/src/lib/spotify/spotify-token-vault";
 
 const ACCESS_COOKIE = "muziks_spotify_access";
 const REFRESH_COOKIE = "muziks_spotify_refresh";
@@ -193,10 +196,17 @@ export async function getValidAccessToken(): Promise<string | null> {
       clientSecret: getSpotifyClientSecret(),
     });
 
-    await persistTokenResponse({
+    const mergedTokens = {
       ...tokens,
       refresh_token: tokens.refresh_token ?? refresh,
-    });
+    };
+
+    await persistTokenResponse(mergedTokens);
+
+    const muziks = await getMuziksSession();
+    if (muziks.status !== "anonymous") {
+      await persistSpotifyTokens(muziks.userId, mergedTokens);
+    }
 
     return tokens.access_token;
   } catch (error) {

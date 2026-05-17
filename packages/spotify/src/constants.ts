@@ -7,5 +7,8 @@ export const SPOTIFY_PLAYBACK_SCOPES = [
   "user-read-email",
 ] as const;
 
+/** Participante em muziks.app — só identidade, sem playback. */
+export const SPOTIFY_PARTICIPANT_SCOPES = ["user-read-email"] as const;
+
 export const SPOTIFY_ACCOUNTS_BASE = "https://accounts.spotify.com";
 export const SPOTIFY_API_BASE = "https://api.spotify.com/v1";

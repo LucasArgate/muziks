@@ -1,7 +1,4 @@
-import {
-  SPOTIFY_ACCOUNTS_BASE,
-  SPOTIFY_PLAYBACK_SCOPES,
-} from "./constants";
+import { SPOTIFY_ACCOUNTS_BASE, SPOTIFY_PLAYBACK_SCOPES } from "./constants";
 
 export type SpotifyTokenResponse = {
   access_token: string;
@@ -65,6 +62,7 @@ export type BuildAuthorizeUrlParams = {
   redirectUri: string;
   state: string;
   codeChallenge: string;
+  scopes?: readonly string[];
 };
 
 export function buildAuthorizeUrl({
@@ -72,13 +70,14 @@ export function buildAuthorizeUrl({
   redirectUri,
   state,
   codeChallenge,
+  scopes = SPOTIFY_PLAYBACK_SCOPES,
 }: BuildAuthorizeUrlParams): string {
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",
     redirect_uri: redirectUri,
     state,
-    scope: SPOTIFY_PLAYBACK_SCOPES.join(" "),
+    scope: scopes.join(" "),
     code_challenge_method: "S256",
     code_challenge: codeChallenge,
   });
