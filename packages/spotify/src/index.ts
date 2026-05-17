@@ -1,8 +1,10 @@
 export {
   SPOTIFY_ACCOUNTS_BASE,
   SPOTIFY_API_BASE,
+  SPOTIFY_PARTICIPANT_SCOPES,
   SPOTIFY_PLAYBACK_SCOPES,
 } from "./constants";
+export { searchTracks, type SpotifySearchTrack } from "./search";
 export { spotifyFetch, type SpotifyFetchOptions } from "./api";
 export { createCodeChallenge, generateCodeVerifier } from "./pkce";
 export {

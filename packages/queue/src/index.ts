@@ -12,3 +12,7 @@ export {
   dequeueNextQueueItemHandler,
   type DequeueNextQueueItemHandlerResult,
 } from "./slices/dequeue-next-queue-item/handler";
+export {
+  voteOnQueueItemHandler,
+  type VoteOnQueueItemHandlerResult,
+} from "./slices/vote-on-queue-item/handler";

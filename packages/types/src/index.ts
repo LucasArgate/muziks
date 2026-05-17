@@ -46,6 +46,23 @@ export {
 } from "./playback/session";
 
 export {
+  publicPlaybackSessionSchema,
+  type PublicPlaybackSession,
+} from "./playback/public-session";
+
+export {
+  discoverPlayerCardSchema,
+  type DiscoverPlayerCard,
+} from "./discovery/player-card";
+
+export {
+  catalogTrackSchema,
+  catalogSearchResultSchema,
+  type CatalogTrack,
+  type CatalogSearchResult,
+} from "./catalog/search-track";
+
+export {
   playbackSyncModeSchema,
   type PlaybackSyncMode,
 } from "./playback/sync-mode";

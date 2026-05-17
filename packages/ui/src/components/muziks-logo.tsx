@@ -1,44 +1,58 @@
 import { cn } from "@muziks/utils";
 
+import {
+  MUZIKS_BRAND_DIMENSIONS,
+  MUZIKS_BRAND_PATHS,
+} from "../brand";
+
+/**
+ * `light` — wordmark claro (fundo escuro); `dark` — wordmark escuro (fundo claro);
+ * `iconOnly` — marcador dos três quadrados.
+ * @see docs/DESIGN.md §7
+ */
+export type MuziksLogoVariant = "light" | "dark" | "iconOnly";
+
 export type MuziksLogoProps = {
   className?: string;
+  /** Override asset URL (ex.: testes). Preferir `variant`. */
   src?: string;
+  variant?: MuziksLogoVariant;
 };
 
-export function MuziksLogo({ className, src }: MuziksLogoProps) {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt="Muziks"
-        width={200}
-        height={48}
-        className={cn("h-10 w-auto md:h-12", className)}
-      />
-    );
-  }
+const variantConfig = {
+  light: {
+    src: MUZIKS_BRAND_PATHS.onDarkBg,
+    ...MUZIKS_BRAND_DIMENSIONS.onDarkBg,
+    defaultClassName: "h-10 w-auto md:h-12",
+  },
+  dark: {
+    src: MUZIKS_BRAND_PATHS.onLightBg,
+    ...MUZIKS_BRAND_DIMENSIONS.onLightBg,
+    defaultClassName: "h-10 w-auto md:h-12",
+  },
+  iconOnly: {
+    src: MUZIKS_BRAND_PATHS.icon,
+    ...MUZIKS_BRAND_DIMENSIONS.icon,
+    defaultClassName: "h-10 w-10",
+  },
+} as const;
+
+export function MuziksLogo({
+  className,
+  src,
+  variant = "light",
+}: MuziksLogoProps) {
+  const config = variantConfig[variant];
+  const imageSrc = src ?? config.src;
 
   return (
-    <svg
-      role="img"
-      aria-label="Muziks"
-      viewBox="0 0 200 48"
-      className={cn("h-10 w-auto md:h-12", className)}
-      fill="currentColor"
-    >
-      <rect x="0" y="8" width="6" height="32" rx="1" opacity="0.9" />
-      <rect x="10" y="14" width="6" height="26" rx="1" opacity="0.7" />
-      <rect x="20" y="4" width="6" height="36" rx="1" />
-      <text
-        x="36"
-        y="34"
-        fontSize="28"
-        fontFamily="system-ui, sans-serif"
-        fontWeight="600"
-        letterSpacing="-0.02em"
-      >
-        muziks
-      </text>
-    </svg>
+    <img
+      src={imageSrc}
+      alt="Muziks"
+      width={config.width}
+      height={config.height}
+      className={cn(config.defaultClassName, className)}
+      decoding="async"
+    />
   );
 }

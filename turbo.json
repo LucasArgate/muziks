@@ -1,9 +1,26 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SPOTIFY_CLIENT_SECRET",
+    "SPOTIFY_TOKEN_ENCRYPTION_KEY",
+    "PLAYBACK_WORKER_SECRET",
+    "PLAYER_ALLOWED_APP_ORIGINS",
+    "PLAYER_ALLOWED_DEV_ORIGINS"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_WEB_APP_URL",
+        "NEXT_PUBLIC_PLAYER_APP_URL",
+        "NEXT_PUBLIC_SPOTIFY_CLIENT_ID",
+        "NEXT_PUBLIC_APP_URL"
+      ]
     },
     "dev": {
       "cache": false,

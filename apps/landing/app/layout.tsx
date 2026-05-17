@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   title: "Muziks — música compartilhada no seu bar",
   description:
     "Ideal para criar playlists e música ambiente de acordo com o gosto dos seus clientes. Fila democrática com regras claras.",
+  icons: {
+    icon: "/brand/Muziks-152.png",
+    apple: "/brand/Muziks-152.png",
+  },
   openGraph: {
     title: "Muziks",
     description:

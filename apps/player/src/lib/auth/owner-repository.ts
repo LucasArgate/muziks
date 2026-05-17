@@ -1,11 +1,4 @@
-import {
-  getDb,
-  players,
-  profiles,
-  spotifyConnections,
-  toPlayerSummary,
-  toProfileSummary,
-} from "@muziks/db";
+import { getDb, players, profiles, toPlayerSummary, toProfileSummary } from "@muziks/db";
 import {
   pickSpotifyAvatarUrl,
   type SpotifyUserProfile,
@@ -13,7 +6,7 @@ import {
 } from "@muziks/spotify";
 import { eq } from "drizzle-orm";
 
-import { encryptToken } from "@/src/lib/crypto/token-encryption";
+import { persistSpotifyTokens } from "@/src/lib/spotify/spotify-token-vault";
 import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
 
 export async function findProfileBySpotifyUserId(spotifyUserId: string) {
@@ -139,28 +132,7 @@ export async function ensureOwnerAccount(input: {
       });
   }
 
-  const refreshToken = input.tokens.refresh_token;
-  if (refreshToken) {
-    const expiresAt = new Date(Date.now() + input.tokens.expires_in * 1000);
-    await db
-      .insert(spotifyConnections)
-      .values({
-        userId,
-        refreshTokenEnc: encryptToken(refreshToken),
-        accessTokenEnc: encryptToken(input.tokens.access_token),
-        expiresAt,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: spotifyConnections.userId,
-        set: {
-          refreshTokenEnc: encryptToken(refreshToken),
-          accessTokenEnc: encryptToken(input.tokens.access_token),
-          expiresAt,
-          updatedAt: new Date(),
-        },
-      });
-  }
+  await persistSpotifyTokens(userId, input.tokens);
 
   return { userId, email };
 }

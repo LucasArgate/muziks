@@ -1,4 +1,4 @@
-import { GlassPanel } from "@muziks/ui";
+import { GlassPanel, MuziksLogo } from "@muziks/ui";
 import type { ReactNode } from "react";
 
 type AuthPageShellProps = {
@@ -12,6 +12,9 @@ export function AuthPageShell({ title, subtitle, children }: AuthPageShellProps)
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-md">
         <GlassPanel className="p-8 md:p-10">
+          <div className="mb-6 flex justify-center">
+            <MuziksLogo variant="light" className="h-8 w-auto" />
+          </div>
           <h1 className="text-center text-2xl font-semibold text-on-surface md:text-3xl">
             {title}
           </h1>
