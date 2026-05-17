@@ -7,12 +7,7 @@ const extraDevOrigins =
     .filter(Boolean) ?? [];
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: [
-    "127.0.0.1",
-    "localhost",
-    "192.168.15.11",
-    ...extraDevOrigins,
-  ],
+  allowedDevOrigins: ["127.0.0.1", "localhost", ...extraDevOrigins],
   transpilePackages: [
     "@muziks/ui",
     "@muziks/utils",
