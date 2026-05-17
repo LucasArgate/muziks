@@ -1,0 +1,6 @@
+@import "@muziks/ui/globals.css";
+
+html,
+body {
+  overflow-x: clip;
+}

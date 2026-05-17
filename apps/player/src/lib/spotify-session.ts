@@ -1,0 +1,124 @@
+import { cookies } from "next/headers";
+import {
+  refreshAccessToken,
+  type SpotifyTokenResponse,
+} from "@muziks/spotify";
+import {
+  getSpotifyClientId,
+  getSpotifyClientSecret,
+} from "@/src/config/spotify-env";
+
+const ACCESS_COOKIE = "muziks_spotify_access";
+const REFRESH_COOKIE = "muziks_spotify_refresh";
+const EXPIRES_COOKIE = "muziks_spotify_expires_at";
+const PKCE_VERIFIER_COOKIE = "muziks_spotify_pkce_verifier";
+const OAUTH_STATE_COOKIE = "muziks_spotify_oauth_state";
+const RETURN_SLUG_COOKIE = "muziks_spotify_return_slug";
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+
+export const spotifySessionCookies = {
+  pkceVerifier: PKCE_VERIFIER_COOKIE,
+  oauthState: OAUTH_STATE_COOKIE,
+  returnSlug: RETURN_SLUG_COOKIE,
+} as const;
+
+export async function setOAuthTransientCookies(input: {
+  codeVerifier: string;
+  state: string;
+  returnSlug: string;
+}): Promise<void> {
+  const jar = await cookies();
+  const opts = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 600,
+  };
+  jar.set(PKCE_VERIFIER_COOKIE, input.codeVerifier, opts);
+  jar.set(OAUTH_STATE_COOKIE, input.state, opts);
+  jar.set(RETURN_SLUG_COOKIE, input.returnSlug, opts);
+}
+
+export async function readOAuthTransientCookies(): Promise<{
+  codeVerifier: string | undefined;
+  state: string | undefined;
+  returnSlug: string | undefined;
+}> {
+  const jar = await cookies();
+  return {
+    codeVerifier: jar.get(PKCE_VERIFIER_COOKIE)?.value,
+    state: jar.get(OAUTH_STATE_COOKIE)?.value,
+    returnSlug: jar.get(RETURN_SLUG_COOKIE)?.value,
+  };
+}
+
+export async function clearOAuthTransientCookies(): Promise<void> {
+  const jar = await cookies();
+  jar.delete(PKCE_VERIFIER_COOKIE);
+  jar.delete(OAUTH_STATE_COOKIE);
+  jar.delete(RETURN_SLUG_COOKIE);
+}
+
+export async function persistTokenResponse(
+  tokens: SpotifyTokenResponse,
+): Promise<void> {
+  const jar = await cookies();
+  const expiresAt = Date.now() + tokens.expires_in * 1000;
+  const opts = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: COOKIE_MAX_AGE,
+  };
+
+  jar.set(ACCESS_COOKIE, tokens.access_token, opts);
+  jar.set(EXPIRES_COOKIE, String(expiresAt), opts);
+
+  if (tokens.refresh_token) {
+    jar.set(REFRESH_COOKIE, tokens.refresh_token, opts);
+  }
+}
+
+export async function clearSpotifySession(): Promise<void> {
+  const jar = await cookies();
+  jar.delete(ACCESS_COOKIE);
+  jar.delete(REFRESH_COOKIE);
+  jar.delete(EXPIRES_COOKIE);
+}
+
+export async function getValidAccessToken(): Promise<string | null> {
+  const jar = await cookies();
+  const access = jar.get(ACCESS_COOKIE)?.value;
+  const refresh = jar.get(REFRESH_COOKIE)?.value;
+  const expiresRaw = jar.get(EXPIRES_COOKIE)?.value;
+  const expiresAt = expiresRaw ? Number(expiresRaw) : 0;
+
+  if (access && expiresAt > Date.now() + 60_000) {
+    return access;
+  }
+
+  if (!refresh) {
+    return null;
+  }
+
+  const tokens = await refreshAccessToken({
+    clientId: getSpotifyClientId(),
+    refreshToken: refresh,
+    clientSecret: getSpotifyClientSecret(),
+  });
+
+  await persistTokenResponse({
+    ...tokens,
+    refresh_token: tokens.refresh_token ?? refresh,
+  });
+
+  return tokens.access_token;
+}
+
+export async function hasSpotifySession(): Promise<boolean> {
+  const token = await getValidAccessToken();
+  return Boolean(token);
+}
