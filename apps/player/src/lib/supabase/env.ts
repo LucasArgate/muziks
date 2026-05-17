@@ -15,17 +15,21 @@ export function getSupabaseAnonKey(): string {
 }
 
 export function getSupabaseServiceRoleKey(): string {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!key) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
   }
   return key;
 }
 
+export function hasSupabaseServiceRoleKey(): boolean {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+}
+
 export function getSpotifyTokenEncryptionKey(): string {
-  return (
-    process.env.SPOTIFY_TOKEN_ENCRYPTION_KEY ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    ""
-  );
+  const dedicated = process.env.SPOTIFY_TOKEN_ENCRYPTION_KEY?.trim();
+  if (dedicated) {
+    return dedicated;
+  }
+  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? "";
 }

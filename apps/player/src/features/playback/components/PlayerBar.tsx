@@ -1,0 +1,117 @@
+"use client";
+
+import type { NormalizedSpotifyPlayerState, PlaybackSyncMode } from "@muziks/types";
+import { cn } from "@muziks/utils";
+import { Pause, Play } from "lucide-react";
+
+import { ConnectDeviceControl } from "@/src/components/molecules/connect-device-control";
+import { Button } from "@/src/components/ui/button";
+import { usePlaybackProgress } from "@/src/features/playback/hooks/usePlaybackProgress";
+
+type PlayerBarProps = {
+  playback: NormalizedSpotifyPlayerState | null;
+  ready: boolean;
+  onTogglePlay: () => void;
+  syncMode?: PlaybackSyncMode;
+  deviceName?: string | null;
+  showConnectBadge?: boolean;
+  onSelectDevice?: (deviceId: string, deviceName: string) => Promise<void>;
+  className?: string;
+};
+
+export function PlayerBar({
+  playback,
+  ready,
+  onTogglePlay,
+  syncMode,
+  deviceName,
+  showConnectBadge = false,
+  onSelectDevice,
+  className,
+}: PlayerBarProps) {
+  const progress = usePlaybackProgress(playback);
+
+  return (
+    <div className={cn("flex flex-col", className)}>
+      <div className="p-3">
+        <div className="flex items-center gap-3">
+          {playback?.albumImageUrl ? (
+            <img
+              src={playback.albumImageUrl}
+              alt=""
+              className="h-12 w-12 shrink-0 rounded-md object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-surface-container-high text-on-surface-variant">
+              <MusicIcon />
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-on-surface">
+              {playback?.trackName ?? "Nenhuma faixa"}
+            </p>
+            <p className="truncate text-xs text-on-surface-variant">
+              {playback?.artistName ?? (ready ? "Pronto para reproduzir" : "—")}
+            </p>
+            {progress.hasDuration ? (
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-outline/30">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${progress.progressPercent}%` }}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <Button
+            type="button"
+            size="icon"
+            onClick={onTogglePlay}
+            disabled={!ready}
+            className="h-10 w-10 shrink-0 rounded-full"
+            aria-label={playback?.paused !== false ? "Reproduzir" : "Pausar"}
+          >
+            {playback?.paused !== false ? (
+              <Play className="h-5 w-5 fill-current" />
+            ) : (
+              <Pause className="h-5 w-5 fill-current" />
+            )}
+          </Button>
+        </div>
+
+        {progress.hasDuration ? (
+          <p className="mt-1 text-right text-[10px] tabular-nums text-on-surface-variant">
+            {progress.currentTime} / {progress.durationTime}
+          </p>
+        ) : null}
+      </div>
+
+      {showConnectBadge && syncMode && onSelectDevice ? (
+        <div className="border-t border-outline/40 px-3 py-2">
+          <ConnectDeviceControl
+            syncMode={syncMode}
+            deviceName={deviceName}
+            onSelectDevice={onSelectDevice}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MusicIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 stroke-current"
+      fill="none"
+      strokeWidth="1.5"
+      aria-hidden
+    >
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+  );
+}

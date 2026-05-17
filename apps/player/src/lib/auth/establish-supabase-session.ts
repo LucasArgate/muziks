@@ -12,7 +12,7 @@ export async function establishSupabaseSessionFromEmail(
     });
 
   if (linkError) {
-    throw linkError;
+    throw new Error(`Supabase generateLink failed: ${linkError.message}`);
   }
 
   const tokenHash = linkData.properties?.hashed_token;

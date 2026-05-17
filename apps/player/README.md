@@ -4,19 +4,22 @@ App **master Spotify** — host `player.muziks.com/{slug}`.
 
 ## Desenvolvimento
 
+Mesmo projeto Supabase que produção (`qgucuffklddzciejdtrb`). Checklist local:
+
+1. Copie `.env.example` → `.env` e `.env.local`.
+2. **Supabase → API Keys** → cole `SUPABASE_SERVICE_ROLE_KEY` em `.env.local`.
+3. **Connect → Transaction** → mesma `DATABASE_URL` da Vercel (`aws-1-…pooler…:6543`, usuário `postgres.PROJECT_REF`).
+4. **Spotify Dashboard** → redirect `http://127.0.0.1:3002/api/spotify/callback` (e o IP da rede, se usar celular).
+5. `NEXT_PUBLIC_PLAYER_APP_URL` = host que você abre (`http://127.0.0.1:3002` no PC).
+6. Migrations (se banco novo): `pnpm db:migrate` na raiz.
+
 ```bash
 pnpm dev:player
 ```
 
-Copie `.env.example` para `.env.local` (Supabase + Spotify + `DATABASE_URL`).
+Abra **http://127.0.0.1:3002/login** (não `localhost`, para bater com o redirect).
 
-**Rede local (celular/tablet):** o dev server escuta em `0.0.0.0:3002`. Abra `http://<IP-da-máquina>:3002` (ex. `http://192.168.15.11:3002/login`). No Spotify Dashboard, adicione o redirect `http://<IP>:3002/api/spotify/callback`. Em `.env.local`, opcional: `PLAYER_ALLOWED_DEV_ORIGINS=<IP>:3002`.
-
-Aplique migrations do banco (uma vez por ambiente):
-
-```bash
-pnpm db:migrate
-```
+**Celular na rede:** `NEXT_PUBLIC_PLAYER_APP_URL=http://<seu-ip>:3002`, redirect no Spotify, `PLAYER_ALLOWED_DEV_ORIGINS=<seu-ip>`.
 
 ## Auth (dono)
 

@@ -11,7 +11,7 @@ function resolveSpotifyNotice(
   searchParams: Record<string, string | string[] | undefined>,
 ): string | null {
   if (searchParams.spotify_connected === "1") {
-    return "Spotify conectado. Ative a reprodução neste navegador.";
+    return "Spotify conectado. Escolha o dispositivo onde a música vai tocar.";
   }
 
   const error = searchParams.spotify_error;

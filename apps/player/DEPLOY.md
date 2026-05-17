@@ -53,14 +53,30 @@ Sem isso o callback Spotify falha após autorizar.
 No Spotify Dashboard, registrar redirect URI:
 
 - Produção: `https://player.muziks.app/api/spotify/callback`
+- Staging: `https://staging-player.muziks.app/api/spotify/callback`
 - Local: `http://127.0.0.1:3002/api/spotify/callback` (não usar `localhost`)
 
 Ver [Building with AI (Spotify)](https://developer.spotify.com/documentation/web-api/tutorials/building-with-ai).
 
+### Staging vs produção (Vercel)
+
+O OAuth usa `NEXT_PUBLIC_PLAYER_APP_URL` para montar redirects. **Cada ambiente na Vercel precisa da sua própria URL** — não copie a de produção para Preview/Staging.
+
+| Escopo Vercel | Domínio | `NEXT_PUBLIC_PLAYER_APP_URL` |
+|---------------|---------|------------------------------|
+| **Production** | `player.muziks.app` | `https://player.muziks.app` |
+| **Preview** (branch `develop`, etc.) | `staging-player.muziks.app` | `https://staging-player.muziks.app` |
+
+Se staging ainda redirecionar para produção, confira no projeto Vercel → Settings → Environment Variables que Preview não herda o valor de Production.
+
+Opcional: `PLAYER_ALLOWED_APP_ORIGINS=https://staging-player.muziks.app` no ambiente Preview (fallback se a URL da requisição for permitida explicitamente).
+
+No **Supabase → Authentication → URL Configuration**, incluir em redirect URLs: `https://staging-player.muziks.app/**` e `https://player.muziks.app/**`.
+
 ## Domínios
 
 - **Produção:** `player.muziks.app`
-- **Staging (futuro):** `staging.player.muziks.com`
+- **Staging:** `staging-player.muziks.app`
 
 ## Cloudflare
 

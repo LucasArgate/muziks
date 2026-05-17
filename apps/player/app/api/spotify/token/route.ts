@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getValidAccessToken } from "@/src/lib/spotify-session";
+import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
 
 /** Fornece access token ao Web Playback SDK (sem expor refresh). */
 export async function GET() {
-  const accessToken = await getValidAccessToken();
+  const accessToken = await getOwnerSpotifyAccessToken();
 
   if (!accessToken) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });

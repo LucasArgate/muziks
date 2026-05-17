@@ -6,8 +6,11 @@ import {
   toPlayerSummary,
   toProfileSummary,
 } from "@muziks/db";
-import type { SpotifyUserProfile } from "@muziks/spotify";
-import type { SpotifyTokenResponse } from "@muziks/spotify";
+import {
+  pickSpotifyAvatarUrl,
+  type SpotifyUserProfile,
+  type SpotifyTokenResponse,
+} from "@muziks/spotify";
 import { eq } from "drizzle-orm";
 
 import { encryptToken } from "@/src/lib/crypto/token-encryption";
@@ -52,6 +55,13 @@ export async function ensureOwnerAccount(input: {
   const spotifyUserId = input.spotifyProfile.id;
   const displayName =
     input.spotifyProfile.display_name ?? input.spotifyProfile.id;
+  const avatarUrl = pickSpotifyAvatarUrl(input.spotifyProfile.images);
+  const profileFields = {
+    displayName,
+    avatarUrl,
+    email,
+    updatedAt: new Date(),
+  };
 
   let userId: string;
   const existingProfile = await findProfileBySpotifyUserId(spotifyUserId);
@@ -60,11 +70,14 @@ export async function ensureOwnerAccount(input: {
     userId = existingProfile.id;
     await db
       .update(profiles)
-      .set({
-        displayName,
-        updatedAt: new Date(),
-      })
+      .set(profileFields)
       .where(eq(profiles.id, userId));
+    await admin.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        display_name: displayName,
+        avatar_url: avatarUrl,
+      },
+    });
   } else {
     const { data: created, error } = await admin.auth.admin.createUser({
       email,
@@ -75,6 +88,7 @@ export async function ensureOwnerAccount(input: {
       },
       user_metadata: {
         display_name: displayName,
+        avatar_url: avatarUrl,
       },
     });
 
@@ -95,6 +109,10 @@ export async function ensureOwnerAccount(input: {
           provider: "spotify",
           spotify_user_id: spotifyUserId,
         },
+        user_metadata: {
+          display_name: displayName,
+          avatar_url: avatarUrl,
+        },
       });
     } else {
       throw new Error("Failed to create Supabase user");
@@ -106,12 +124,16 @@ export async function ensureOwnerAccount(input: {
         id: userId,
         spotifyUserId,
         displayName,
+        avatarUrl,
+        email,
       })
       .onConflictDoUpdate({
         target: profiles.id,
         set: {
           spotifyUserId,
           displayName,
+          avatarUrl,
+          email,
           updatedAt: new Date(),
         },
       });

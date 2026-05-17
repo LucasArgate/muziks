@@ -6,6 +6,8 @@ export const profileSchema = z.object({
   id: z.string().uuid(),
   spotifyUserId: z.string().nullable(),
   displayName: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  email: z.string().email().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -16,6 +18,8 @@ export const profileSummarySchema = z.object({
   id: z.string().uuid(),
   displayName: z.string().nullable(),
   spotifyUserId: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  email: z.string().email().nullable(),
 });
 
 export type ProfileSummary = z.infer<typeof profileSummarySchema>;

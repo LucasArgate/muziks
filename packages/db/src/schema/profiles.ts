@@ -4,6 +4,8 @@ export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
   spotifyUserId: text("spotify_user_id").unique(),
   displayName: text("display_name"),
+  avatarUrl: text("avatar_url"),
+  email: text("email"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

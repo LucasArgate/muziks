@@ -7,6 +7,7 @@ import {
   ensureOwnerAccount,
   findPlayerByOwnerId,
 } from "@/src/lib/auth/owner-repository";
+import { upsertConnectedSession } from "@/src/lib/playback/playback-session-repository";
 import {
   getPlayerAppUrlFromRequest,
   getSpotifyClientId,
@@ -21,7 +22,11 @@ import {
 } from "@/src/lib/spotify-session";
 import type { SupabaseCookieToSet } from "@/src/lib/supabase/cookie-types";
 import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/src/lib/supabase/env";
+import {
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  hasSupabaseServiceRoleKey,
+} from "@/src/lib/supabase/env";
 
 export async function GET(request: NextRequest) {
   const appUrl = getPlayerAppUrlFromRequest(request);
@@ -55,12 +60,16 @@ export async function GET(request: NextRequest) {
     return redirectWithError("invalid_state");
   }
 
+  if (!hasSupabaseServiceRoleKey()) {
+    return redirectWithError("SUPABASE_SERVICE_ROLE_KEY is not set");
+  }
+
   try {
     const tokens = await exchangeAuthorizationCode({
       clientId: getSpotifyClientId(),
       clientSecret: getSpotifyClientSecret(),
       code,
-      redirectUri: getSpotifyRedirectUri(),
+      redirectUri: getSpotifyRedirectUri(request),
       codeVerifier: oauthState.codeVerifier,
     });
 
@@ -71,6 +80,12 @@ export async function GET(request: NextRequest) {
     });
 
     const player = await findPlayerByOwnerId(userId);
+    if (player) {
+      await upsertConnectedSession({
+        playerId: player.id,
+        spotifyUserId: spotifyProfile.id,
+      });
+    }
     const slug = returnSlug || player?.slug;
 
     const successUrl = slug

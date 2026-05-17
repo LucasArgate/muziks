@@ -36,17 +36,22 @@ ALTER TABLE "profiles" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "players" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "spotify_connections" ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "profiles_select_own" ON "profiles";
 CREATE POLICY "profiles_select_own" ON "profiles"
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "profiles_update_own" ON "profiles";
 CREATE POLICY "profiles_update_own" ON "profiles"
   FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "players_select_own" ON "players";
 CREATE POLICY "players_select_own" ON "players"
   FOR SELECT USING (auth.uid() = owner_id);
 
+DROP POLICY IF EXISTS "players_insert_own" ON "players";
 CREATE POLICY "players_insert_own" ON "players"
   FOR INSERT WITH CHECK (auth.uid() = owner_id);
 
+DROP POLICY IF EXISTS "players_update_own" ON "players";
 CREATE POLICY "players_update_own" ON "players"
   FOR UPDATE USING (auth.uid() = owner_id);

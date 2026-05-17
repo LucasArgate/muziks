@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@muziks/db": "workspace:*",
+    "@muziks/queue": "workspace:*",
+    "@muziks/types": "workspace:*",
     "@muziks/ui": "workspace:*",
     "@muziks/utils": "workspace:*",
     "next": "^15.1.3",
