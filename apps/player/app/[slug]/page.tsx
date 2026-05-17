@@ -1,5 +1,6 @@
 import { PlayerMasterShell } from "@/src/components/organisms/player-master-shell";
-import { hasSpotifySession } from "@/src/lib/spotify-session";
+import { assertPlayerOwnership } from "@/src/lib/auth/require-session";
+import { buildPlayerMasterViewState } from "@/src/lib/auth/build-master-view";
 
 type PlayerSlugPageProps = {
   params: Promise<{ slug: string }>;
@@ -27,13 +28,15 @@ export default async function PlayerSlugPage({
 }: PlayerSlugPageProps) {
   const { slug } = await params;
   const query = await searchParams;
-  const isAuthenticated = await hasSpotifySession();
+
+  await assertPlayerOwnership(slug);
+  const viewState = await buildPlayerMasterViewState();
   const spotifyNotice = resolveSpotifyNotice(query);
 
   return (
     <PlayerMasterShell
       slug={slug}
-      isAuthenticated={isAuthenticated}
+      viewState={viewState}
       spotifyNotice={spotifyNotice}
     />
   );

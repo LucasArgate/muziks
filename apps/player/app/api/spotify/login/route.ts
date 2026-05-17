@@ -14,11 +14,7 @@ import { setOAuthTransientCookies } from "@/src/lib/spotify-session";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get("slug")?.trim();
-
-    if (!slug) {
-      return NextResponse.json({ error: "slug is required" }, { status: 400 });
-    }
+    const slug = searchParams.get("slug")?.trim() ?? "";
 
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = await createCodeChallenge(codeVerifier);

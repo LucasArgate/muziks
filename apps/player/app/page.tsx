@@ -1,10 +1,17 @@
-import { ComingSoonScreen } from "@muziks/ui";
+import { redirect } from "next/navigation";
 
-export default function PlayerHomePage() {
-  return (
-    <ComingSoonScreen
-      title="Muziks Player"
-      subtitle="Abra o link do seu espaço no formato /{slug} para conectar o Spotify e ativar a reprodução no telão."
-    />
-  );
+import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
+
+export default async function HomePage() {
+  const session = await getMuziksSession();
+
+  if (session.status === "anonymous") {
+    redirect("/login");
+  }
+
+  if (session.status === "authenticated_no_player") {
+    redirect("/create");
+  }
+
+  redirect(`/${session.player.slug}`);
 }

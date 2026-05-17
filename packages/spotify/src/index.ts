@@ -14,3 +14,4 @@ export {
   type RefreshTokenParams,
   type SpotifyTokenResponse,
 } from "./oauth";
+export { fetchSpotifyProfile, type SpotifyUserProfile } from "./profile";

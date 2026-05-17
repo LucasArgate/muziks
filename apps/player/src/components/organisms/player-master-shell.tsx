@@ -1,23 +1,26 @@
 "use client";
 
 import { GlassPanel } from "@muziks/ui";
+import type { PlayerMasterViewState } from "@muziks/types";
 import { cn } from "@muziks/utils";
+
 import { SpotifyConnectButton } from "@/src/components/molecules/spotify-connect-button";
 import { PlaybackMasterGate } from "@/src/features/playback/components/PlaybackMasterGate";
 import { useSpotifyPlayer } from "@/src/features/playback/hooks/useSpotifyPlayer";
 
 type PlayerMasterShellProps = {
   slug: string;
-  isAuthenticated: boolean;
+  viewState: PlayerMasterViewState;
   spotifyNotice?: string | null;
 };
 
 export function PlayerMasterShell({
   slug,
-  isAuthenticated,
+  viewState,
   spotifyNotice,
 }: PlayerMasterShellProps) {
-  const playback = useSpotifyPlayer(`Muziks — ${slug}`, isAuthenticated);
+  const hasSpotify = viewState.spotify === "connected";
+  const playback = useSpotifyPlayer(`Muziks — ${slug}`, hasSpotify);
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-10">
@@ -48,7 +51,7 @@ export function PlayerMasterShell({
 
           <div className="mt-8 space-y-4">
             <PlaybackMasterGate
-              isAuthenticated={isAuthenticated}
+              isAuthenticated={hasSpotify}
               fallback={<SpotifyConnectButton slug={slug} />}
             >
               {!playback.ready ? (
@@ -73,10 +76,7 @@ export function PlayerMasterShell({
                 </p>
               ) : null}
 
-              <form
-                action={`/api/spotify/logout?slug=${encodeURIComponent(slug)}`}
-                method="post"
-              >
+              <form action={`/api/spotify/logout?slug=${encodeURIComponent(slug)}`} method="post">
                 <button
                   type="submit"
                   className="w-full text-center text-sm text-on-surface-variant underline-offset-2 hover:underline"
@@ -85,6 +85,15 @@ export function PlayerMasterShell({
                 </button>
               </form>
             </PlaybackMasterGate>
+
+            <form action="/logout" method="post">
+              <button
+                type="submit"
+                className="w-full text-center text-sm text-on-surface-variant/80 underline-offset-2 hover:underline"
+              >
+                Sair do Muziks
+              </button>
+            </form>
           </div>
         </GlassPanel>
       </div>

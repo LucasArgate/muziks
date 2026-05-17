@@ -1,5 +1,11 @@
+import { exchangeAuthorizationCode, fetchSpotifyProfile } from "@muziks/spotify";
 import { NextResponse } from "next/server";
-import { exchangeAuthorizationCode } from "@muziks/spotify";
+
+import { establishSupabaseSessionFromEmail } from "@/src/lib/auth/establish-supabase-session";
+import {
+  ensureOwnerAccount,
+  findPlayerByOwnerId,
+} from "@/src/lib/auth/owner-repository";
 import {
   getPlayerAppUrl,
   getSpotifyClientId,
@@ -11,6 +17,8 @@ import {
   persistTokenResponse,
   readOAuthTransientCookies,
 } from "@/src/lib/spotify-session";
+import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/src/lib/supabase/server";
 
 export async function GET(request: Request) {
   const appUrl = getPlayerAppUrl();
@@ -20,24 +28,29 @@ export async function GET(request: Request) {
   const state = searchParams.get("state");
 
   const transient = await readOAuthTransientCookies();
-  const returnSlug = transient.returnSlug ?? "";
+  const returnSlug = transient.returnSlug?.trim() ?? "";
 
-  const redirectToPlayer = (query: string) =>
-    NextResponse.redirect(`${appUrl}/${returnSlug}${query}`);
+  const redirectWithError = (message: string, path = "") => {
+    const base = returnSlug ? `${appUrl}/${returnSlug}` : `${appUrl}/login`;
+    const target = path || base;
+    return NextResponse.redirect(
+      `${target}?spotify_error=${encodeURIComponent(message)}`,
+    );
+  };
 
   if (error) {
     await clearOAuthTransientCookies();
-    return redirectToPlayer(`?spotify_error=${encodeURIComponent(error)}`);
+    return redirectWithError(error);
   }
 
   if (!code || !state) {
     await clearOAuthTransientCookies();
-    return redirectToPlayer("?spotify_error=missing_code");
+    return redirectWithError("missing_code");
   }
 
   if (!transient.codeVerifier || state !== transient.state) {
     await clearOAuthTransientCookies();
-    return redirectToPlayer("?spotify_error=invalid_state");
+    return redirectWithError("invalid_state");
   }
 
   try {
@@ -49,15 +62,38 @@ export async function GET(request: Request) {
       codeVerifier: transient.codeVerifier,
     });
 
+    const spotifyProfile = await fetchSpotifyProfile(tokens.access_token);
+    const { userId, email } = await ensureOwnerAccount({
+      spotifyProfile,
+      tokens,
+    });
+
+    const supabase = await createSupabaseServerClient();
+    const supabaseAdmin = createSupabaseAdminClient();
+    await establishSupabaseSessionFromEmail(email, supabase, supabaseAdmin);
+
     await persistTokenResponse(tokens);
     await clearOAuthTransientCookies();
 
-    return redirectToPlayer("?spotify_connected=1");
+    const player = await findPlayerByOwnerId(userId);
+    const slug = returnSlug || player?.slug;
+
+    if (slug) {
+      return NextResponse.redirect(
+        `${appUrl}/${slug}?spotify_connected=1`,
+      );
+    }
+
+    if (player) {
+      return NextResponse.redirect(
+        `${appUrl}/${player.slug}?spotify_connected=1`,
+      );
+    }
+
+    return NextResponse.redirect(`${appUrl}/create`);
   } catch (err) {
     await clearOAuthTransientCookies();
     const message = err instanceof Error ? err.message : "token_exchange_failed";
-    return redirectToPlayer(
-      `?spotify_error=${encodeURIComponent(message)}`,
-    );
+    return redirectWithError(message);
   }
 }

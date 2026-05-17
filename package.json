@@ -9,6 +9,8 @@
     "dev:player": "turbo run dev --filter=@muziks/player",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "db:generate": "pnpm --filter @muziks/db db:generate",
+    "db:migrate": "pnpm --filter @muziks/db db:migrate",
     "supabase": "pnpm dlx supabase@latest",
     "supabase:link": "pnpm dlx supabase@latest link --project-ref qgucuffklddzciejdtrb"
   },
