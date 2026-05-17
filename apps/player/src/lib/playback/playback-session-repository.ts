@@ -41,6 +41,7 @@ export function playbackSessionToNormalized(
     artistName: session.artistName,
     albumImageUrl: session.albumImageUrl,
     positionMs: session.progressMs,
+    positionUpdatedAt: Date.parse(session.updatedAt),
     durationMs: session.durationMs,
     paused: session.paused,
     deviceId: session.activeDeviceId,

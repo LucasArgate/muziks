@@ -19,15 +19,15 @@ export type PlaybackManagerOptions = {
   onLocalState: (state: NormalizedSpotifyPlayerState) => void;
 };
 
-type ListenerEntry<E extends keyof Spotify.PlayerEventMap> = {
-  event: E;
-  callback: (payload: Spotify.PlayerEventMap[E]) => void;
+type ListenerEntry = {
+  event: keyof Spotify.PlayerEventMap;
+  callback: (payload: Spotify.PlayerEventMap[keyof Spotify.PlayerEventMap]) => void;
 };
 
 export class PlaybackManager {
   private service: SpotifyServiceInstance | null = null;
   private options: PlaybackManagerOptions | null = null;
-  private listeners: ListenerEntry<keyof Spotify.PlayerEventMap>[] = [];
+  private listeners: ListenerEntry[] = [];
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private lastTrackUri: string | null = null;
 
@@ -114,7 +114,10 @@ export class PlaybackManager {
   ): void {
     if (!this.service) return;
     this.service.player.addListener(event, callback);
-    this.listeners.push({ event, callback });
+    this.listeners.push({
+      event,
+      callback: callback as ListenerEntry["callback"],
+    });
   }
 
   private emitLocal(state: NormalizedSpotifyPlayerState): void {

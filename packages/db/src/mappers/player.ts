@@ -15,6 +15,8 @@ export function toProfileSummary(row: ProfileRow): ProfileSummary {
     id: row.id,
     displayName: row.displayName,
     spotifyUserId: row.spotifyUserId,
+    avatarUrl: row.avatarUrl,
+    email: row.email,
   };
 }
 

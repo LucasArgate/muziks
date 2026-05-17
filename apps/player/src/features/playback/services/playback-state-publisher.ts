@@ -5,12 +5,21 @@ import type {
   PublishPlaybackSessionInput,
 } from "@muziks/types";
 
+import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-channel";
+
+import {
+  mergeApiOverSdk,
+  type PlaybackStateSource,
+  statesDiverge,
+} from "./playback-state-merge";
+
 const DEBOUNCE_MS = 800;
-const PLAYING_POSITION_BUCKET_MS = 2000;
+const PLAYING_POSITION_BUCKET_MS = 5000;
 const PAUSED_POSITION_BUCKET_MS = 10000;
 
 export type PlaybackStatePublisherOptions = {
   slug: string;
+  playerId?: string | null;
   syncMode: PlaybackSyncMode;
   preferredDeviceId?: string | null;
   activeDeviceName?: string | null;
@@ -53,6 +62,7 @@ export class PlaybackStatePublisher {
   private lastPublished: NormalizedSpotifyPlayerState | null = null;
   private lastFingerprint: string | null = null;
   private lastTrackUri: string | null = null;
+  private lastSdkState: NormalizedSpotifyPlayerState | null = null;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private stateVersion = 0;
 
@@ -73,27 +83,78 @@ export class PlaybackStatePublisher {
     this.options?.onLocalState(state);
   }
 
-  ingest(state: NormalizedSpotifyPlayerState, status?: PlaybackSessionStatus): void {
+  ingest(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
+  ): void {
     const resolved: NormalizedSpotifyPlayerState = {
       ...state,
       status: status ?? state.status,
     };
 
-    this.emitLocal(resolved);
-
-    const trackChanged = resolved.trackUri !== this.lastTrackUri;
-    if (trackChanged && resolved.trackUri) {
-      this.lastTrackUri = resolved.trackUri;
-      this.options?.onTrackChanged?.(resolved);
-      void this.flushPublish(resolved, status);
+    if (source === "sdk") {
+      this.lastSdkState = resolved;
+      this.ingestSdk(resolved, status);
       return;
     }
 
-    if (!shouldPublish(this.lastPublished, resolved)) {
+    this.ingestApi(resolved, status);
+  }
+
+  private ingestSdk(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+  ): void {
+    this.emitLocal(state);
+
+    const trackChanged = state.trackUri !== this.lastTrackUri;
+    if (trackChanged && state.trackUri) {
+      this.lastTrackUri = state.trackUri;
+      this.options?.onTrackChanged?.(state);
+      void this.flushPublish(state, status);
       return;
     }
 
-    this.schedulePublish(resolved, status);
+    if (!shouldPublish(this.lastPublished, state)) {
+      return;
+    }
+
+    this.schedulePublish(state, status);
+  }
+
+  private ingestApi(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+  ): void {
+    const mode = this.options?.syncMode ?? "api_device";
+    const diverged = statesDiverge(this.lastSdkState, state);
+
+    if (mode === "hybrid" && !diverged) {
+      return;
+    }
+
+    const display = mergeApiOverSdk(this.lastSdkState, state);
+    this.emitLocal(display);
+
+    const trackChanged = display.trackUri !== this.lastTrackUri;
+    if (trackChanged && display.trackUri) {
+      this.lastTrackUri = display.trackUri;
+      this.options?.onTrackChanged?.(display);
+      void this.flushPublish(display, status);
+      return;
+    }
+
+    if (!shouldPublish(this.lastPublished, display)) {
+      return;
+    }
+
+    if (diverged) {
+      void this.flushPublish(display, status);
+      return;
+    }
+
+    this.schedulePublish(display, status);
   }
 
   private schedulePublish(
@@ -165,6 +226,14 @@ export class PlaybackStatePublisher {
 
       this.lastPublished = state;
       this.lastFingerprint = fp;
+
+      const playerId = this.options?.playerId;
+      if (playerId && session.accepted !== false) {
+        void broadcastSessionSnapshot(playerId, {
+          playback: state,
+          stateVersion: this.stateVersion,
+        });
+      }
     } catch {
       // best-effort sync
     }
@@ -179,5 +248,6 @@ export class PlaybackStatePublisher {
     this.lastPublished = null;
     this.lastFingerprint = null;
     this.lastTrackUri = null;
+    this.lastSdkState = null;
   }
 }

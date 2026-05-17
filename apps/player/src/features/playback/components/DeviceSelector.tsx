@@ -5,9 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 
 type DeviceSelectorProps = {
   onSelect: (deviceId: string, deviceName: string) => Promise<void>;
+  embedded?: boolean;
 };
 
-export function DeviceSelector({ onSelect }: DeviceSelectorProps) {
+export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorProps) {
   const [devices, setDevices] = useState<SpotifyApiDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,15 +53,17 @@ export function DeviceSelector({ onSelect }: DeviceSelectorProps) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-on-surface">
-          Escolha onde tocar
-        </h2>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          Selecione um dispositivo Spotify Connect. O áudio toca no aparelho
-          escolhido; este painel controla a sessão.
-        </p>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="text-lg font-semibold text-on-surface">
+            Escolha onde tocar
+          </h2>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Selecione um dispositivo Spotify Connect. O áudio toca no aparelho
+            escolhido; este painel controla a sessão.
+          </p>
+        </div>
+      ) : null}
 
       {loading ? (
         <p className="text-sm text-on-surface-variant">Carregando dispositivos…</p>

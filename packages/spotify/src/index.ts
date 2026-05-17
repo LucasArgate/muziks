@@ -8,13 +8,19 @@ export { createCodeChallenge, generateCodeVerifier } from "./pkce";
 export {
   buildAuthorizeUrl,
   exchangeAuthorizationCode,
+  isSpotifyRefreshTokenRevoked,
   refreshAccessToken,
+  SpotifyOAuthError,
   type BuildAuthorizeUrlParams,
   type ExchangeCodeParams,
   type RefreshTokenParams,
   type SpotifyTokenResponse,
 } from "./oauth";
-export { fetchSpotifyProfile, type SpotifyUserProfile } from "./profile";
+export {
+  fetchSpotifyProfile,
+  pickSpotifyAvatarUrl,
+  type SpotifyUserProfile,
+} from "./profile";
 export {
   getCurrentPlayback,
   type GetCurrentPlaybackParams,

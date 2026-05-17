@@ -22,6 +22,13 @@
       "when": 1747574400000,
       "tag": "0002_player_sessions_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1747660800000,
+      "tag": "0003_profile_avatar_email",
+      "breakpoints": true
     }
   ]
 }

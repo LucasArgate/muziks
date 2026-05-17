@@ -10,6 +10,8 @@ export const normalizedSpotifyPlayerStateSchema = z.object({
   artistName: z.string().nullable(),
   albumImageUrl: z.string().nullable().optional(),
   positionMs: z.number().int().nonnegative(),
+  /** Epoch ms em que `positionMs` foi medido (Spotify API `timestamp` ou recebimento do SDK). */
+  positionUpdatedAt: z.number().int().nonnegative().optional(),
   durationMs: z.number().int().nonnegative(),
   paused: z.boolean(),
   deviceId: z.string().nullable(),

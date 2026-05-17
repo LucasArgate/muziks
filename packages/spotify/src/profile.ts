@@ -7,6 +7,12 @@ export type SpotifyUserProfile = {
   images?: { url: string }[];
 };
 
+export function pickSpotifyAvatarUrl(
+  images?: { url: string }[],
+): string | null {
+  return images?.[0]?.url ?? null;
+}
+
 export async function fetchSpotifyProfile(
   accessToken: string,
 ): Promise<SpotifyUserProfile> {

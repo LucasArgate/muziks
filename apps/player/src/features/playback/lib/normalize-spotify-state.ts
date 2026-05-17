@@ -35,6 +35,7 @@ export function normalizeSpotifyPlaybackState(
       : null,
     albumImageUrl: pickAlbumImageUrl(track),
     positionMs: state?.position ?? 0,
+    positionUpdatedAt: Date.now(),
     durationMs: state?.duration ?? 0,
     paused: state?.paused ?? true,
     deviceId,

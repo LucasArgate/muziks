@@ -8,9 +8,9 @@ import {
 } from "../lib/normalize-spotify-state";
 import type { SpotifyServiceInstance } from "./SpotifyService";
 
-type ListenerEntry<E extends keyof Spotify.PlayerEventMap> = {
-  event: E;
-  callback: (payload: Spotify.PlayerEventMap[E]) => void;
+type ListenerEntry = {
+  event: keyof Spotify.PlayerEventMap;
+  callback: (payload: Spotify.PlayerEventMap[keyof Spotify.PlayerEventMap]) => void;
 };
 
 export type SdkPlaybackSourceOptions = {
@@ -20,7 +20,7 @@ export type SdkPlaybackSourceOptions = {
 export class SdkPlaybackSource {
   private service: SpotifyServiceInstance | null = null;
   private options: SdkPlaybackSourceOptions | null = null;
-  private listeners: ListenerEntry<keyof Spotify.PlayerEventMap>[] = [];
+  private listeners: ListenerEntry[] = [];
 
   start(
     service: SpotifyServiceInstance,
@@ -87,6 +87,9 @@ export class SdkPlaybackSource {
   ): void {
     if (!this.service) return;
     this.service.player.addListener(event, callback);
-    this.listeners.push({ event, callback });
+    this.listeners.push({
+      event,
+      callback: callback as ListenerEntry["callback"],
+    });
   }
 }

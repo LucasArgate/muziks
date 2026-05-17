@@ -1,76 +1,98 @@
-"use client";
-
-import type { NormalizedSpotifyPlayerState } from "@muziks/types";
-import { cn } from "@muziks/utils";
-
-import { PlayerBar } from "./PlayerBar";
-
-type PlayerSidebarProps = {
-  slug: string;
-  playback: NormalizedSpotifyPlayerState | null;
-  ready: boolean;
-  onTogglePlay: () => void;
-  className?: string;
-};
-
-const navItems = [
-  { label: "Início", active: true, disabled: false },
-  { label: "Fila", active: false, disabled: true },
-  { label: "Configurações", active: false, disabled: true },
-];
-
-export function PlayerSidebar({
-  slug,
-  playback,
-  ready,
-  onTogglePlay,
-  className,
-}: PlayerSidebarProps) {
-  return (
-    <aside
-      className={cn(
-        "hidden h-dvh w-60 flex-col border-r border-outline/40 bg-surface/80 md:flex",
-        className,
-      )}
-    >
-      <div className="px-5 py-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-on-surface-variant">
-          Muziks Player
-        </p>
-        <p className="mt-1 truncate text-lg font-semibold text-on-surface">
-          {slug}
-        </p>
-      </div>
-
-      <nav className="flex-1 space-y-1 px-3">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            disabled={item.disabled}
-            className={cn(
-              "w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition",
-              item.active
-                ? "bg-surface-container-high text-on-surface"
-                : "text-on-surface-variant",
-              item.disabled && "cursor-not-allowed opacity-40",
-            )}
-          >
-            {item.label}
-            {item.disabled ? (
-              <span className="ml-2 text-[10px] uppercase">em breve</span>
-            ) : null}
-          </button>
-        ))}
-      </nav>
-
-      <div className="mt-auto border-t border-outline/40">
-        <PlayerBar
-          playback={playback}
-          ready={ready}
-          onTogglePlay={onTogglePlay}
-        />
-      </div>
-    </aside>
-  );
-}
+"use client";
+
+import type { NormalizedSpotifyPlayerState, PlaybackSyncMode, ProfileSummary } from "@muziks/types";
+import { cn } from "@muziks/utils";
+import Link from "next/link";
+
+import { OwnerProfileBlock } from "@/src/components/molecules/owner-profile-block";
+import { Button } from "@/src/components/ui/button";
+
+import { PlayerBar } from "./PlayerBar";
+import { getPlayerNavItems, type PlayerNavSection } from "./player-nav-items";
+
+type PlayerSidebarProps = {
+  slug: string;
+  profile: ProfileSummary | null;
+  playback: NormalizedSpotifyPlayerState | null;
+  ready: boolean;
+  onTogglePlay: () => void;
+  syncMode?: PlaybackSyncMode;
+  deviceName?: string | null;
+  showConnectBadge?: boolean;
+  onSelectDevice?: (deviceId: string, deviceName: string) => Promise<void>;
+  activeNav: PlayerNavSection;
+  className?: string;
+};
+
+export function PlayerSidebar({
+  slug,
+  profile,
+  playback,
+  ready,
+  onTogglePlay,
+  syncMode,
+  deviceName,
+  showConnectBadge,
+  onSelectDevice,
+  activeNav,
+  className,
+}: PlayerSidebarProps) {
+  const navItems = getPlayerNavItems(slug, activeNav);
+
+  return (
+    <aside
+      className={cn(
+        "hidden h-dvh w-60 shrink-0 flex-col border-r border-outline/40 bg-surface/80 md:flex",
+        className,
+      )}
+    >
+      <div className="shrink-0 border-b border-outline/40 px-5 py-5">
+        <OwnerProfileBlock profile={profile} className="mb-4" />
+        <p className="text-xs font-medium uppercase tracking-wider text-on-surface-variant">
+          Muziks Player
+        </p>
+        <p className="mt-1 truncate text-lg font-semibold text-on-surface">
+          {slug}
+        </p>
+      </div>
+
+      <nav className="min-h-0 flex-1 space-y-1 overflow-hidden px-3 py-4">
+        {navItems.map((item) => (
+          <Button
+            key={item.label}
+            variant="ghost"
+            disabled={item.disabled}
+            className={cn(
+              "h-auto w-full justify-start rounded-lg px-3 py-2 text-sm font-medium",
+              item.active
+                ? "bg-surface-container-high text-on-surface hover:bg-surface-container-high"
+                : "text-on-surface-variant",
+            )}
+            asChild={!item.disabled}
+          >
+            {item.disabled ? (
+              <span>
+                {item.label}
+                <span className="ml-2 text-[10px] uppercase">em breve</span>
+              </span>
+            ) : (
+              <Link href={item.href}>{item.label}</Link>
+            )}
+          </Button>
+        ))}
+      </nav>
+
+      <div className="mt-auto shrink-0 border-t border-outline/40">
+        <PlayerBar
+          playback={playback}
+          ready={ready}
+          onTogglePlay={onTogglePlay}
+          syncMode={syncMode}
+          deviceName={deviceName}
+          showConnectBadge={showConnectBadge}
+          onSelectDevice={onSelectDevice}
+        />
+      </div>
+    </aside>
+  );
+}

@@ -9,6 +9,7 @@ const PUBLIC_PATHS = new Set([
   "/forget",
   "/api/spotify/login",
   "/api/spotify/callback",
+  "/api/spotify/clear-session",
   "/api/auth/session",
   "/api/health/env",
 ]);

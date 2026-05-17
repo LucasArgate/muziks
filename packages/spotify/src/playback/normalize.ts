@@ -48,6 +48,7 @@ export function normalizeApiPlaybackState(
       : null,
     albumImageUrl: pickAlbumImageUrl(track),
     positionMs: state.progress_ms ?? 0,
+    positionUpdatedAt: state.timestamp,
     durationMs: track?.duration_ms ?? 0,
     paused: !state.is_playing,
     deviceId,

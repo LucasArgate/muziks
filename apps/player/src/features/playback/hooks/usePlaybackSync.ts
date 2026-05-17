@@ -12,6 +12,7 @@ import { initializeSpotifyPlayer } from "../services/SpotifyService";
 
 export type UsePlaybackSyncOptions = {
   slug: string;
+  playerId: string | null;
   playerName: string;
   enabled: boolean;
   sessionMeta: PlayerMasterSessionMeta | null | undefined;
@@ -21,6 +22,7 @@ export type UsePlaybackSyncOptions = {
 
 export function usePlaybackSync({
   slug,
+  playerId,
   playerName,
   enabled,
   sessionMeta,
@@ -31,7 +33,7 @@ export function usePlaybackSync({
     initialPlayback ?? null,
   );
   const [syncMode, setSyncMode] = useState<PlaybackSyncMode>(
-    sessionMeta?.syncMode ?? "api_device",
+    sessionMeta?.syncMode ?? "hybrid",
   );
   const [preferredDeviceId, setPreferredDeviceId] = useState<string | null>(
     sessionMeta?.preferredDeviceId ?? null,
@@ -45,6 +47,7 @@ export function usePlaybackSync({
   const [sdkReady, setSdkReady] = useState(false);
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [pollError, setPollError] = useState<string | null>(null);
+  const [hybridInitAttempted, setHybridInitAttempted] = useState(false);
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
   const onLocalStateRef = useRef(onLocalState);
@@ -66,13 +69,17 @@ export function usePlaybackSync({
       coordinatorRef.current?.stop();
       coordinatorRef.current = null;
       setSdkReady(false);
+      setHybridInitAttempted(false);
       return;
     }
 
     const coordinator = new PlaybackSyncCoordinator();
     coordinatorRef.current = coordinator;
+
+    const resolvedMode = sessionMeta?.syncMode ?? "hybrid";
     coordinator.configure({
       slug,
+      playerId,
       sessionMeta: sessionMeta
         ? {
             syncMode: sessionMeta.syncMode,
@@ -81,7 +88,7 @@ export function usePlaybackSync({
             stateVersion: sessionMeta.stateVersion,
           }
         : {
-            syncMode: "api_device",
+            syncMode: "hybrid",
             preferredDeviceId: null,
             activeDeviceName: null,
             stateVersion: 0,
@@ -91,21 +98,69 @@ export function usePlaybackSync({
       onPollError: setPollError,
     });
 
-    if (sessionMeta?.preferredDeviceId) {
-      coordinator.startApiPolling();
+    setSyncMode(resolvedMode);
+
+    if (resolvedMode === "api_device" && sessionMeta?.preferredDeviceId) {
+      coordinator.setPreferredDevice(
+        sessionMeta.preferredDeviceId,
+        sessionMeta.activeDeviceName ?? "",
+      );
     }
 
     return () => {
       coordinator.stop();
       coordinatorRef.current = null;
     };
-  }, [enabled, slug, sessionMeta, handleLocalState]);
+  }, [enabled, slug, playerId, sessionMeta, handleLocalState]);
 
   useEffect(() => {
     if (initialPlayback) {
       setPlayback(initialPlayback);
     }
   }, [initialPlayback]);
+
+  useEffect(() => {
+    if (!enabled || hybridInitAttempted) {
+      return;
+    }
+    if (syncMode !== "hybrid" && syncMode !== "sdk") {
+      return;
+    }
+
+    const coordinator = coordinatorRef.current;
+    if (!coordinator) {
+      return;
+    }
+
+    setHybridInitAttempted(true);
+    void (async () => {
+      setSdkError(null);
+      try {
+        const instance = await initializeSpotifyPlayer(playerName);
+        if (syncMode === "hybrid") {
+          coordinator.startHybrid(instance);
+          setSyncMode("hybrid");
+        } else {
+          coordinator.startSdk(instance);
+          setSyncMode("sdk");
+        }
+        await instance.connect();
+        setSdkReady(Boolean(instance.getDeviceId()));
+      } catch (err) {
+        setSdkError(err instanceof Error ? err.message : "playback_error");
+        if (preferredDeviceId) {
+          coordinator.setSyncMode("api_device");
+          setSyncMode("api_device");
+        }
+      }
+    })();
+  }, [
+    enabled,
+    hybridInitAttempted,
+    playerName,
+    preferredDeviceId,
+    syncMode,
+  ]);
 
   const selectDevice = useCallback(
     async (deviceId: string, deviceName: string) => {
@@ -126,11 +181,14 @@ export function usePlaybackSync({
       const coordinator = coordinatorRef.current;
       if (!coordinator) return;
 
+      coordinator.stopSdk();
+      coordinator.setSyncMode("api_device");
       coordinator.setPreferredDevice(deviceId, deviceName);
       setPreferredDeviceId(deviceId);
       setActiveDeviceName(deviceName);
       setSyncMode("api_device");
-      coordinator.startApiPolling();
+      setSdkReady(false);
+      await coordinator.refreshApiOnce();
     },
     [],
   );
@@ -139,8 +197,8 @@ export function usePlaybackSync({
     setSdkError(null);
     try {
       const instance = await initializeSpotifyPlayer(playerName);
-      coordinatorRef.current?.startSdk(instance);
-      setSyncMode("sdk");
+      coordinatorRef.current?.startHybrid(instance);
+      setSyncMode("hybrid");
       await instance.connect();
       setSdkReady(Boolean(instance.getDeviceId()));
     } catch (err) {
@@ -158,13 +216,18 @@ export function usePlaybackSync({
         preferredDeviceId,
         activeDeviceName ?? "",
       );
-      coordinator.startApiPolling();
+      coordinator.setSyncMode("api_device");
+    } else {
+      coordinator?.setSyncMode("api_device");
     }
   }, [preferredDeviceId, activeDeviceName]);
 
   const togglePlay = useCallback(async () => {
     const coordinator = coordinatorRef.current;
-    if (syncMode === "sdk" && coordinator?.sdkPlayer) {
+    if (
+      (syncMode === "hybrid" || syncMode === "sdk") &&
+      coordinator?.sdkPlayer
+    ) {
       await coordinator.sdkPlayer.togglePlay();
       return;
     }
@@ -178,13 +241,18 @@ export function usePlaybackSync({
         deviceId: preferredDeviceId ?? playback?.deviceId ?? undefined,
       }),
     });
+    await coordinator?.refreshApiOnce();
   }, [syncMode, playback, preferredDeviceId]);
 
   const requiresDeviceSelection =
     syncMode === "api_device" && !preferredDeviceId;
 
   const ready =
-    syncMode === "sdk" ? sdkReady : Boolean(preferredDeviceId) && !requiresDeviceSelection;
+    syncMode === "hybrid"
+      ? sdkReady || (Boolean(preferredDeviceId) && !requiresDeviceSelection)
+      : syncMode === "sdk"
+        ? sdkReady
+        : Boolean(preferredDeviceId) && !requiresDeviceSelection;
 
   return {
     playback,

@@ -1,5 +1,8 @@
 import { getDb, spotifyConnections } from "@muziks/db";
-import { refreshAccessToken } from "@muziks/spotify";
+import {
+  isSpotifyRefreshTokenRevoked,
+  refreshAccessToken,
+} from "@muziks/spotify";
 import { eq } from "drizzle-orm";
 
 import {
@@ -37,25 +40,44 @@ export async function getOwnerSpotifyAccessToken(): Promise<string | null> {
     return null;
   }
 
+  if (
+    connection.accessTokenEnc &&
+    connection.expiresAt &&
+    connection.expiresAt.getTime() > Date.now() + 60_000
+  ) {
+    return decryptToken(connection.accessTokenEnc);
+  }
+
   const refreshToken = decryptToken(connection.refreshTokenEnc);
-  const tokens = await refreshAccessToken({
-    clientId: getSpotifyClientId(),
-    clientSecret: getSpotifyClientSecret(),
-    refreshToken,
-  });
 
-  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
-  await db
-    .update(spotifyConnections)
-    .set({
-      accessTokenEnc: encryptToken(tokens.access_token),
-      expiresAt,
-      updatedAt: new Date(),
-      ...(tokens.refresh_token
-        ? { refreshTokenEnc: encryptToken(tokens.refresh_token) }
-        : {}),
-    })
-    .where(eq(spotifyConnections.userId, muziks.userId));
+  try {
+    const tokens = await refreshAccessToken({
+      clientId: getSpotifyClientId(),
+      clientSecret: getSpotifyClientSecret(),
+      refreshToken,
+    });
 
-  return tokens.access_token;
+    const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
+    await db
+      .update(spotifyConnections)
+      .set({
+        accessTokenEnc: encryptToken(tokens.access_token),
+        expiresAt,
+        updatedAt: new Date(),
+        ...(tokens.refresh_token
+          ? { refreshTokenEnc: encryptToken(tokens.refresh_token) }
+          : {}),
+      })
+      .where(eq(spotifyConnections.userId, muziks.userId));
+
+    return tokens.access_token;
+  } catch (error) {
+    if (isSpotifyRefreshTokenRevoked(error)) {
+      await db
+        .delete(spotifyConnections)
+        .where(eq(spotifyConnections.userId, muziks.userId));
+      return null;
+    }
+    throw error;
+  }
 }

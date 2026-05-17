@@ -66,6 +66,12 @@ export {
 } from "./playback/spotify-state";
 
 export {
+  PLAYER_SESSION_BROADCAST_EVENT,
+  sessionSnapshotBroadcastSchema,
+  type SessionSnapshotBroadcast,
+} from "./playback/session-broadcast";
+
+export {
   playerMasterSessionMetaSchema,
   playerMasterViewStateSchema,
   type PlayerMasterSessionMeta,
