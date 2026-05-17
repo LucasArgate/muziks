@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
   buildAuthorizeUrl,
@@ -9,7 +8,7 @@ import {
   getSpotifyClientId,
   getSpotifyRedirectUri,
 } from "@/src/config/spotify-env";
-import { setOAuthTransientCookies } from "@/src/lib/spotify-session";
+import { createOAuthState } from "@/src/lib/oauth-state";
 
 export async function GET(request: Request) {
   try {
@@ -18,13 +17,7 @@ export async function GET(request: Request) {
 
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = await createCodeChallenge(codeVerifier);
-    const state = randomBytes(16).toString("hex");
-
-    await setOAuthTransientCookies({
-      codeVerifier,
-      state,
-      returnSlug: slug,
-    });
+    const state = createOAuthState({ codeVerifier, returnSlug: slug });
 
     const authorizeUrl = buildAuthorizeUrl({
       clientId: getSpotifyClientId(),
@@ -33,7 +26,7 @@ export async function GET(request: Request) {
       codeChallenge,
     });
 
-    return NextResponse.redirect(authorizeUrl);
+    return NextResponse.redirect(authorizeUrl, 302);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Spotify login failed";

@@ -19,6 +19,21 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
+/** Supabase session cookies must survive redirects (avoids / ↔ /login loops). */
+function redirectWithSessionCookies(
+  request: NextRequest,
+  sessionResponse: NextResponse,
+  pathname: string,
+): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const redirect = NextResponse.redirect(url);
+  sessionResponse.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie);
+  });
+  return redirect;
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -59,20 +74,20 @@ export async function middleware(request: NextRequest) {
     pathname !== "/";
 
   if (user && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return redirectWithSessionCookies(request, response, "/");
   }
 
   if (!user && !isPublicPath(pathname)) {
     if (pathname === "/logout") {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return redirectWithSessionCookies(request, response, "/login");
     }
     if (pathname === "/create" || isDynamicSlug) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return redirectWithSessionCookies(request, response, "/login");
     }
   }
 
   if (!user && pathname === "/") {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectWithSessionCookies(request, response, "/login");
   }
 
   return response;
