@@ -7,7 +7,16 @@ export function getSpotifyClientId(): string {
 }
 
 export function getSpotifyClientSecret(): string | undefined {
-  return process.env.SPOTIFY_CLIENT_SECRET;
+  const secret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
+  if (!secret) {
+    return undefined;
+  }
+  if (/\s/.test(secret)) {
+    throw new Error(
+      "SPOTIFY_CLIENT_SECRET must be a single line (no spaces or line breaks)",
+    );
+  }
+  return secret;
 }
 
 export function getPlayerAppUrl(): string {

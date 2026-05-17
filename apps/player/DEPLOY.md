@@ -40,6 +40,16 @@ postgresql://postgres.SEU_PROJECT_REF:SENHA@aws-N-REGIAO.pooler.supabase.com:654
 
 Se 6543 falhar no projeto, teste **Session pooler** (porta **5432**) com a URI correspondente do Dashboard.
 
+#### Migrations (obrigatório antes do primeiro login)
+
+O banco Supabase de produção precisa das tabelas `profiles`, `players`, `spotify_connections`. Na raiz do monorepo, com `DATABASE_URL` apontando para produção:
+
+```bash
+pnpm db:migrate
+```
+
+Sem isso o callback Spotify falha após autorizar.
+
 No Spotify Dashboard, registrar redirect URI:
 
 - Produção: `https://player.muziks.app/api/spotify/callback`
