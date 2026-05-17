@@ -45,6 +45,17 @@ export function isDatabaseConnectivityError(message: string): boolean {
     lower.includes("tenant") ||
     lower.includes("database_url") ||
     lower.includes("econnrefused") ||
-    lower.includes("password authentication failed")
+    lower.includes("password authentication failed") ||
+    lower.includes("self-signed certificate") ||
+    lower.includes("ssl")
+  );
+}
+
+export function isDatabaseSchemaError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('relation "profiles" does not exist') ||
+    lower.includes('relation "players" does not exist') ||
+    (lower.includes("does not exist") && lower.includes("relation"))
   );
 }
