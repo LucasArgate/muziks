@@ -13,6 +13,7 @@ import {
   getSpotifyClientSecret,
   getSpotifyRedirectUri,
 } from "@/src/config/spotify-env";
+import { toSpotifyCallbackError } from "@/src/lib/auth/spotify-callback-errors";
 import { parseOAuthState } from "@/src/lib/oauth-state";
 import {
   applyPersistTokenResponse,
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
     clearOAuthTransientCookiesOnResponse(response);
     return response;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "token_exchange_failed";
-    return redirectWithError(message);
+    console.error("[spotify/callback]", err);
+    return redirectWithError(toSpotifyCallbackError(err));
   }
 }
