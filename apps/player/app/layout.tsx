@@ -1,0 +1,33 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#000000",
+};
+
+export const metadata: Metadata = {
+  title: "Muziks Player",
+  description:
+    "Player master Spotify — controle de reprodução do estabelecimento.",
+  openGraph: {
+    title: "Muziks Player",
+    description:
+      "Player master Spotify — controle de reprodução do estabelecimento.",
+    type: "website",
+    locale: "pt_BR",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="pt-BR">
+      <body>{children}</body>
+    </html>
+  );
+}

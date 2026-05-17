@@ -6,8 +6,11 @@
     "dev": "turbo run dev",
     "dev:landing": "turbo run dev --filter=@muziks/landing",
     "dev:web": "turbo run dev --filter=@muziks/web",
+    "dev:player": "turbo run dev --filter=@muziks/player",
     "build": "turbo run build",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "supabase": "pnpm dlx supabase@latest",
+    "supabase:link": "pnpm dlx supabase@latest link --project-ref qgucuffklddzciejdtrb"
   },
   "devDependencies": {
     "turbo": "^2.3.3"
