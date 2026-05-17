@@ -1,3 +1,4 @@
+export { createTokenCrypto, type TokenCrypto } from "./crypto/token-encryption";
 export { getDb } from "./client";
 export {
   isDatabaseConnectivityError,
@@ -20,6 +21,13 @@ export {
   type PublicPlaybackSessionRow,
 } from "./repositories/player-sessions";
 export { castVoteOnQueueItem, type CastVoteResult } from "./repositories/vote-events";
+export {
+  getAccessTokenForPlayer,
+  getAccessTokenForUser,
+  hasValidConnectionForUser,
+  persistSpotifyTokens,
+  type SpotifyTokenVaultDeps,
+} from "./repositories/spotify-token-vault";
 export {
   computeQueueVersion,
   dequeueNextQueuedItem,

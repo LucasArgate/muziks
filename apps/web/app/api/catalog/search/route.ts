@@ -1,9 +1,8 @@
-import { getPlayerIdBySlug } from "@muziks/db";
 import { searchTracks } from "@muziks/spotify";
 import { catalogSearchResultSchema } from "@muziks/types";
 import { NextResponse } from "next/server";
 
-import { getAccessTokenForPlayer } from "@/src/lib/spotify/owner-token-vault";
+import { getOwnerSpotifyAccessTokenBySlug } from "@/src/lib/spotify/resolve-owner-token-by-slug";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -19,20 +18,25 @@ export async function GET(request: Request) {
   }
 
   try {
-    const playerId = await getPlayerIdBySlug(slug);
-    if (!playerId) {
-      return NextResponse.json({ error: "player_not_found" }, { status: 404 });
-    }
+    const tokenResult = await getOwnerSpotifyAccessTokenBySlug(slug);
 
-    const accessToken = await getAccessTokenForPlayer(playerId);
-    if (!accessToken) {
+    if (!tokenResult.ok) {
+      if (tokenResult.code === "invalid_slug") {
+        return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
+      }
+      if (tokenResult.code === "player_not_found") {
+        return NextResponse.json({ error: "player_not_found" }, { status: 404 });
+      }
       return NextResponse.json(
-        { error: "catalog_unavailable", message: "Este espaço ainda não conectou o catálogo." },
+        {
+          error: "catalog_unavailable",
+          message: "Este espaço ainda não conectou o catálogo.",
+        },
         { status: 503 },
       );
     }
 
-    const tracks = await searchTracks(accessToken, q);
+    const tracks = await searchTracks(tokenResult.accessToken, q);
     const result = catalogSearchResultSchema.parse({ tracks });
 
     return NextResponse.json(result);

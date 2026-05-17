@@ -16,5 +16,6 @@ export async function GET() {
     spotifyClientId: Boolean(process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID),
     spotifyClientSecret: Boolean(process.env.SPOTIFY_CLIENT_SECRET?.trim()),
     playerAppUrl: process.env.NEXT_PUBLIC_PLAYER_APP_URL ?? null,
+    webAppUrl: process.env.NEXT_PUBLIC_WEB_APP_URL ?? null,
   });
 }

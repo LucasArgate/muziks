@@ -157,6 +157,9 @@ importers:
       '@muziks/queue':
         specifier: workspace:*
         version: link:../../packages/queue
+      '@muziks/spotify':
+        specifier: workspace:*
+        version: link:../../packages/spotify
       '@muziks/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -166,6 +169,24 @@ importers:
       '@muziks/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@radix-ui/react-dialog':
+        specifier: ^1.1.15
+        version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@radix-ui/react-slot':
+        specifier: ^1.2.4
+        version: 1.2.4(@types/react@19.2.14)(react@19.2.6)
+      '@supabase/ssr':
+        specifier: ^0.5.2
+        version: 0.5.2(@supabase/supabase-js@2.105.4)
+      '@supabase/supabase-js':
+        specifier: ^2.47.10
+        version: 2.105.4
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      lucide-react:
+        specifier: ^1.16.0
+        version: 1.16.0(react@19.2.6)
       next:
         specifier: ^15.1.3
         version: 15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -175,6 +196,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.6(react@19.2.6)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
     devDependencies:
       '@muziks/config':
         specifier: workspace:*
@@ -203,6 +227,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.19
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.19)
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -211,6 +238,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@muziks/spotify':
+        specifier: workspace:*
+        version: link:../spotify
       '@muziks/types':
         specifier: workspace:*
         version: link:../types

@@ -20,6 +20,15 @@ export function getWebAppUrl(): string {
   return url.replace(/\/$/, "");
 }
 
+/** Player master — prod: https://player.muziks.app; staging: https://staging-player.muziks.app */
+export function getPlayerAppUrl(): string {
+  const url = process.env.NEXT_PUBLIC_PLAYER_APP_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_PLAYER_APP_URL is not set");
+  }
+  return url.replace(/\/$/, "");
+}
+
 function readRequestOrigin(request: Request): string | null {
   const host =
     request.headers.get("x-forwarded-host") ?? request.headers.get("host");

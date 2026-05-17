@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Muziks Player",
   description:
     "Player master Spotify — controle de reprodução do estabelecimento.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/brand/Muziks-152.png",
+    apple: "/brand/Muziks-152.png",
+  },
   openGraph: {
     title: "Muziks Player",
     description:

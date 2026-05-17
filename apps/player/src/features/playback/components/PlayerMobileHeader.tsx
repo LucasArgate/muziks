@@ -1,7 +1,9 @@
 "use client";
 
+import { MuziksLogo } from "@muziks/ui";
 import { Menu } from "lucide-react";
 
+import { ShareParticipantLinkButton } from "@/src/components/molecules/share-participant-link-button";
 import { Button } from "@/src/components/ui/button";
 
 type PlayerMobileHeaderProps = {
@@ -29,11 +31,10 @@ export function PlayerMobileHeader({
         <Menu className="h-6 w-6" />
       </Button>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-on-surface-variant">
-          Muziks Player
-        </p>
-        <p className="truncate text-lg font-semibold text-on-surface">{slug}</p>
+        <MuziksLogo variant="light" className="h-5 w-auto" />
+        <p className="mt-1 truncate text-base font-semibold text-on-surface">{slug}</p>
       </div>
+      <ShareParticipantLinkButton slug={slug} className="shrink-0" />
     </header>
   );
 }
