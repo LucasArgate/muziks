@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
+/** Hostnames only (sem porta) — ver block-cross-site do Next.js. */
+const extraDevOrigins =
+  process.env.PLAYER_ALLOWED_DEV_ORIGINS?.split(",")
+    .map((origin) => origin.trim().replace(/:\d+$/, ""))
+    .filter(Boolean) ?? [];
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    "127.0.0.1",
+    "localhost",
+    "192.168.15.11",
+    ...extraDevOrigins,
+  ],
   transpilePackages: [
     "@muziks/ui",
     "@muziks/utils",

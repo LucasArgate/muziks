@@ -10,6 +10,8 @@ pnpm dev:player
 
 Copie `.env.example` para `.env.local` (Supabase + Spotify + `DATABASE_URL`).
 
+**Rede local (celular/tablet):** o dev server escuta em `0.0.0.0:3002`. Abra `http://<IP-da-máquina>:3002` (ex. `http://192.168.15.11:3002/login`). No Spotify Dashboard, adicione o redirect `http://<IP>:3002/api/spotify/callback`. Em `.env.local`, opcional: `PLAYER_ALLOWED_DEV_ORIGINS=<IP>:3002`.
+
 Aplique migrations do banco (uma vez por ambiente):
 
 ```bash
