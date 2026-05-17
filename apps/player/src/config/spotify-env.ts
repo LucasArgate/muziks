@@ -27,11 +27,6 @@ export function getPlayerAppUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-/** Deve ser idêntico ao URI cadastrado no Spotify Dashboard (inclui porta em dev). */
-export function getSpotifyRedirectUri(): string {
-  return `${getPlayerAppUrl()}/api/spotify/callback`;
-}
-
 const LOCALHOST_ALIASES = new Set(["localhost", "127.0.0.1", "::1", "0.0.0.0"]);
 
 function readRequestOrigin(request: Request): string | null {
@@ -67,19 +62,46 @@ function originsMatch(a: string, b: string): boolean {
   }
 }
 
-/** Redirects pós-login: em dev usa o host da aba se bater com o configurado. */
-export function getPlayerAppUrlFromRequest(request: Request): string {
-  if (process.env.NODE_ENV !== "development") {
-    return getPlayerAppUrl();
+/** Origins allowed for OAuth redirects (configured URL + optional extras). */
+export function getAllowedPlayerOrigins(): string[] {
+  const origins = [getPlayerAppUrl()];
+  const extra = process.env.PLAYER_ALLOWED_APP_ORIGINS?.split(",") ?? [];
+  for (const entry of extra) {
+    const trimmed = entry.trim().replace(/\/$/, "");
+    if (!trimmed) continue;
+    const normalized = trimmed.includes("://")
+      ? trimmed
+      : `https://${trimmed}`;
+    if (!origins.some((o) => originsMatch(o, normalized))) {
+      origins.push(normalized);
+    }
   }
+  return origins;
+}
 
+function isAllowedPlayerOrigin(origin: string): boolean {
+  return getAllowedPlayerOrigins().some((allowed) =>
+    originsMatch(origin, allowed),
+  );
+}
+
+/**
+ * Public base URL for redirects. Uses the request host when it matches an
+ * allowed origin (staging, dev IP, etc.); otherwise falls back to env.
+ */
+export function getPlayerAppUrlFromRequest(request: Request): string {
   const configured = getPlayerAppUrl();
   const fromRequest = readRequestOrigin(request);
 
-  if (fromRequest && originsMatch(fromRequest, configured)) {
+  if (fromRequest && isAllowedPlayerOrigin(fromRequest)) {
     return fromRequest;
   }
 
   return configured;
 }
 
+/** Must match a redirect URI registered in the Spotify Dashboard. */
+export function getSpotifyRedirectUri(request?: Request): string {
+  const base = request ? getPlayerAppUrlFromRequest(request) : getPlayerAppUrl();
+  return `${base}/api/spotify/callback`;
+}

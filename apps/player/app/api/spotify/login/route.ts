@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
     const authorizeUrl = buildAuthorizeUrl({
       clientId: getSpotifyClientId(),
-      redirectUri: getSpotifyRedirectUri(),
+      redirectUri: getSpotifyRedirectUri(request),
       state,
       codeChallenge,
     });

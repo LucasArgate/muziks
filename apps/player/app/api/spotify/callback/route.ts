@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       clientId: getSpotifyClientId(),
       clientSecret: getSpotifyClientSecret(),
       code,
-      redirectUri: getSpotifyRedirectUri(),
+      redirectUri: getSpotifyRedirectUri(request),
       codeVerifier: oauthState.codeVerifier,
     });
 
