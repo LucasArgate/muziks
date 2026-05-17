@@ -22,7 +22,7 @@ export function getPlayerNavItems(
       label: "Fila",
       href: `/${slug}/queue`,
       active: active === "queue",
-      disabled: true,
+      disabled: false,
     },
     {
       label: "Configurações",

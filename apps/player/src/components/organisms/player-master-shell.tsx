@@ -1,16 +1,14 @@
 "use client";
 
-import type {
-  NormalizedSpotifyPlayerState,
-  PlayerMasterViewState,
-} from "@muziks/types";
+import type { PlayerMasterViewState } from "@muziks/types";
 
 import { PlayerAppFrame } from "@/src/components/organisms/player-app-frame";
 import { SpotifyConnectButton } from "@/src/components/molecules/spotify-connect-button";
 import { Button } from "@/src/components/ui/button";
 import { DeviceSelector } from "@/src/features/playback/components/DeviceSelector";
 import { PlaybackMasterGate } from "@/src/features/playback/components/PlaybackMasterGate";
-import { usePlaybackProgress } from "@/src/features/playback/hooks/usePlaybackProgress";
+import { DequeueTestButton } from "@/src/features/queue/components/DequeueTestButton";
+import { SpotifyPlaybackQueueList } from "@/src/features/queue/components/SpotifyPlaybackQueueList";
 
 type PlayerMasterShellProps = {
   slug: string;
@@ -40,7 +38,13 @@ export function PlayerMasterShell({
               <DeviceSelector onSelect={sync.selectDevice} />
             ) : (
               <>
-                <NowPlayingDetails playback={sync.playback} />
+                <SpotifyPlaybackQueueList
+                  enabled={hasSpotify}
+                  trackUri={sync.playback?.trackUri}
+                  paused={sync.playback?.paused ?? true}
+                />
+
+                <DequeueTestButton slug={slug} />
 
                 {sync.syncMode === "hybrid" || sync.syncMode === "sdk" ? (
                   <Button
@@ -67,36 +71,5 @@ export function PlayerMasterShell({
         </PlaybackMasterGate>
       )}
     </PlayerAppFrame>
-  );
-}
-
-function NowPlayingDetails({
-  playback,
-}: {
-  playback: NormalizedSpotifyPlayerState | null;
-}) {
-  const progress = usePlaybackProgress(playback);
-
-  return (
-    <div className="text-center">
-      <p className="text-lg font-medium text-on-surface">
-        {playback?.trackName ?? "Nenhuma faixa em reprodução"}
-      </p>
-      {playback?.artistName ? (
-        <p className="mt-1 text-sm text-on-surface-variant">
-          {playback.artistName}
-        </p>
-      ) : null}
-      {progress.hasDuration ? (
-        <div className="mt-6">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-outline/30">
-            <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${progress.progressPercent}%` }}
-            />
-          </div>
-        </div>
-      ) : null}
-    </div>
   );
 }

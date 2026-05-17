@@ -12,6 +12,7 @@ const PUBLIC_PATHS = new Set([
   "/api/spotify/clear-session",
   "/api/auth/session",
   "/api/health/env",
+  "/api/internal/playback-tick",
 ]);
 
 function isPublicPath(pathname: string): boolean {

@@ -13,7 +13,7 @@ export function playerSessionChannelName(playerId: string): string {
   return `player:${playerId}`;
 }
 
-function getOrCreateChannel(playerId: string): RealtimeChannel {
+export function getOrCreatePlayerChannel(playerId: string): RealtimeChannel {
   const name = playerSessionChannelName(playerId);
   const existing = channels.get(name);
   if (existing) {
@@ -31,7 +31,7 @@ function getOrCreateChannel(playerId: string): RealtimeChannel {
 export async function ensurePlayerSessionChannel(
   playerId: string,
 ): Promise<RealtimeChannel> {
-  const channel = getOrCreateChannel(playerId);
+  const channel = getOrCreatePlayerChannel(playerId);
   if (channel.state === "joined") {
     return channel;
   }
@@ -74,7 +74,7 @@ export function subscribeSessionSnapshots(
   playerId: string,
   onSnapshot: (payload: SessionSnapshotBroadcast) => void,
 ): () => void {
-  const channel = getOrCreateChannel(playerId);
+  const channel = getOrCreatePlayerChannel(playerId);
 
   channel.on(
     "broadcast",

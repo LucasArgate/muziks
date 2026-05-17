@@ -137,12 +137,19 @@ export class ApiPlaybackPoller {
   }
 
   private async tick(): Promise<void> {
-    if (!this.running || !this.options) return;
+    const options = this.options;
+    if (!this.running || !options) {
+      return;
+    }
 
     try {
       const state = await this.fetchPlaybackState();
+      if (!this.running || this.options !== options) {
+        return;
+      }
+
       if (!state) {
-        this.options.onError?.("spotify_not_connected");
+        options.onError?.("spotify_not_connected");
         this.scheduleNext();
         return;
       }
@@ -157,14 +164,18 @@ export class ApiPlaybackPoller {
         this.backoffMultiplier = 1;
         this.lastFingerprint = fp;
         this.lastState = state;
-        this.options.onState(state);
+        options.onState(state);
       }
     } catch (error) {
-      this.options.onError?.(
-        error instanceof Error ? error.message : "poll_error",
-      );
+      if (this.running && this.options === options) {
+        options.onError?.(
+          error instanceof Error ? error.message : "poll_error",
+        );
+      }
     }
 
-    this.scheduleNext();
+    if (this.running && this.options === options) {
+      this.scheduleNext();
+    }
   }
 }

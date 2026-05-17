@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@muziks/db": "workspace:*",
+    "@muziks/queue": "workspace:*",
     "@muziks/spotify": "workspace:*",
     "@muziks/types": "workspace:*",
     "@muziks/ui": "workspace:*",

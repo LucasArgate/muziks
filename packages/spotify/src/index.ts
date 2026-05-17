@@ -39,6 +39,12 @@ export {
   type PlaybackControlParams,
 } from "./playback/control";
 export { normalizeApiPlaybackState } from "./playback/normalize";
+export {
+  getPlaybackQueue,
+  normalizeSpotifyPlaybackQueue,
+  type GetPlaybackQueueParams,
+  type SpotifyApiPlaybackQueueResponse,
+} from "./playback/queue";
 export type {
   SpotifyApiDevice,
   SpotifyApiDevicesResponse,

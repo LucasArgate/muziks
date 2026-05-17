@@ -66,6 +66,9 @@ importers:
       '@muziks/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@muziks/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@muziks/spotify':
         specifier: workspace:*
         version: link:../../packages/spotify
@@ -148,6 +151,15 @@ importers:
 
   apps/web:
     dependencies:
+      '@muziks/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@muziks/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+      '@muziks/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@muziks/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -218,6 +230,25 @@ importers:
       drizzle-kit:
         specifier: ^0.30.1
         version: 0.30.6
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/queue:
+    dependencies:
+      '@muziks/db':
+        specifier: workspace:*
+        version: link:../db
+      '@muziks/types':
+        specifier: workspace:*
+        version: link:../types
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@muziks/config':
+        specifier: workspace:*
+        version: link:../config
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

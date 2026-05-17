@@ -9,6 +9,8 @@ import {
   getSpotifyClientId,
   getSpotifyClientSecret,
 } from "@/src/config/spotify-env";
+import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
+import { hasValidConnectionForUser } from "@/src/lib/spotify/spotify-token-vault";
 
 const ACCESS_COOKIE = "muziks_spotify_access";
 const REFRESH_COOKIE = "muziks_spotify_refresh";
@@ -132,7 +134,7 @@ export async function clearSpotifySession(): Promise<void> {
 
 /**
  * Read-only session check for Server Components (no cookie writes).
- * Probes refresh when access expired; does not persist new tokens.
+ * Cookies first; falls back to vault in Postgres when Muziks session exists.
  */
 export async function checkSpotifySessionConnected(): Promise<boolean> {
   const jar = await cookies();
@@ -145,23 +147,28 @@ export async function checkSpotifySessionConnected(): Promise<boolean> {
     return true;
   }
 
-  if (!refresh) {
+  if (refresh) {
+    try {
+      await refreshAccessToken({
+        clientId: getSpotifyClientId(),
+        refreshToken: refresh,
+        clientSecret: getSpotifyClientSecret(),
+      });
+      return true;
+    } catch (error) {
+      if (isSpotifyRefreshTokenRevoked(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  const muziks = await getMuziksSession();
+  if (muziks.status === "anonymous") {
     return false;
   }
 
-  try {
-    await refreshAccessToken({
-      clientId: getSpotifyClientId(),
-      refreshToken: refresh,
-      clientSecret: getSpotifyClientSecret(),
-    });
-    return true;
-  } catch (error) {
-    if (isSpotifyRefreshTokenRevoked(error)) {
-      return false;
-    }
-    throw error;
-  }
+  return hasValidConnectionForUser(muziks.userId);
 }
 
 export async function getValidAccessToken(): Promise<string | null> {
