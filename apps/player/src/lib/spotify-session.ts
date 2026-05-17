@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import {
   refreshAccessToken,
   type SpotifyTokenResponse,
@@ -17,28 +18,52 @@ const RETURN_SLUG_COOKIE = "muziks_spotify_return_slug";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
+const transientCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 600,
+};
+
+const sessionCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: COOKIE_MAX_AGE,
+};
+
 export const spotifySessionCookies = {
   pkceVerifier: PKCE_VERIFIER_COOKIE,
   oauthState: OAUTH_STATE_COOKIE,
   returnSlug: RETURN_SLUG_COOKIE,
 } as const;
 
-export async function setOAuthTransientCookies(input: {
-  codeVerifier: string;
-  state: string;
-  returnSlug: string;
-}): Promise<void> {
-  const jar = await cookies();
-  const opts = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge: 600,
-  };
-  jar.set(PKCE_VERIFIER_COOKIE, input.codeVerifier, opts);
-  jar.set(OAUTH_STATE_COOKIE, input.state, opts);
-  jar.set(RETURN_SLUG_COOKIE, input.returnSlug, opts);
+/** Attach OAuth PKCE/state cookies to a redirect response (required for Next.js). */
+export function applyOAuthTransientCookies(
+  response: NextResponse,
+  input: { codeVerifier: string; state: string; returnSlug: string },
+): void {
+  response.cookies.set(
+    PKCE_VERIFIER_COOKIE,
+    input.codeVerifier,
+    transientCookieOptions,
+  );
+  response.cookies.set(OAUTH_STATE_COOKIE, input.state, transientCookieOptions);
+  response.cookies.set(
+    RETURN_SLUG_COOKIE,
+    input.returnSlug,
+    transientCookieOptions,
+  );
+}
+
+export function clearOAuthTransientCookiesOnResponse(
+  response: NextResponse,
+): void {
+  response.cookies.delete(PKCE_VERIFIER_COOKIE);
+  response.cookies.delete(OAUTH_STATE_COOKIE);
+  response.cookies.delete(RETURN_SLUG_COOKIE);
 }
 
 export async function readOAuthTransientCookies(): Promise<{
@@ -54,11 +79,26 @@ export async function readOAuthTransientCookies(): Promise<{
   };
 }
 
-export async function clearOAuthTransientCookies(): Promise<void> {
-  const jar = await cookies();
-  jar.delete(PKCE_VERIFIER_COOKIE);
-  jar.delete(OAUTH_STATE_COOKIE);
-  jar.delete(RETURN_SLUG_COOKIE);
+export function applyPersistTokenResponse(
+  response: NextResponse,
+  tokens: SpotifyTokenResponse,
+): void {
+  const expiresAt = Date.now() + tokens.expires_in * 1000;
+
+  response.cookies.set(ACCESS_COOKIE, tokens.access_token, sessionCookieOptions);
+  response.cookies.set(
+    EXPIRES_COOKIE,
+    String(expiresAt),
+    sessionCookieOptions,
+  );
+
+  if (tokens.refresh_token) {
+    response.cookies.set(
+      REFRESH_COOKIE,
+      tokens.refresh_token,
+      sessionCookieOptions,
+    );
+  }
 }
 
 export async function persistTokenResponse(
@@ -66,19 +106,12 @@ export async function persistTokenResponse(
 ): Promise<void> {
   const jar = await cookies();
   const expiresAt = Date.now() + tokens.expires_in * 1000;
-  const opts = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  };
 
-  jar.set(ACCESS_COOKIE, tokens.access_token, opts);
-  jar.set(EXPIRES_COOKIE, String(expiresAt), opts);
+  jar.set(ACCESS_COOKIE, tokens.access_token, sessionCookieOptions);
+  jar.set(EXPIRES_COOKIE, String(expiresAt), sessionCookieOptions);
 
   if (tokens.refresh_token) {
-    jar.set(REFRESH_COOKIE, tokens.refresh_token, opts);
+    jar.set(REFRESH_COOKIE, tokens.refresh_token, sessionCookieOptions);
   }
 }
 
