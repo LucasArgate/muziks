@@ -16,3 +16,4 @@ export {
   queueDequeueLedger,
   queueItemStateEnum,
 } from "./queue-items";
+export { voteEvents } from "./vote-events";

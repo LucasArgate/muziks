@@ -116,3 +116,19 @@ Objetivo: **detectar padrões** (várias contas no mesmo dispositivo, mesma rede
 ## 7. Próximos passos de documentação
 
 Quando fechar lista exata de IdPs, política de retenção de IP/device e **copy** do passo “por quê”, **atualizar** [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) (secção 2), [08-nfr-privacy-accessibility.md](../specs/08-nfr-privacy-accessibility.md) e exemplos em [07-ux-copy-and-states.md](../specs/07-ux-copy-and-states.md); este arquivo permanece como **arquitetura de produto** do pacote MVP.
+
+---
+
+## 8. Exceção PoC — Spotify como IdP do participante (`apps/web`)
+
+**Status:** válida **somente** na PoC do client participante em `muziks.app`, até adoção de Muziks IdP (Google / Apple / Meta) na superfície pública.
+
+| Aspecto | Regra PoC |
+|---------|-----------|
+| **Objetivo** | Identificar quem vota com `spotify_user_id` estável via OAuth; **sem** playback nem menção a Premium no web participante. |
+| **Escopos** | Mínimos (ex.: `user-read-email`); **não** gravar `spotify_connections` de playback no fluxo participante. |
+| **Separação** | Login Spotify do **dono** permanece em `player.muziks.com` com scopes de execução; cookies/state PKCE distintos do participante. |
+| **Copy** | Portão **valor → por quê → dados** inalterado; o botão pode ser “Continuar com Spotify” em vez de Google/Apple. |
+| **Futuro** | Muziks OAuth como IdP principal; Spotify opcional para vincular gostos; **links de afiliados** para criação de conta Spotify fora do escopo desta PoC (produto/compliance). |
+
+Esta exceção **não** altera a regra de que o participante **não** precisa de conta de streaming para **ver** fila e **explorar** busca; só para **votar** ou mutação equivalente.
