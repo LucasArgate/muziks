@@ -2,14 +2,27 @@ import type { PlayerMasterViewState } from "@muziks/types";
 
 import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
 import { resolveSpotifyConnectionState } from "@/src/lib/auth/spotify-connection-state";
+import {
+  getPlaybackSessionByPlayerId,
+  playbackSessionToNormalized,
+} from "@/src/lib/playback/playback-session-repository";
 
 export async function buildPlayerMasterViewState(): Promise<PlayerMasterViewState> {
   const muziks = await getMuziksSession();
   const spotify = await resolveSpotifyConnectionState();
 
+  let playback: PlayerMasterViewState["playback"] = null;
+
+  if (muziks.status === "authenticated") {
+    const session = await getPlaybackSessionByPlayerId(muziks.player.id);
+    if (session) {
+      playback = playbackSessionToNormalized(session);
+    }
+  }
+
   return {
     muziks,
     spotify,
-    playback: null,
+    playback,
   };
 }

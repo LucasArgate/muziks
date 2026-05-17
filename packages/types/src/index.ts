@@ -55,7 +55,9 @@ export {
 
 export {
   normalizedSpotifyPlayerStateSchema,
+  publishPlaybackSessionInputSchema,
   type NormalizedSpotifyPlayerState,
+  type PublishPlaybackSessionInput,
 } from "./playback/spotify-state";
 
 export {
