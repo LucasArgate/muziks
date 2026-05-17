@@ -1,7 +1,7 @@
 import { getAccessTokenForPlayer, getPlayerIdBySlug } from "@muziks/db";
 import { isValidPlayerSlug, normalizePlayerSlug } from "@muziks/types";
 
-import { spotifyTokenVaultDeps } from "@/src/lib/spotify/vault-deps";
+import { getSpotifyTokenVaultDeps } from "@/src/lib/spotify/vault-deps";
 
 export type OwnerSpotifyTokenBySlugError =
   | "invalid_slug"
@@ -27,7 +27,7 @@ export async function getOwnerSpotifyAccessTokenBySlug(
 
   const accessToken = await getAccessTokenForPlayer(
     playerId,
-    spotifyTokenVaultDeps,
+    getSpotifyTokenVaultDeps(),
   );
   if (!accessToken) {
     return { ok: false, code: "spotify_not_connected" };

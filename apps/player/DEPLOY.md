@@ -11,6 +11,8 @@
 
 `vercel.json` nesta pasta define install/build do monorepo.
 
+**Turborepo:** secrets como `SUPABASE_SERVICE_ROLE_KEY` e `DATABASE_URL` precisam estar declarados em `turbo.json` (`globalEnv` / `build.env`) — senão a Vercel não repassa essas variáveis ao `pnpm turbo run build` e o passo *Collecting page data* falha.
+
 ### Variáveis de ambiente
 
 | Variável | Obrigatória | Descrição |

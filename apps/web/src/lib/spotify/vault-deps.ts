@@ -6,11 +6,17 @@ import {
 } from "@/src/config/env";
 import { getSpotifyTokenEncryptionKey } from "@/src/lib/supabase/env";
 
-const tokenCrypto = createTokenCrypto(getSpotifyTokenEncryptionKey());
+let cached: SpotifyTokenVaultDeps | null = null;
 
-export const spotifyTokenVaultDeps: SpotifyTokenVaultDeps = {
-  clientId: getSpotifyClientId(),
-  clientSecret: getSpotifyClientSecret(),
-  encrypt: tokenCrypto.encrypt,
-  decrypt: tokenCrypto.decrypt,
-};
+export function getSpotifyTokenVaultDeps(): SpotifyTokenVaultDeps {
+  if (!cached) {
+    const tokenCrypto = createTokenCrypto(getSpotifyTokenEncryptionKey());
+    cached = {
+      clientId: getSpotifyClientId(),
+      clientSecret: getSpotifyClientSecret(),
+      encrypt: tokenCrypto.encrypt,
+      decrypt: tokenCrypto.decrypt,
+    };
+  }
+  return cached;
+}
