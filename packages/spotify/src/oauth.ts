@@ -11,6 +11,55 @@ export type SpotifyTokenResponse = {
   refresh_token?: string;
 };
 
+type SpotifyOAuthErrorBody = {
+  error?: string;
+  error_description?: string;
+};
+
+export class SpotifyOAuthError extends Error {
+  readonly status: number;
+  readonly code: string | undefined;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "SpotifyOAuthError";
+    this.status = status;
+    this.code = code;
+  }
+
+  get isRefreshTokenRevoked(): boolean {
+    return this.status === 400 && this.code === "invalid_grant";
+  }
+}
+
+export function isSpotifyRefreshTokenRevoked(error: unknown): boolean {
+  return error instanceof SpotifyOAuthError && error.isRefreshTokenRevoked;
+}
+
+function parseOAuthErrorBody(text: string): SpotifyOAuthErrorBody | null {
+  try {
+    return JSON.parse(text) as SpotifyOAuthErrorBody;
+  } catch {
+    return null;
+  }
+}
+
+function oauthError(
+  action: string,
+  status: number,
+  text: string,
+): SpotifyOAuthError {
+  const body = parseOAuthErrorBody(text);
+  const code = body?.error;
+  const description = body?.error_description;
+  const detail = description ? `${code}: ${description}` : text;
+  return new SpotifyOAuthError(
+    `Spotify ${action} failed (${status}): ${detail}`,
+    status,
+    code,
+  );
+}
+
 export type BuildAuthorizeUrlParams = {
   clientId: string;
   redirectUri: string;
@@ -67,7 +116,7 @@ export async function exchangeAuthorizationCode(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Spotify token exchange failed (${response.status}): ${text}`);
+    throw oauthError("token exchange", response.status, text);
   }
 
   return response.json() as Promise<SpotifyTokenResponse>;
@@ -100,7 +149,7 @@ export async function refreshAccessToken(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Spotify token refresh failed (${response.status}): ${text}`);
+    throw oauthError("token refresh", response.status, text);
   }
 
   return response.json() as Promise<SpotifyTokenResponse>;

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 import {
+  isSpotifyRefreshTokenRevoked,
   refreshAccessToken,
   type SpotifyTokenResponse,
 } from "@muziks/spotify";
@@ -8,6 +9,8 @@ import {
   getSpotifyClientId,
   getSpotifyClientSecret,
 } from "@/src/config/spotify-env";
+import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
+import { hasValidConnectionForUser } from "@/src/lib/spotify/spotify-token-vault";
 
 const ACCESS_COOKIE = "muziks_spotify_access";
 const REFRESH_COOKIE = "muziks_spotify_refresh";
@@ -115,11 +118,57 @@ export async function persistTokenResponse(
   }
 }
 
+/** Use in Route Handlers / Server Actions only (Next.js cookie mutation rules). */
+export function clearSpotifySessionOnResponse(response: NextResponse): void {
+  response.cookies.delete(ACCESS_COOKIE);
+  response.cookies.delete(REFRESH_COOKIE);
+  response.cookies.delete(EXPIRES_COOKIE);
+}
+
 export async function clearSpotifySession(): Promise<void> {
   const jar = await cookies();
   jar.delete(ACCESS_COOKIE);
   jar.delete(REFRESH_COOKIE);
   jar.delete(EXPIRES_COOKIE);
+}
+
+/**
+ * Read-only session check for Server Components (no cookie writes).
+ * Cookies first; falls back to vault in Postgres when Muziks session exists.
+ */
+export async function checkSpotifySessionConnected(): Promise<boolean> {
+  const jar = await cookies();
+  const access = jar.get(ACCESS_COOKIE)?.value;
+  const refresh = jar.get(REFRESH_COOKIE)?.value;
+  const expiresRaw = jar.get(EXPIRES_COOKIE)?.value;
+  const expiresAt = expiresRaw ? Number(expiresRaw) : 0;
+
+  if (access && expiresAt > Date.now() + 60_000) {
+    return true;
+  }
+
+  if (refresh) {
+    try {
+      await refreshAccessToken({
+        clientId: getSpotifyClientId(),
+        refreshToken: refresh,
+        clientSecret: getSpotifyClientSecret(),
+      });
+      return true;
+    } catch (error) {
+      if (isSpotifyRefreshTokenRevoked(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  const muziks = await getMuziksSession();
+  if (muziks.status === "anonymous") {
+    return false;
+  }
+
+  return hasValidConnectionForUser(muziks.userId);
 }
 
 export async function getValidAccessToken(): Promise<string | null> {
@@ -137,21 +186,28 @@ export async function getValidAccessToken(): Promise<string | null> {
     return null;
   }
 
-  const tokens = await refreshAccessToken({
-    clientId: getSpotifyClientId(),
-    refreshToken: refresh,
-    clientSecret: getSpotifyClientSecret(),
-  });
+  try {
+    const tokens = await refreshAccessToken({
+      clientId: getSpotifyClientId(),
+      refreshToken: refresh,
+      clientSecret: getSpotifyClientSecret(),
+    });
 
-  await persistTokenResponse({
-    ...tokens,
-    refresh_token: tokens.refresh_token ?? refresh,
-  });
+    await persistTokenResponse({
+      ...tokens,
+      refresh_token: tokens.refresh_token ?? refresh,
+    });
 
-  return tokens.access_token;
+    return tokens.access_token;
+  } catch (error) {
+    if (isSpotifyRefreshTokenRevoked(error)) {
+      await clearSpotifySession();
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function hasSpotifySession(): Promise<boolean> {
-  const token = await getValidAccessToken();
-  return Boolean(token);
+  return checkSpotifySessionConnected();
 }

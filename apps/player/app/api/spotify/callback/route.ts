@@ -7,6 +7,7 @@ import {
   ensureOwnerAccount,
   findPlayerByOwnerId,
 } from "@/src/lib/auth/owner-repository";
+import { upsertConnectedSession } from "@/src/lib/playback/playback-session-repository";
 import {
   getPlayerAppUrlFromRequest,
   getSpotifyClientId,
@@ -79,6 +80,12 @@ export async function GET(request: NextRequest) {
     });
 
     const player = await findPlayerByOwnerId(userId);
+    if (player) {
+      await upsertConnectedSession({
+        playerId: player.id,
+        spotifyUserId: spotifyProfile.id,
+      });
+    }
     const slug = returnSlug || player?.slug;
 
     const successUrl = slug

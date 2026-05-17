@@ -3,14 +3,18 @@ declare namespace Spotify {
     device_id: string;
   }
 
+  interface ErrorMessage {
+    message: string;
+  }
+
   type PlayerEventMap = {
     ready: DeviceMessage;
     not_ready: DeviceMessage;
     player_state_changed: PlaybackState | null;
-    initialization_error: { message: string };
-    authentication_error: { message: string };
-    account_error: { message: string };
-    playback_error: { message: string };
+    initialization_error: ErrorMessage;
+    authentication_error: ErrorMessage;
+    account_error: ErrorMessage;
+    playback_error: ErrorMessage;
   };
 
   interface Player {
@@ -36,16 +40,22 @@ declare namespace Spotify {
     nextTrack(): Promise<void>;
   }
 
+  interface PlaybackTrack {
+    uri: string;
+    name: string;
+    artists: { name: string }[];
+    album: {
+      name: string;
+      images: { url: string; height: number | null; width: number | null }[];
+    };
+  }
+
   interface PlaybackState {
     paused: boolean;
     position: number;
     duration: number;
     track_window: {
-      current_track: {
-        name: string;
-        artists: { name: string }[];
-        album: { name: string; images: { url: string }[] };
-      };
+      current_track: PlaybackTrack;
     };
   }
 

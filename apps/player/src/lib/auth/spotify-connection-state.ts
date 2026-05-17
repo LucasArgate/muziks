@@ -1,8 +1,8 @@
 import type { SpotifyConnectionState } from "@muziks/types";
 
-import { hasSpotifySession } from "@/src/lib/spotify-session";
+import { checkSpotifySessionConnected } from "@/src/lib/spotify-session";
 
 export async function resolveSpotifyConnectionState(): Promise<SpotifyConnectionState> {
-  const connected = await hasSpotifySession();
+  const connected = await checkSpotifySessionConnected();
   return connected ? "connected" : "disconnected";
 }
