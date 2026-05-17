@@ -1,12 +1,14 @@
 "use client";
 
-import { GlassPanel } from "@muziks/ui";
 import type { PlayerMasterViewState } from "@muziks/types";
-import { cn } from "@muziks/utils";
 
 import { SpotifyConnectButton } from "@/src/components/molecules/spotify-connect-button";
+import { DeviceSelector } from "@/src/features/playback/components/DeviceSelector";
 import { PlaybackMasterGate } from "@/src/features/playback/components/PlaybackMasterGate";
-import { useSpotifyPlayer } from "@/src/features/playback/hooks/useSpotifyPlayer";
+import { PlaybackModeBadge } from "@/src/features/playback/components/PlaybackModeBadge";
+import { PlayerMasterLayout } from "@/src/features/playback/components/PlayerMasterLayout";
+import { usePlaybackSession } from "@/src/features/playback/hooks/usePlaybackSession";
+import { usePlaybackSync } from "@/src/features/playback/hooks/usePlaybackSync";
 
 type PlayerMasterShellProps = {
   slug: string;
@@ -20,115 +22,118 @@ export function PlayerMasterShell({
   spotifyNotice,
 }: PlayerMasterShellProps) {
   const hasSpotify = viewState.spotify === "connected";
-  const playback = useSpotifyPlayer(`Muziks — ${slug}`, hasSpotify);
+  const { onLocalState } = usePlaybackSession(viewState.playback);
+  const sync = usePlaybackSync({
+    slug,
+    playerName: `Muziks — ${slug}`,
+    enabled: hasSpotify,
+    sessionMeta: viewState.sessionMeta,
+    initialPlayback: viewState.playback,
+    onLocalState,
+  });
+
+  const displayPlayback = sync.playback;
+  const error = sync.pollError ?? sync.sdkError;
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-10">
-      <div className="w-full max-w-lg">
-        <GlassPanel className="p-8 md:p-10">
-          <p className="text-center text-sm font-medium uppercase tracking-wider text-on-surface-variant">
-            Player master
-          </p>
-          <h1 className="mt-2 text-center text-2xl font-semibold text-on-surface md:text-3xl">
-            {slug}
-          </h1>
-          <p className="mt-3 text-center text-sm leading-relaxed text-on-surface-variant">
-            Conta Spotify Premium do estabelecimento — reprodução via Web
-            Playback SDK.
-          </p>
+    <PlayerMasterLayout
+      slug={slug}
+      spotifyNotice={spotifyNotice}
+      playback={displayPlayback}
+      ready={sync.ready}
+      error={error}
+      onTogglePlay={() => void sync.togglePlay()}
+    >
+      <PlaybackMasterGate
+        isAuthenticated={hasSpotify}
+        fallback={<SpotifyConnectButton slug={slug} />}
+      >
+        <div className="space-y-4">
+          <PlaybackModeBadge
+            syncMode={sync.syncMode}
+            deviceName={sync.activeDeviceName}
+          />
 
-          {spotifyNotice ? (
-            <p
-              className={cn(
-                "mt-4 rounded-lg border px-3 py-2 text-center text-sm",
-                "border-outline/60 text-on-surface-variant",
-              )}
-              role="status"
-            >
-              {spotifyNotice}
-            </p>
-          ) : null}
+          {sync.requiresDeviceSelection ? (
+            <DeviceSelector onSelect={sync.selectDevice} />
+          ) : (
+            <>
+              <NowPlayingDetails playback={displayPlayback} />
 
-          <div className="mt-8 space-y-4">
-            <PlaybackMasterGate
-              isAuthenticated={hasSpotify}
-              fallback={<SpotifyConnectButton slug={slug} />}
-            >
-              {!playback.ready ? (
+              {sync.syncMode === "sdk" ? (
                 <button
                   type="button"
-                  onClick={() => void playback.connect()}
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-base font-semibold text-on-primary transition hover:opacity-90"
-                >
-                  Ativar reprodução neste navegador
-                </button>
-              ) : (
-                <NowPlaying
-                  trackName={playback.trackName}
-                  artistName={playback.artistName}
-                  deviceId={playback.deviceId}
-                />
-              )}
-
-              {playback.error ? (
-                <p className="text-center text-sm text-red-300" role="alert">
-                  {playback.error}
-                </p>
-              ) : null}
-
-              <form action={`/api/spotify/logout?slug=${encodeURIComponent(slug)}`} method="post">
-                <button
-                  type="submit"
+                  onClick={() => sync.disconnectSdk()}
                   className="w-full text-center text-sm text-on-surface-variant underline-offset-2 hover:underline"
                 >
-                  Desconectar Spotify
+                  Voltar para dispositivo externo
                 </button>
-              </form>
-            </PlaybackMasterGate>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void sync.connectSdk()}
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-outline/50 bg-surface-container-low px-6 py-3 text-sm font-medium text-on-surface transition hover:border-primary/50"
+                >
+                  Tocar neste navegador (opcional)
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
-            <form action="/logout" method="post">
-              <button
-                type="submit"
-                className="w-full text-center text-sm text-on-surface-variant/80 underline-offset-2 hover:underline"
-              >
-                Sair do Muziks
-              </button>
-            </form>
-          </div>
-        </GlassPanel>
-      </div>
-    </main>
+        <form
+          action={`/api/spotify/logout?slug=${encodeURIComponent(slug)}`}
+          method="post"
+          className="pt-2"
+        >
+          <button
+            type="submit"
+            className="w-full text-center text-sm text-on-surface-variant underline-offset-2 hover:underline"
+          >
+            Desconectar Spotify
+          </button>
+        </form>
+      </PlaybackMasterGate>
+
+      <form action="/logout" method="post" className="pt-4">
+        <button
+          type="submit"
+          className="w-full text-center text-sm text-on-surface-variant/80 underline-offset-2 hover:underline"
+        >
+          Sair do Muziks
+        </button>
+      </form>
+    </PlayerMasterLayout>
   );
 }
 
-function NowPlaying({
-  trackName,
-  artistName,
-  deviceId,
+function NowPlayingDetails({
+  playback,
 }: {
-  trackName: string | null;
-  artistName: string | null;
-  deviceId: string | null;
+  playback: ReturnType<typeof usePlaybackSync>["playback"];
 }) {
   return (
-    <div>
-      <p className="text-center text-xs uppercase tracking-wide text-on-surface-variant">
-        Dispositivo ativo
+    <div className="text-center">
+      <p className="text-lg font-medium text-on-surface">
+        {playback?.trackName ?? "Nenhuma faixa em reprodução"}
       </p>
-      <p className="mt-1 text-center font-mono text-xs text-on-surface-variant/80">
-        {deviceId ?? "—"}
-      </p>
-      <p className="mt-4 text-center text-lg font-medium text-on-surface">
-        {trackName ?? "Nenhuma faixa em reprodução"}
-      </p>
-      {artistName ? (
-        <p className="mt-1 text-center text-sm text-on-surface-variant">
-          {artistName}
+      {playback?.artistName ? (
+        <p className="mt-1 text-sm text-on-surface-variant">
+          {playback.artistName}
         </p>
       ) : null}
-      <p className="mt-4 text-center text-xs text-on-surface-variant">
-        Atribuição: conteúdo reproduzido via Spotify
-      </p>
+      {playback?.durationMs && playback.durationMs > 0 ? (
+        <div className="mt-6">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-outline/30">
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-300"
+              style={{
+                width: `${Math.min(100, (playback.positionMs / playback.durationMs) * 100)}%`,
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

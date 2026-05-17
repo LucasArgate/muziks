@@ -23,9 +23,15 @@ export async function publishSessionStateHandler(
     };
   }
 
-  const session = await upsertPlaybackSession(access.playerId, parsed.data);
+  const { session, accepted } = await upsertPlaybackSession(
+    access.playerId,
+    parsed.data,
+  );
   return {
     status: 200 as const,
-    body: playbackSessionSchema.parse(session),
+    body: {
+      ...playbackSessionSchema.parse(session),
+      accepted,
+    },
   };
 }

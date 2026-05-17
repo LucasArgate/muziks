@@ -46,6 +46,11 @@ export {
 } from "./playback/session";
 
 export {
+  playbackSyncModeSchema,
+  type PlaybackSyncMode,
+} from "./playback/sync-mode";
+
+export {
   playbackCommandSchema,
   playbackCommandTypes,
   type PlaybackCommand,
@@ -61,6 +66,8 @@ export {
 } from "./playback/spotify-state";
 
 export {
+  playerMasterSessionMetaSchema,
   playerMasterViewStateSchema,
+  type PlayerMasterSessionMeta,
   type PlayerMasterViewState,
 } from "./gates/master-view";

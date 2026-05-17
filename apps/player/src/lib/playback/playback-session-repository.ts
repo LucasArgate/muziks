@@ -3,6 +3,7 @@ import type {
   NormalizedSpotifyPlayerState,
   PlaybackSession,
   PlaybackSessionStatus,
+  PlaybackSyncMode,
   PublishPlaybackSessionInput,
 } from "@muziks/types";
 import { eq } from "drizzle-orm";
@@ -23,6 +24,10 @@ function rowToPlaybackSession(
     paused: row.paused,
     status: row.status as PlaybackSessionStatus,
     lastError: row.lastError,
+    syncMode: (row.syncMode ?? "api_device") as PlaybackSyncMode,
+    preferredDeviceId: row.preferredDeviceId,
+    activeDeviceName: row.activeDeviceName,
+    stateVersion: row.stateVersion ?? 0,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -69,9 +74,11 @@ export async function upsertConnectedSession(input: {
       playerId: input.playerId,
       spotifyUserId: input.spotifyUserId,
       status: "connected",
+      syncMode: "api_device",
       paused: true,
       progressMs: 0,
       durationMs: 0,
+      stateVersion: 0,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
@@ -85,16 +92,32 @@ export async function upsertConnectedSession(input: {
     });
 }
 
+export type UpsertPlaybackSessionResult = {
+  session: PlaybackSession;
+  accepted: boolean;
+};
+
 export async function upsertPlaybackSession(
   playerId: string,
   input: PublishPlaybackSessionInput,
-): Promise<PlaybackSession> {
+): Promise<UpsertPlaybackSessionResult> {
   const db = getDb();
+  const existing = await getPlaybackSessionByPlayerId(playerId);
+
+  if (
+    existing &&
+    input.stateVersion !== undefined &&
+    input.stateVersion < existing.stateVersion
+  ) {
+    return { session: existing, accepted: false };
+  }
+
   const now = new Date();
+  const nextVersion = (existing?.stateVersion ?? 0) + 1;
 
   const values = {
     playerId,
-    spotifyUserId: input.spotifyUserId ?? null,
+    spotifyUserId: input.spotifyUserId ?? existing?.spotifyUserId ?? null,
     activeDeviceId: input.deviceId,
     currentTrackUri: input.trackUri,
     trackName: input.trackName,
@@ -105,6 +128,16 @@ export async function upsertPlaybackSession(
     paused: input.paused,
     status: input.status,
     lastError: input.lastError ?? null,
+    syncMode: input.syncMode ?? existing?.syncMode ?? "api_device",
+    preferredDeviceId:
+      input.preferredDeviceId !== undefined
+        ? input.preferredDeviceId
+        : (existing?.preferredDeviceId ?? null),
+    activeDeviceName:
+      input.activeDeviceName !== undefined
+        ? input.activeDeviceName
+        : (existing?.activeDeviceName ?? null),
+    stateVersion: nextVersion,
     updatedAt: now,
   };
 
@@ -125,6 +158,10 @@ export async function upsertPlaybackSession(
         paused: values.paused,
         status: values.status,
         lastError: values.lastError,
+        syncMode: values.syncMode,
+        preferredDeviceId: values.preferredDeviceId,
+        activeDeviceName: values.activeDeviceName,
+        stateVersion: values.stateVersion,
         updatedAt: values.updatedAt,
       },
     });
@@ -133,5 +170,5 @@ export async function upsertPlaybackSession(
   if (!session) {
     throw new Error("Failed to persist playback session");
   }
-  return session;
+  return { session, accepted: true };
 }

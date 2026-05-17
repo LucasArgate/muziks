@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { playbackSyncModeSchema } from "./sync-mode";
+
 export const playbackSessionStatusSchema = z.enum([
   "connected",
   "ready",
@@ -25,6 +27,10 @@ export const playbackSessionSchema = z.object({
   paused: z.boolean(),
   status: playbackSessionStatusSchema,
   lastError: z.string().nullable(),
+  syncMode: playbackSyncModeSchema,
+  preferredDeviceId: z.string().nullable(),
+  activeDeviceName: z.string().nullable(),
+  stateVersion: z.number().int().nonnegative(),
   updatedAt: z.string().datetime(),
 });
 

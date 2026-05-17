@@ -18,6 +18,12 @@ export const playerSessionStatusEnum = [
   "error",
 ] as const;
 
+export const playerSessionSyncModeEnum = [
+  "api_device",
+  "sdk",
+  "hybrid",
+] as const;
+
 export const playerSessions = pgTable("player_sessions", {
   playerId: uuid("player_id")
     .primaryKey()
@@ -33,6 +39,10 @@ export const playerSessions = pgTable("player_sessions", {
   paused: boolean("paused").notNull().default(true),
   status: text("status").notNull().default("idle"),
   lastError: text("last_error"),
+  syncMode: text("sync_mode").notNull().default("api_device"),
+  preferredDeviceId: text("preferred_device_id"),
+  activeDeviceName: text("active_device_name"),
+  stateVersion: integer("state_version").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

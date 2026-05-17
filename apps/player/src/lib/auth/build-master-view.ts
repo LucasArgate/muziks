@@ -12,11 +12,18 @@ export async function buildPlayerMasterViewState(): Promise<PlayerMasterViewStat
   const spotify = await resolveSpotifyConnectionState();
 
   let playback: PlayerMasterViewState["playback"] = null;
+  let sessionMeta: PlayerMasterViewState["sessionMeta"] = null;
 
   if (muziks.status === "authenticated") {
     const session = await getPlaybackSessionByPlayerId(muziks.player.id);
     if (session) {
       playback = playbackSessionToNormalized(session);
+      sessionMeta = {
+        syncMode: session.syncMode,
+        preferredDeviceId: session.preferredDeviceId,
+        activeDeviceName: session.activeDeviceName,
+        stateVersion: session.stateVersion,
+      };
     }
   }
 
@@ -24,5 +31,6 @@ export async function buildPlayerMasterViewState(): Promise<PlayerMasterViewStat
     muziks,
     spotify,
     playback,
+    sessionMeta,
   };
 }
