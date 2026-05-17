@@ -21,12 +21,20 @@ export function getWebAppUrl(): string {
 }
 
 /** Player master — prod: https://player.muziks.app; staging: https://staging-player.muziks.app */
+export function tryGetPlayerAppUrl(): string | null {
+  const url = process.env.NEXT_PUBLIC_PLAYER_APP_URL?.trim();
+  if (!url) {
+    return null;
+  }
+  return url.replace(/\/$/, "");
+}
+
 export function getPlayerAppUrl(): string {
-  const url = process.env.NEXT_PUBLIC_PLAYER_APP_URL;
+  const url = tryGetPlayerAppUrl();
   if (!url) {
     throw new Error("NEXT_PUBLIC_PLAYER_APP_URL is not set");
   }
-  return url.replace(/\/$/, "");
+  return url;
 }
 
 function readRequestOrigin(request: Request): string | null {

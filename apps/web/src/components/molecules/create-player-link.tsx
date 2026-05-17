@@ -1,7 +1,10 @@
-import { getPlayerAppUrl } from "@/src/config/env";
+import { tryGetPlayerAppUrl } from "@/src/config/env";
 
 export function CreatePlayerLink() {
-  const playerUrl = getPlayerAppUrl();
+  const playerUrl = tryGetPlayerAppUrl();
+  if (!playerUrl) {
+    return null;
+  }
 
   return (
     <p className="text-sm text-on-surface-variant">

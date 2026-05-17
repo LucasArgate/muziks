@@ -4,7 +4,7 @@ import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/src/components/ui/button";
-import { getParticipantPlayerUrl } from "@/src/config/app-urls";
+import { tryGetParticipantPlayerUrl } from "@/src/config/app-urls";
 
 type ShareParticipantLinkButtonProps = {
   slug: string;
@@ -16,9 +16,15 @@ export function ShareParticipantLinkButton({
   className,
 }: ShareParticipantLinkButtonProps) {
   const [copied, setCopied] = useState(false);
-  const url = getParticipantPlayerUrl(slug);
+  const shareUrl = tryGetParticipantPlayerUrl(slug);
+
+  if (!shareUrl) {
+    return null;
+  }
 
   const share = async () => {
+    const url = shareUrl;
+
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
