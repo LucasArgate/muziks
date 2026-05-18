@@ -27,9 +27,18 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 - `broadcast.self: false` — Master não recebe eco do próprio envio.
 - **Não** usar `postgres_changes` por tick de progresso.
 
-### 3. Fila pública
+### 3. Fila Muziks (snapshot + Broadcast)
 
-Fora deste ADR — plano dedicado para regras de fila e transporte.
+| Camada | Escolha |
+|--------|---------|
+| Fonte de verdade | Postgres (`queue_items`, votos) |
+| Leitura inicial | `GET /api/players/{slug}/queue` → `MuziksQueueSnapshot` |
+| Atualizações | **Realtime Broadcast** `queue.snapshot` no mesmo canal `player:{playerId}` |
+
+- Cliente: `@supabase/supabase-js` via `createBrowserClient` (`@supabase/ssr`) — `channel().on('broadcast', { event: 'queue.snapshot' }, …)`.
+- **Não** usar `postgres_changes` por voto ou reorder; um broadcast por mutação mantém ordem/regras no servidor (`@muziks/queue`).
+- Mutadores (vote, dequeue, …) devem chamar `broadcastQueueSnapshotFromServer` após persistir (hoje parcial — ver implementação).
+- Sensor de fim de faixa (sidecar librespot): [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md).
 
 ## Consequências
 
@@ -46,4 +55,5 @@ Fora deste ADR — plano dedicado para regras de fila e transporte.
 ## Referências
 
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)
+- [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)
 - [STACK-E-FASES-DE-MIGRACAO.md](./STACK-E-FASES-DE-MIGRACAO.md)
