@@ -5,7 +5,8 @@ export {
   SPOTIFY_PLAYBACK_SCOPES,
 } from "./constants";
 export { searchTracks, type SpotifySearchTrack } from "./search";
-export { spotifyFetch, type SpotifyFetchOptions } from "./api";
+export { createSpotifyApi, sdkForAccessToken, type SpotifyApi } from "./client";
+export type { CreateSpotifyApiOptions } from "./client";
 export { createCodeChallenge, generateCodeVerifier } from "./pkce";
 export {
   buildAuthorizeUrl,
@@ -52,4 +53,6 @@ export type {
   SpotifyApiDevicesResponse,
   SpotifyApiPlaybackState,
   SpotifyApiTrack,
+  TrackItem,
 } from "./playback/types";
+export { isSpotifyApiTrack } from "./playback/types";
