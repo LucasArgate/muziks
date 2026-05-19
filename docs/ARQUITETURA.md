@@ -249,6 +249,8 @@ Abstrações front: `SpotifyService`, `PlaybackManager`, `QueueService` em `apps
 
 **Sincronização de estado (diagramas):** [tech/ADR-spotify-state-sync.md](tech/ADR-spotify-state-sync.md) — Master → `player_sessions` → Broadcast; bridge Docker (proposto).
 
+**Preload / transição gapless:** [tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) — near-end, fila dupla, `mirror-next`.
+
 ### 7.3 Deezer (secundário)
 
 Busca, metadados, prototipagem Python/ML — **não** substitui execução Spotify no MVP. [mvp/04-viabilidade-integracao-secundaria-deezer.md](mvp/04-viabilidade-integracao-secundaria-deezer.md).
@@ -417,6 +419,7 @@ Essas trilhas **não alteram** a Fase infra A até spike + ADR.
 | [ADR-playback-hybrid-realtime.md](tech/ADR-playback-hybrid-realtime.md) | SDK + API híbrido, Broadcast |
 | [ADR-librespot-playback-sidecar.md](tech/ADR-librespot-playback-sidecar.md) | Sidecar track-ended, dequeue |
 | `apps/spotify-bridge/` | Serviço Docker: librespot + WebSocket → API interna |
+| [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) | Preload near-end, espelho queue Spotify, dequeue separado |
 
 ### 13.3 Specs de produto (`docs/specs/`)
 

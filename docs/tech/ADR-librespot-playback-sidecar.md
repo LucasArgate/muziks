@@ -68,7 +68,7 @@ Handler (server, autoridade):
 4. `broadcastQueueSnapshotFromServer` com `source: "playback"` (estender `queueSnapshotSources` em `@muziks/types`).
 5. Opcional: `applyLifecycleFromSample` / evento `track_ended` para histórico e telão.
 
-**Near-end:** o sidecar pode avisar ~5 s antes (`reason: "near_end"`) para preload na fila nativa Spotify; o dequeue definitivo só em `track_ended` ou confirmação de troca de `spotifyTrackId`.
+**Near-end:** o sidecar pode avisar ~5 s antes (`reason: "near_end"`) para preload na fila nativa Spotify; o dequeue definitivo só em `track_ended` ou confirmação de troca de `spotifyTrackId`. Fluxo Master + slice `mirror-next`: [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md).
 
 ### 4. Fluxo end-to-end
 

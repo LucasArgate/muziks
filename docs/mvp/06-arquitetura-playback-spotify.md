@@ -223,6 +223,8 @@ sequenceDiagram
 
 ### 7.1 Regras do PlaybackManager (cliente Master)
 
+**Arquitetura detalhada (Next.js, diagramas, slices):** [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md).
+
 1. Inscrever `player.addListener('player_state_changed', ...)`.
 2. Quando `!paused` e `position >= duration - 5000` (ms): disparar **uma vez** por faixa (debounce / flag `transitionScheduled`).
 3. Resolver próxima faixa: cabeça da **fila Muziks** (após política) → URI Spotify.

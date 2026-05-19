@@ -15,7 +15,7 @@ Não existe **webhook oficial** do Spotify para o servidor reagir a cada mudanç
 | **Web API** (`GET /me/player`) | Qualquer device Connect ativo | Poll com rate limit; latência |
 | **Bridge librespot** (container dedicado) | Espaço com bridge ativo | Operação extra; reverse engineering (sensor) |
 
-Este ADR consolida **dois níveis** de solução que se complementam. Detalhes de fila e dequeue continuam em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md); modo híbrido SDK+API em [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md).
+Este ADR consolida **dois níveis** de solução que se complementam. Detalhes de fila e dequeue continuam em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md); modo híbrido SDK+API em [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md). **Preload near-end e espelho da fila Spotify (Next.js):** [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md).
 
 ---
 
@@ -344,6 +344,7 @@ Participantes e telão: `GET` inicial + `subscribeSessionSnapshots` / `subscribe
 
 ## Referências
 
+- [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) — preload, fila dupla, slices `mirror-next`
 - [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md) — decisão Broadcast vs `postgres_changes`
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md) — `track-ended`, dequeue, contrato interno
 - [ADR-spotify-web-api-sdk.md](./ADR-spotify-web-api-sdk.md)
