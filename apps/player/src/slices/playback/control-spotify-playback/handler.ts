@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 
 import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
+import { readNormalizedSpotifyPlaybackState } from "@/src/lib/spotify/read-playback-state";
 
 const controlBodySchema = z.object({
   action: z.enum(["play", "pause", "next"]),
@@ -43,5 +44,7 @@ export async function controlSpotifyPlaybackHandler(rawBody: unknown) {
       break;
   }
 
-  return { status: 200 as const, body: { ok: true } };
+  const state = await readNormalizedSpotifyPlaybackState(accessToken);
+
+  return { status: 200 as const, body: { ok: true, state } };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { SpotifyApiDevice } from "@muziks/spotify";
+import type { SpotifyApiDevice } from "@muziks/spotify/types";
 import { useCallback, useEffect, useState } from "react";
 
 type DeviceSelectorProps = {

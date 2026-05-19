@@ -1,4 +1,4 @@
-import { spotifyFetch } from "./api";
+import { sdkForAccessToken } from "./client";
 
 export type SpotifyUserProfile = {
   id: string;
@@ -16,5 +16,12 @@ export function pickSpotifyAvatarUrl(
 export async function fetchSpotifyProfile(
   accessToken: string,
 ): Promise<SpotifyUserProfile> {
-  return spotifyFetch<SpotifyUserProfile>("/me", { accessToken });
+  const sdk = sdkForAccessToken(accessToken);
+  const profile = await sdk.currentUser.profile();
+  return {
+    id: profile.id,
+    display_name: profile.display_name,
+    email: profile.email,
+    images: profile.images,
+  };
 }

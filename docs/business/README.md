@@ -17,6 +17,7 @@ Esta pasta responde à pergunta **“onde entra o dinheiro?”** de forma **sepa
 | [01-receita-rentabilidade-e-go-to-market.md](01-receita-rentabilidade-e-go-to-market.md) | Mapa de mecanismos além de mensal/fichas; OSS + freemium + infra gerenciada; personas (dev × dono); expansão comercial e marketing; aponta para o doc do “rádio do espaço” |
 | [02-canal-midia-radio-do-espaco.md](02-canal-midia-radio-do-espaco.md) | “Rádio do espaço”: *spots* no player controlado pelo dono; inventário no salão; dono × rede × SaaS; riscos e manutenção vs specs |
 | [03-espaco-romantico-prioridade-e-sustentabilidade.md](03-espaco-romantico-prioridade-e-sustentabilidade.md) | Participante: assinatura/créditos, “espaço romântico”, mensagens, **peso** na ordem dentro do firewall; sustentabilidade emocional do ecossistema |
+| [04-playback-bridge-e-tiering.md](04-playback-bridge-e-tiering.md) | Bridge/librespot **só pagantes**; freemium = SDK no Master; abstração de custo e packaging |
 
 ## Manutenção
 

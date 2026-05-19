@@ -1,0 +1,22 @@
+# Dev / VM dedicada — build a partir da raiz do monorepo:
+#   docker compose -f apps/spotify-bridge/docker-compose.yml up --build
+
+services:
+  spotify-bridge:
+    build:
+      context: ../..
+      dockerfile: apps/spotify-bridge/Dockerfile
+    container_name: muziks-spotify-bridge
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: "8765"
+      HOST: "0.0.0.0"
+    volumes:
+      - ./cache:/app/cache
+      - ./logs:/app/logs
+    ports:
+      - "8765:8765"
+    # Descomente em host Linux para Spotify Connect discovery:
+    # network_mode: host

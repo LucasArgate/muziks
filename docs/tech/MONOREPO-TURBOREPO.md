@@ -15,6 +15,7 @@ muziks/                          ← raiz do monorepo
 ├── apps/
 │   ├── web/                     ← muziks.app/{slug} — PWA, fila, participante, telão
 │   ├── player/                  ← player.muziks.com/{slug} — master Spotify (placeholder)
+│   ├── spotify-bridge/          ← VM/Docker: librespot + WS → API interna (ver ADR-spotify-state-sync)
 │   ├── blog/                    ← blog.muziks.com.br
 │   ├── admin/                   ← futuro painel admin (placeholder)
 │   └── api/                     ← futuro backend dedicado (placeholder)

@@ -98,7 +98,7 @@ flowchart LR
 |--------------|---------|
 | **0 — Fundação** | Criar servidor, `#regras`, `#geral`, `#dev`, `#ops-alertas` (manual ou webhook GitHub) |
 | **1 — Stack** | `#ops-deploys` ligado a Actions; integração Linear → notificação (opcional) |
-| **2 — MVP interno** | `#feedback-beta` fechado; template de bug report |
+| **2 — MVP interno** | `#feedback-beta` fechado; template de bug report; **widget in-app** → Linear ([17-feedback-in-app-e-linear.md](../specs/17-feedback-in-app-e-linear.md)) |
 | **3+ — Beta / lançamento** | `Piloto`, moderação documentada; link no README do app |
 
 ### 2.5 O que **não** vai para o Discord

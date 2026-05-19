@@ -7,6 +7,7 @@ const PUBLIC_PATHS = new Set([
   "/login",
   "/register",
   "/forget",
+  "/manifest.webmanifest",
   "/api/spotify/login",
   "/api/spotify/callback",
   "/api/spotify/clear-session",
@@ -19,6 +20,7 @@ function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/favicon")) return true;
+  if (pathname.startsWith("/brand/")) return true;
   return false;
 }
 

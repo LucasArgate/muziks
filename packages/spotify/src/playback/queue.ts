@@ -1,21 +1,21 @@
 import type { NormalizedSpotifyPlaybackQueue } from "@muziks/types";
 
-import { spotifyFetch, type SpotifyFetchOptions } from "../api";
-import type { SpotifyApiTrack } from "./types";
+import { sdkForAccessToken } from "../client";
+import type { SpotifyApiPlaybackQueueResponse, SpotifyApiTrack } from "./types";
+import { isSpotifyApiTrack } from "./types";
 
-export type GetPlaybackQueueParams = Pick<SpotifyFetchOptions, "accessToken">;
-
-export type SpotifyApiPlaybackQueueResponse = {
-  currently_playing: SpotifyApiTrack | null;
-  queue: SpotifyApiTrack[];
+export type GetPlaybackQueueParams = {
+  accessToken: string;
 };
+
+export type { SpotifyApiPlaybackQueueResponse };
 
 export async function getPlaybackQueue(
   params: GetPlaybackQueueParams,
 ): Promise<SpotifyApiPlaybackQueueResponse> {
-  return spotifyFetch<SpotifyApiPlaybackQueueResponse>("/me/player/queue", {
-    accessToken: params.accessToken,
-  });
+  const sdk = sdkForAccessToken(params.accessToken);
+  const queue = await sdk.player.getUsersQueue();
+  return queue ?? { currently_playing: null, queue: [] };
 }
 
 function pickAlbumImageUrl(track: SpotifyApiTrack | null): string | null {
@@ -43,8 +43,14 @@ function normalizeTrack(
 export function normalizeSpotifyPlaybackQueue(
   raw: SpotifyApiPlaybackQueueResponse,
 ): NormalizedSpotifyPlaybackQueue {
+  const current = isSpotifyApiTrack(raw.currently_playing)
+    ? raw.currently_playing
+    : null;
+
   return {
-    currentlyPlaying: normalizeTrack(raw.currently_playing),
-    upcoming: raw.queue.map((track) => normalizeTrack(track)!),
+    currentlyPlaying: normalizeTrack(current),
+    upcoming: raw.queue
+      .filter(isSpotifyApiTrack)
+      .map((track) => normalizeTrack(track)!),
   };
 }

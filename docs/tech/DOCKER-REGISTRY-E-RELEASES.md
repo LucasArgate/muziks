@@ -41,6 +41,7 @@ Exemplos (Docker Hub):
 | App | Imagem | Tags típicas |
 |-----|--------|----------------|
 | Player | `muziks/web` | `v1.4.2`, `1.4.2`, `sha-abc1234`, `staging` |
+| Spotify bridge | `muziks/spotify-bridge` | idem (`apps/spotify-bridge`) |
 | API (futuro) | `muziks/api` | idem |
 | Blog (opcional) | `muziks/blog` | idem |
 
@@ -135,20 +136,49 @@ sequenceDiagram
 
 ---
 
-## 6. CI/CD — workflows (esboço)
+## 6. CI/CD — workflows
 
 Complementa [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) §5.
 
+### 6.0 `apps/spotify-bridge` (implementado)
+
+| Workflow | Gatilho | Tags publicadas |
+|----------|---------|-----------------|
+| [`docker-spotify-bridge-staging.yml`](../../.github/workflows/docker-spotify-bridge-staging.yml) | Push `staging` + path filters abaixo; ou `workflow_dispatch` | `muziks/spotify-bridge:staging`, `:sha-<7>` |
+| [`docker-spotify-bridge-release.yml`](../../.github/workflows/docker-spotify-bridge-release.yml) | Push tag Git `v*.*.*` | `muziks/spotify-bridge:vX.Y.Z`, `:X.Y.Z` |
+
+**Path filters** (staging — não rebuildar quando só `docs/` mudar):
+
+- `apps/spotify-bridge/**`
+- `packages/types/**`
+- `packages/config/**`
+- `pnpm-lock.yaml`, `package.json`, `pnpm-workspace.yaml`
+
+**Build:** contexto na raiz do monorepo; `docker build -f apps/spotify-bridge/Dockerfile .`
+
+### 6.0.1 Setup Docker Hub (privado)
+
+1. Criar repositório **`muziks/spotify-bridge`** no Docker Hub com visibilidade **private**.
+2. Gerar **Access Token** (read/write) na conta ou org **muziks**.
+3. No GitHub (`lucasargate/muziks` ou org): **Settings → Secrets and variables → Actions**:
+   - `DOCKERHUB_USERNAME` — usuário ou org do Hub
+   - `DOCKERHUB_TOKEN` — token do passo 2
+4. Validar: **Actions → Docker — spotify-bridge (staging) → Run workflow** (`workflow_dispatch`) antes da branch `staging` existir.
+5. Rotina manual pós-push: [docs/tests/spotify-bridge/INICIO-RAPIDO.md](../tests/spotify-bridge/INICIO-RAPIDO.md) (guia curto) · [docker-e2e.md](../tests/spotify-bridge/docker-e2e.md) (referência).
+6. (Futuro) Environment `production` com **approval** — quando houver job de deploy na VM.
+
+### 6.1 Outros apps (planejado)
+
 | Workflow | Gatilho | Ações |
 |----------|---------|--------|
-| `docker-build-staging.yml` | Push `staging` + paths `apps/web`, `packages/**` | `docker build` → push `:staging` e `:sha-*` |
+| `docker-build-staging.yml` | Push `staging` + paths `apps/web`, `packages/**` | `docker build` → push `muziks/web:staging` e `:sha-*` |
 | `release-docker-prod.yml` | Tag `v*.*.*` | Build → push `:vX.Y.Z` → deploy prod (approval) → `db:migrate` prod |
 | `hotfix-docker-prod.yml` | Tag `v*.*.*` em branch `hotfix/*` ou após merge hotfix | Igual release; approval obrigatório |
 | `ci.yml` | PR | Lint (sem push de imagem de prod) |
 
 **Path filters:** Turborepo / paths — não rebuildar `web` quando só `docs/` mudar.
 
-### 6.1 Secrets (GitHub Environments)
+### 6.2 Secrets (GitHub Environments)
 
 | Secret | Uso |
 |--------|-----|
@@ -159,7 +189,7 @@ Complementa [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) §5.
 
 Produção: **approval gate** no environment `production` (já previsto no processo).
 
-### 6.2 Promoção imagem → ambiente
+### 6.3 Promoção imagem → ambiente
 
 | Ambiente | Tag consumida | Quem atualiza |
 |----------|---------------|---------------|
@@ -182,8 +212,10 @@ muziks/
 │   ├── web.Dockerfile        # opcional: Dockerfiles centralizados
 │   └── README.md             # build local: pnpm + turbo
 ├── .github/workflows/
-│   ├── docker-build-staging.yml
-│   └── release-docker-prod.yml
+│   ├── docker-spotify-bridge-staging.yml
+│   ├── docker-spotify-bridge-release.yml
+│   ├── docker-build-staging.yml          # futuro: apps/web
+│   └── release-docker-prod.yml           # futuro: apps/web
 ```
 
 **Build:** contexto na **raiz** do monorepo (`docker build -f docker/web.Dockerfile .`) para `pnpm` + Turborepo resolver `packages/*`.

@@ -58,11 +58,11 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 |---------|---------|
 | Motor de áudio | Spotify Web Playback SDK no cliente Master |
 | Controle remoto / fila nativa | Spotify Web API (Player) com token do **dono** |
-| Transição automática | `PlaybackManager` no Master (`player_state_changed`, ~5 s antes do fim) |
+| Transição automática | `NearEndScheduler` + slice `mirror-next` no Master ([PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md)) |
 | Sync telão / dono / comandos | Realtime `player_sessions` + `playback_commands` |
 | Leitura da fila (massa) | Polling HTTP 3–5 s (inalterado na PoC) |
 
-Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md). Viabilidade e EDA: [../mvp/03-viabilidade-integracao-spotify-eda.md](../mvp/03-viabilidade-integracao-spotify-eda.md). Compliance: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
+Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) · near-end / fila dupla: [../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md). Viabilidade e EDA: [../mvp/03-viabilidade-integracao-spotify-eda.md](../mvp/03-viabilidade-integracao-spotify-eda.md). Compliance: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 
 **Escopo:** reprodução integrada entra no **MVP-B** (piloto com som), não no MVP-A (só fila/votos) — [../mvp/congelamento-mvp-e-arquitetura.md](../mvp/congelamento-mvp-e-arquitetura.md).
 

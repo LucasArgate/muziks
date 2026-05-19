@@ -1,14 +1,14 @@
-import { spotifyFetch, type SpotifyFetchOptions } from "../api";
+import { sdkForAccessToken } from "../client";
 import type { SpotifyApiPlaybackState } from "./types";
 
-export type GetCurrentPlaybackParams = Pick<SpotifyFetchOptions, "accessToken">;
+export type GetCurrentPlaybackParams = {
+  accessToken: string;
+};
 
 /** Returns null when nothing is playing (HTTP 204). */
 export async function getCurrentPlayback(
   params: GetCurrentPlaybackParams,
 ): Promise<SpotifyApiPlaybackState | null> {
-  const result = await spotifyFetch<SpotifyApiPlaybackState>("/me/player", {
-    accessToken: params.accessToken,
-  });
-  return result ?? null;
+  const sdk = sdkForAccessToken(params.accessToken);
+  return sdk.player.getPlaybackState();
 }

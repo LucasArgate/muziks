@@ -16,7 +16,7 @@ function toSnapshot(
     positionMs: playback.positionMs,
     durationMs: playback.durationMs,
     paused: playback.paused,
-    positionUpdatedAt: playback.positionUpdatedAt ?? Date.now(),
+    positionUpdatedAt: playback.positionUpdatedAt ?? 0,
   };
 }
 
@@ -36,6 +36,19 @@ const EMPTY: PlaybackProgressView = {
   hasDuration: false,
 };
 
+function staticProgressView(
+  snapshot: PlaybackProgressSnapshot,
+): PlaybackProgressView {
+  const positionMs = Math.min(snapshot.positionMs, snapshot.durationMs);
+  return {
+    positionMs,
+    progressPercent: (positionMs / snapshot.durationMs) * 100,
+    currentTime: formatPlaybackTime(positionMs),
+    durationTime: formatPlaybackTime(snapshot.durationMs),
+    hasDuration: true,
+  };
+}
+
 export function usePlaybackProgress(
   playback: NormalizedSpotifyPlayerState | null,
 ): PlaybackProgressView {
@@ -44,34 +57,45 @@ export function usePlaybackProgress(
     [playback],
   );
 
-  const [now, setNow] = useState(() => Date.now());
+  const [hydrated, setHydrated] = useState(false);
+  const [liveNow, setLiveNow] = useState<number | null>(null);
 
   useEffect(() => {
-    setNow(Date.now());
-  }, [snapshot]);
+    setHydrated(true);
+    setLiveNow(Date.now());
+  }, []);
 
   useEffect(() => {
-    if (!snapshot || snapshot.paused || snapshot.durationMs <= 0) {
+    if (!hydrated) return;
+    setLiveNow(Date.now());
+  }, [snapshot, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !snapshot || snapshot.paused || snapshot.durationMs <= 0) {
       return;
     }
 
     let frame = 0;
     const tick = () => {
-      setNow(Date.now());
+      setLiveNow(Date.now());
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [snapshot]);
+  }, [snapshot, hydrated]);
 
   if (!snapshot || snapshot.durationMs <= 0) {
     return EMPTY;
   }
 
-  const positionMs = computeLivePositionMs(snapshot, now);
+  if (!hydrated || liveNow === null) {
+    return staticProgressView(snapshot);
+  }
+
+  const positionMs = computeLivePositionMs(snapshot, liveNow);
   return {
     positionMs,
-    progressPercent: computeProgressPercent(snapshot, now),
+    progressPercent: computeProgressPercent(snapshot, liveNow),
     currentTime: formatPlaybackTime(positionMs),
     durationTime: formatPlaybackTime(snapshot.durationMs),
     hasDuration: true,

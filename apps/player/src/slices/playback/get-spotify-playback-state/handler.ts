@@ -1,6 +1,5 @@
-import { getCurrentPlayback, normalizeApiPlaybackState } from "@muziks/spotify";
-
 import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
+import { readSpotifyPlaybackSnapshot } from "@/src/lib/spotify/read-playback-state";
 
 export async function getSpotifyPlaybackStateHandler() {
   const accessToken = await getOwnerSpotifyAccessToken();
@@ -8,11 +7,10 @@ export async function getSpotifyPlaybackStateHandler() {
     return { status: 401 as const, body: { error: "spotify_not_connected" } };
   }
 
-  const raw = await getCurrentPlayback({ accessToken });
-  const state = normalizeApiPlaybackState(raw);
+  const { raw, state } = await readSpotifyPlaybackSnapshot(accessToken);
 
   return {
     status: 200 as const,
-    body: { state, raw: raw ?? null },
+    body: { state, raw },
   };
 }
