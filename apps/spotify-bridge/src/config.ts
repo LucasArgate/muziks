@@ -12,6 +12,7 @@ const envSchema = z.object({
   LIBRESPOT_AUTOSTART: z
     .enum(["true", "false", "1", "0"])
     .optional()
+    .default("false")
     .transform((v) => v === "true" || v === "1"),
 });
 

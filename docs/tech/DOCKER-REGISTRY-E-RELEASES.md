@@ -41,6 +41,7 @@ Exemplos (Docker Hub):
 | App | Imagem | Tags típicas |
 |-----|--------|----------------|
 | Player | `muziks/web` | `v1.4.2`, `1.4.2`, `sha-abc1234`, `staging` |
+| Spotify bridge | `muziks/spotify-bridge` | idem (`apps/spotify-bridge`) |
 | API (futuro) | `muziks/api` | idem |
 | Blog (opcional) | `muziks/blog` | idem |
 
