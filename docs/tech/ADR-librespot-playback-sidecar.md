@@ -124,6 +124,7 @@ Idempotência em dequeue + `idempotencyKey` no track-ended evita avanço duplo s
 
 ## Referências
 
+- [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) — visão em duas camadas, diagramas de deploy e coexistência com o Master
 - [librespot](https://github.com/librespot-org/librespot) · [Reverse engineering (wiki)](https://github.com/librespot-org/librespot/wiki/Reverse-engineering)
 - [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md)
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) §7.1 (transição ~5 s antes do fim)

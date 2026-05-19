@@ -247,6 +247,8 @@ Abstrações front: `SpotifyService`, `PlaybackManager`, `QueueService` em `apps
 
 **Especificação completa:** [mvp/06-arquitetura-playback-spotify.md](mvp/06-arquitetura-playback-spotify.md).
 
+**Sincronização de estado (diagramas):** [tech/ADR-spotify-state-sync.md](tech/ADR-spotify-state-sync.md) — Master → `player_sessions` → Broadcast; bridge Docker (proposto).
+
 ### 7.3 Deezer (secundário)
 
 Busca, metadados, prototipagem Python/ML — **não** substitui execução Spotify no MVP. [mvp/04-viabilidade-integracao-secundaria-deezer.md](mvp/04-viabilidade-integracao-secundaria-deezer.md).
@@ -411,6 +413,9 @@ Essas trilhas **não alteram** a Fase infra A até spike + ADR.
 | [ATOMIC-DESIGN.md](tech/ATOMIC-DESIGN.md) | Componentes |
 | [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) | Linear, CI, ambientes |
 | [DOCKER-REGISTRY-E-RELEASES.md](tech/DOCKER-REGISTRY-E-RELEASES.md) | Imagens e releases |
+| [ADR-spotify-state-sync.md](tech/ADR-spotify-state-sync.md) | Estado playback: Master, Realtime, bridge librespot |
+| [ADR-playback-hybrid-realtime.md](tech/ADR-playback-hybrid-realtime.md) | SDK + API híbrido, Broadcast |
+| [ADR-librespot-playback-sidecar.md](tech/ADR-librespot-playback-sidecar.md) | Sidecar track-ended, dequeue |
 
 ### 13.3 Specs de produto (`docs/specs/`)
 

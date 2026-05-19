@@ -1,0 +1,6 @@
+dist/
+node_modules/
+cache/
+logs/
+.env
+.env.local

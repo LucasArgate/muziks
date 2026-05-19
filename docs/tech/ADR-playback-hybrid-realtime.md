@@ -54,6 +54,7 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 
 ## Referências
 
+- [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) — diagramas consolidados (Master → API → Broadcast; bridge)
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)
 - [STACK-E-FASES-DE-MIGRACAO.md](./STACK-E-FASES-DE-MIGRACAO.md)
