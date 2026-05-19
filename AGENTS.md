@@ -6,3 +6,4 @@
 - **Git (obrigatório):** [GitFlow e git workflow no GitHub](docs/tech/PROCESSO-DESENVOLVIMENTO.md) (branches, PRs, proteção de `main`) **em vigor** — ver §0 e §2 do processo. Trabalho em **`feature/MUZ-<n>-<slug-curto>`** a partir da branch de integração correta (`develop` no bootstrap; depois `staging` para `apps/web`/`apps/player`). **Não** commitar direto em `main`. PRs de código **devem** referenciar issue Linear (`MUZ-n`). **GitHub Actions** (CI/CD em `.github/workflows/`) é escopo futuro (§5), não confundir com git workflow.
 - **Testes:** não criar arquivos de teste automatizados neste repo, salvo pedido explícito em contrário.
 - **Execução local:** não rodar `pnpm dev` nem servidores long-running — o mantenedor valida no ambiente dele.
+- **Feedback in-app:** widget, Linear e elegibilidade do backlog — [`docs/specs/17-feedback-in-app-e-linear.md`](docs/specs/17-feedback-in-app-e-linear.md).

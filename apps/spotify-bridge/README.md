@@ -2,6 +2,8 @@
 
 Serviço **long-running** (WebSocket + librespot) para observação de playback e chamadas à API interna do Muziks. Roda em **VM/Docker**, não na Vercel.
 
+**Tier:** provisionado **apenas para espaços pagantes** (hosted). Freemium usa Web Playback SDK no `apps/player`. Ver [04-playback-bridge-e-tiering.md](../../docs/business/04-playback-bridge-e-tiering.md).
+
 **Documentação:** [ADR-spotify-state-sync.md](../../docs/tech/ADR-spotify-state-sync.md) · [ADR-librespot-playback-sidecar.md](../../docs/tech/ADR-librespot-playback-sidecar.md)
 
 ## Estrutura

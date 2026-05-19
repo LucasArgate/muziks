@@ -20,6 +20,7 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 14. [10-pwa-strategy.md](10-pwa-strategy.md) — PWA e cache
 15. [15-backend-architecture.md](15-backend-architecture.md) — API/backend, Vertical Slice
 16. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
+17. [17-feedback-in-app-e-linear.md](17-feedback-in-app-e-linear.md) — feedback in-app, contexto rico, Linear, elegibilidade do backlog
 
 ## Convenções
 
@@ -49,5 +50,6 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 - [Vertical Slice Architecture (API/backend)](../tech/VERTICAL-SLICE-ARCHITECTURE.md)
 - [Stack, fases de infra e migração](../tech/STACK-E-FASES-DE-MIGRACAO.md)
 - [Processo de desenvolvimento](../tech/PROCESSO-DESENVOLVIMENTO.md) — Linear, git workflow (GitFlow), GitHub Actions (futuro), ambientes
+- [Feedback in-app e Linear](17-feedback-in-app-e-linear.md) — widget, screenshot, integração issues, cliente no backlog
 - [Monorepo Turborepo](../tech/MONOREPO-TURBOREPO.md)
 - [AGENTS.md](../../AGENTS.md) — orientação para agentes e tooling (`pnpm`, shadcn, lint)

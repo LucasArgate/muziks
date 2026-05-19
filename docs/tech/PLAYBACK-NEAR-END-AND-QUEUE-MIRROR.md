@@ -36,35 +36,40 @@ O Muziks **não** reimplementa áudio nem buffer próprio; orquestra a **fila l�
 
 ```mermaid
 flowchart TB
-  subgraph Client["apps/player — browser Master"]
-    SDK[Web Playback SDK<br/>player_state_changed]
-    APIPoll[SessionPlaybackPoller<br/>modo api_device]
+  subgraph Client["apps/player browser Master"]
+    SDK["Web Playback SDK"]
+    APIPoll["SessionPlaybackPoller"]
     Sched[NearEndScheduler]
     Coord[PlaybackSyncCoordinator]
+    Mirror[QueueMirrorService]
     SDK --> Coord
     APIPoll --> Coord
     Coord --> Sched
-    Sched -->|1x por faixa, timeLeft ≤ PRELOAD_MS| Mirror[QueueMirrorService]
+    Sched -->|"1x por faixa, timeLeft lte PRELOAD_MS"| Mirror
   end
 
-  subgraph Server["apps/player — API Routes / slices"]
-    Route[POST .../playback/mirror-next]
+  subgraph Server["apps/player API slices"]
+    Route["POST mirror-next"]
     Vault[token vault]
-    Slice[mirror-next-to-spotify-queue handler]
+    Slice[mirror-next handler]
+    QGET["GET player queue"]
+    MuzQ["fila Muziks"]
     Route --> Slice
     Slice --> Vault
-    Slice --> SPAPI[@muziks/spotify addToQueue]
-    Slice --> QGET[GET /me/player/queue]
-    Slice --> MuzQ[fila Muziks — packages/queue]
+    Slice --> QGET
+    Slice --> MuzQ
   end
 
   subgraph Spotify["Spotify"]
+    SpotifyAdd["spotify addToQueue"]
     QNat[Queue nativa]
-    SPAPI --> QNat
+    SpotifyAdd --> QNat
   end
 
+  Slice --> SpotifyAdd
+
   Mirror --> Route
-  TrackChange[troca de trackUri] --> Dequeue[POST dequeue / track-ended]
+  TrackChange[troca de trackUri] --> Dequeue["POST track-ended"]
   Dequeue --> MuzQ
   Dequeue --> DB[(Postgres)]
 ```
@@ -85,39 +90,39 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-  participant SDK as SDK / API poll
+  participant SDK as SDK ou API poll
   participant Sched as NearEndScheduler
   participant API as POST mirror-next
   participant Slice as mirror-next handler
   participant Muz as Fila Muziks
   participant SP as Spotify Web API
 
-  SDK->>Sched: state (positionMs, durationMs, trackUri, paused)
-  alt paused ou sem duração
+  SDK->>Sched: state position duration trackUri paused
+  alt paused ou sem duracao
     Sched-->>Sched: no-op
-  else timeLeft > PRELOAD_MS
+  else timeLeft maior que PRELOAD_MS
     Sched-->>Sched: aguardar
-  else já agendado para esta trackUri
+  else ja agendado para esta trackUri
     Sched-->>Sched: no-op
-  else timeLeft ≤ PRELOAD_MS
-    Sched->>Sched: scheduledForTrackUri = trackUri
-    Sched->>API: mirror próxima faixa
-    API->>Slice: assert dono + playerId
-    Slice->>Muz: próximo item após o atual
-  alt sem próxima faixa
-    Slice-->>API: { mirrored: false, reason: "empty" }
-  else
-    Slice->>SP: GET /me/player/queue
-    alt URI já em upcoming
-      Slice-->>API: { mirrored: false, reason: "already_queued" }
+  else timeLeft dentro da janela near-end
+    Sched->>Sched: marcar scheduledForTrackUri
+    Sched->>API: mirror proxima faixa
+    API->>Slice: assert dono e playerId
+    Slice->>Muz: proximo item apos o atual
+    alt sem proxima faixa
+      Slice-->>API: mirrored false empty
     else
-      Slice->>SP: POST /me/player/queue?uri=…&device_id=…
-      Slice-->>API: { mirrored: true, uri }
+      Slice->>SP: GET player queue
+      alt URI ja em upcoming
+        Slice-->>API: mirrored false already_queued
+      else
+        Slice->>SP: POST player queue
+        Slice-->>API: mirrored true
+      end
     end
   end
-  end
 
-  Note over SDK,SP: Na troca de trackUri → reset flag;<br/>dequeue em fluxo separado (§5)
+  Note over SDK,SP: troca de trackUri reseta flag dequeue em fluxo separado
 ```
 
 ### Constantes sugeridas
@@ -199,10 +204,10 @@ Adicionar `action: "queue"` ao schema existente é aceitável para MVP rápido; 
 ```mermaid
 flowchart LR
   A[trackUri mudou ou track_ended] --> B{Autoridade}
-  B --> C[POST dequeue / internal track-ended]
-  C --> D[packages/queue]
+  B --> C[POST dequeue ou track-ended]
+  C --> D[packages queue]
   D --> E[broadcast queue.snapshot]
-  B --> F[Se head Muziks ≠ Spotify:<br/>startPlayback ou next]
+  B --> F["startPlayback ou next se divergir"]
 ```
 
 | Evento | Quem dispara | Endpoint / slice |
@@ -255,9 +260,11 @@ Em divergência SDK vs API, decisões de **device** e **trackUri** seguem [ADR-p
 
 ---
 
-## 9. Bridge librespot (camada 2)
+## 9. Bridge librespot (camada 2 — só pagantes)
 
-Quando `apps/spotify-bridge` estiver ativo:
+O bridge é **exclusivo de espaços pagantes**; freemium implementa near-end e fila via **Master (SDK)**. Política: [04-playback-bridge-e-tiering.md](../business/04-playback-bridge-e-tiering.md).
+
+Quando `apps/spotify-bridge` estiver ativo **e** o espaço tiver tier elegível:
 
 - Evento **`near_end`** → pode chamar o **mesmo** contrato `mirror-next` (HTTP interno) ou notificar o Master via WS.
 - **`track_ended`** → somente `POST /api/internal/playback/track-ended` (dequeue + play next).

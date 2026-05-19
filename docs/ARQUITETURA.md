@@ -19,6 +19,7 @@
 | Modelo de domínio e regras | §5 + [specs/03-domain-model.md](specs/03-domain-model.md) |
 | Onde colocar código no monorepo | §9 + [tech/MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) |
 | UI do player (fila, hero, hosts) | [specs/16-ui-player-e-fila.md](specs/16-ui-player-e-fila.md) |
+| Feedback in-app e Linear | [specs/17-feedback-in-app-e-linear.md](specs/17-feedback-in-app-e-linear.md) |
 | Identidade e sistema visual | [DESIGN.md](DESIGN.md) |
 | Comportamentos de produto (normativo) | [specs/README.md](specs/README.md) |
 
@@ -418,7 +419,8 @@ Essas trilhas **não alteram** a Fase infra A até spike + ADR.
 | [ADR-spotify-state-sync.md](tech/ADR-spotify-state-sync.md) | Estado playback: Master, Realtime, bridge librespot |
 | [ADR-playback-hybrid-realtime.md](tech/ADR-playback-hybrid-realtime.md) | SDK + API híbrido, Broadcast |
 | [ADR-librespot-playback-sidecar.md](tech/ADR-librespot-playback-sidecar.md) | Sidecar track-ended, dequeue |
-| `apps/spotify-bridge/` | Serviço Docker: librespot + WebSocket → API interna |
+| `apps/spotify-bridge/` | Serviço Docker ( **só plano pago** ): librespot + WebSocket → API interna |
+| [04-playback-bridge-e-tiering.md](business/04-playback-bridge-e-tiering.md) | Freemium = SDK Master; pagante = bridge |
 | [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) | Preload near-end, espelho queue Spotify, dequeue separado |
 
 ### 13.3 Specs de produto (`docs/specs/`)

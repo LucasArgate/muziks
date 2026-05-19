@@ -3,6 +3,10 @@
 **Status:** proposto (não implementado)  
 **Data:** 2026-05-18
 
+## Elegibilidade (tier)
+
+O sidecar/bridge **não** é ofertado em plano freemium hosted. Apenas espaços **pagantes** recebem `apps/spotify-bridge` provisionado; freemium permanece na camada Master (Web Playback SDK + Web API). Ver [04-playback-bridge-e-tiering.md](../business/04-playback-bridge-e-tiering.md) e [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) § Camada 2.
+
 ## Contexto
 
 O Muziks precisa detectar com precisão quando uma faixa **termina** (ou está a poucos segundos do fim) para:
@@ -124,6 +128,7 @@ Idempotência em dequeue + `idempotencyKey` no track-ended evita avanço duplo s
 
 ## Referências
 
+- [04-playback-bridge-e-tiering.md](../business/04-playback-bridge-e-tiering.md) — elegibilidade freemium vs pagante
 - [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) — visão em duas camadas, diagramas de deploy e coexistência com o Master
 - [librespot](https://github.com/librespot-org/librespot) · [Reverse engineering (wiki)](https://github.com/librespot-org/librespot/wiki/Reverse-engineering)
 - [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md)

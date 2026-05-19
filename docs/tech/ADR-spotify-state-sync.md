@@ -260,14 +260,18 @@ muziks-spotify-bridge/
 
 Bridge e sidecar **não escrevem** direto no Postgres; só chamam rotas internas. Regras de fila permanecem em `@muziks/queue` e handlers server.
 
-### Política de produto (proposta)
+### Política de produto e tiering (aceito)
 
-| Tier | Camada 1 (Master) | Camada 2 (bridge completo) |
-|------|-------------------|----------------------------|
-| Espaço gratuito / trial | Sim | Não (fallback `playback-tick` se existir) |
-| Espaço pago / Pro | Sim | Sim (observação 24/7, fim de faixa preciso) |
+O **bridge/sidecar** (`apps/spotify-bridge`) é **somente para espaços pagantes** — quem contribui com receita proporcional ao custo de infra persistente (VM/container, worker, librespot). **Freemium** usa **apenas a camada 1** (SDK + Web API no Master + Postgres + Realtime).
 
-Formalizar no packaging quando o deploy existir ([business/01-receita-rentabilidade-e-go-to-market.md](../business/01-receita-rentabilidade-e-go-to-market.md)).
+| Tier | Camada 1 (Master / SDK) | Camada 2 (bridge + librespot) |
+|------|-------------------------|-------------------------------|
+| Freemium / trial | Sim — experiência completa de fila e playback com Master ativo | **Não** — sem provisionamento de bridge |
+| Pagante / Pro | Sim | Sim — observação contínua, `track_ended` preciso, menor dependência do browser |
+
+**Racional:** limitação física de abstração de custo — sustentável, seguro (menos workers expostos em massa), idempotência na API Muziks, demanda alinhada à classe de negócio. Detalhe comercial: [04-playback-bridge-e-tiering.md](../business/04-playback-bridge-e-tiering.md).
+
+**Enforcement (alvo):** feature flag por espaço (`playback_bridge_enabled` ou equivalente); rotas internas e provisionamento Docker recusam tier free; allowlist manual até billing automatizado.
 
 ---
 
@@ -344,6 +348,7 @@ Participantes e telão: `GET` inicial + `subscribeSessionSnapshots` / `subscribe
 
 ## Referências
 
+- [04-playback-bridge-e-tiering.md](../business/04-playback-bridge-e-tiering.md) — bridge só pagantes; freemium = SDK
 - [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) — preload, fila dupla, slices `mirror-next`
 - [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md) — decisão Broadcast vs `postgres_changes`
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md) — `track-ended`, dequeue, contrato interno
