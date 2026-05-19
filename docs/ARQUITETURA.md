@@ -416,6 +416,7 @@ Essas trilhas **não alteram** a Fase infra A até spike + ADR.
 | [ADR-spotify-state-sync.md](tech/ADR-spotify-state-sync.md) | Estado playback: Master, Realtime, bridge librespot |
 | [ADR-playback-hybrid-realtime.md](tech/ADR-playback-hybrid-realtime.md) | SDK + API híbrido, Broadcast |
 | [ADR-librespot-playback-sidecar.md](tech/ADR-librespot-playback-sidecar.md) | Sidecar track-ended, dequeue |
+| `apps/spotify-bridge/` | Serviço Docker: librespot + WebSocket → API interna |
 
 ### 13.3 Specs de produto (`docs/specs/`)
 

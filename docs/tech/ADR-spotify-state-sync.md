@@ -309,7 +309,9 @@ Participantes e telão: `GET` inicial + `subscribeSessionSnapshots` / `subscribe
 
 ---
 
-## Mapa de código (`apps/player`)
+## Mapa de código
+
+### `apps/player` (camada 1)
 
 | Arquivo | Função |
 |---------|--------|
@@ -320,6 +322,17 @@ Participantes e telão: `GET` inicial + `subscribeSessionSnapshots` / `subscribe
 | `src/lib/realtime/player-session-channel.ts` | Subscribe / broadcast cliente |
 | `src/lib/realtime/player-session-broadcast-server.ts` | Broadcast server-side (orchestrator) |
 | `packages/db/src/schema/player-sessions.ts` | Schema Drizzle |
+
+### `apps/spotify-bridge` (camada 2 — base)
+
+| Arquivo | Função |
+|---------|--------|
+| `src/index.ts` | Bootstrap HTTP + WS |
+| `src/ws/server.ts` | WebSocket, `/health` |
+| `src/librespot.ts` | Processo `librespot --onevent` |
+| `src/muziks-api-client.ts` | `POST` rotas internas do player |
+| `src/spotify-api.ts` | Web API (placeholder) |
+| `Dockerfile` / `docker-compose.yml` | Deploy VM |
 
 ---
 

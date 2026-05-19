@@ -21,7 +21,7 @@ export class MuziksApiClient {
     return `${base}${path}`;
   }
 
-  private headers(): HeadersInit {
+  private headers(): Record<string, string> {
     return {
       "Content-Type": "application/json",
       Authorization: `Bearer ${this.config.PLAYBACK_WORKER_SECRET}`,
