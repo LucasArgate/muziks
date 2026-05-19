@@ -64,3 +64,5 @@ docker compose -f apps/spotify-bridge/docker-compose.yml up --build
 ## Imagem registry
 
 `muziks/spotify-bridge` — ver [DOCKER-REGISTRY-E-RELEASES.md](../../docs/tech/DOCKER-REGISTRY-E-RELEASES.md).
+
+**Teste local:** [Início rápido](../../docs/tests/spotify-bridge/INICIO-RAPIDO.md) · [Referência E2E](../../docs/tests/spotify-bridge/docker-e2e.md).

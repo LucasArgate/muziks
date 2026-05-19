@@ -164,7 +164,8 @@ Complementa [PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md) §5.
    - `DOCKERHUB_USERNAME` — usuário ou org do Hub
    - `DOCKERHUB_TOKEN` — token do passo 2
 4. Validar: **Actions → Docker — spotify-bridge (staging) → Run workflow** (`workflow_dispatch`) antes da branch `staging` existir.
-5. (Futuro) Environment `production` com **approval** — quando houver job de deploy na VM.
+5. Rotina manual pós-push: [docs/tests/spotify-bridge/INICIO-RAPIDO.md](../tests/spotify-bridge/INICIO-RAPIDO.md) (guia curto) · [docker-e2e.md](../tests/spotify-bridge/docker-e2e.md) (referência).
+6. (Futuro) Environment `production` com **approval** — quando houver job de deploy na VM.
 
 ### 6.1 Outros apps (planejado)
 
