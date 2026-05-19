@@ -1,0 +1,25 @@
+# Teste com imagem do registry (sem build local).
+# Uso (a partir desta pasta):
+#   cp .env.example .env   # editar secrets
+#   docker login
+#   docker compose -f docker-compose.test.yml pull
+#   docker compose -f docker-compose.test.yml up -d
+#
+# Tag padrão: staging. Para release: IMAGE_TAG=v0.1.0 docker compose ...
+
+services:
+  spotify-bridge:
+    image: muziks/spotify-bridge:${IMAGE_TAG:-staging}
+    container_name: muziks-spotify-bridge-test
+    restart: unless-stopped
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - bridge-cache:/app/cache
+    ports:
+      - "${BRIDGE_PORT:-8765}:8765"
+
+volumes:
+  bridge-cache:
