@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  NormalizedSpotifyPlaybackQueue,
   NormalizedSpotifyPlayerState,
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
@@ -48,6 +49,8 @@ export function usePlaybackSync({
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [pollError, setPollError] = useState<string | null>(null);
   const [hybridInitAttempted, setHybridInitAttempted] = useState(false);
+  const [spotifyQueue, setSpotifyQueue] =
+    useState<NormalizedSpotifyPlaybackQueue | null>(null);
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
   const onLocalStateRef = useRef(onLocalState);
@@ -94,13 +97,18 @@ export function usePlaybackSync({
             stateVersion: 0,
           },
       onLocalState: handleLocalState,
+      onSdkQueue: setSpotifyQueue,
       onStateVersion: setStateVersion,
       onPollError: setPollError,
+      publishRemote: "minimal",
     });
 
     setSyncMode(resolvedMode);
 
-    if (resolvedMode === "api_device" && sessionMeta?.preferredDeviceId) {
+    if (
+      resolvedMode === "api_device" &&
+      sessionMeta?.preferredDeviceId
+    ) {
       coordinator.setPreferredDevice(
         sessionMeta.preferredDeviceId,
         sessionMeta.activeDeviceName ?? "",
@@ -148,19 +156,9 @@ export function usePlaybackSync({
         setSdkReady(Boolean(instance.getDeviceId()));
       } catch (err) {
         setSdkError(err instanceof Error ? err.message : "playback_error");
-        if (preferredDeviceId) {
-          coordinator.setSyncMode("api_device");
-          setSyncMode("api_device");
-        }
       }
     })();
-  }, [
-    enabled,
-    hybridInitAttempted,
-    playerName,
-    preferredDeviceId,
-    syncMode,
-  ]);
+  }, [enabled, hybridInitAttempted, playerName, syncMode]);
 
   const selectDevice = useCallback(
     async (deviceId: string, deviceName: string) => {
@@ -178,6 +176,10 @@ export function usePlaybackSync({
         throw new Error(body.error ?? "transfer_failed");
       }
 
+      const body = (await response.json()) as {
+        state?: NormalizedSpotifyPlayerState;
+      };
+
       const coordinator = coordinatorRef.current;
       if (!coordinator) return;
 
@@ -188,7 +190,11 @@ export function usePlaybackSync({
       setActiveDeviceName(deviceName);
       setSyncMode("api_device");
       setSdkReady(false);
-      await coordinator.refreshApiOnce();
+      if (body.state) {
+        coordinator.applyApiState(body.state);
+      } else {
+        await coordinator.refreshSessionOnce();
+      }
     },
     [],
   );
@@ -233,7 +239,7 @@ export function usePlaybackSync({
     }
 
     const action = playback?.paused ? "play" : "pause";
-    await fetch("/api/spotify/playback/control", {
+    const response = await fetch("/api/spotify/playback/control", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -241,7 +247,18 @@ export function usePlaybackSync({
         deviceId: preferredDeviceId ?? playback?.deviceId ?? undefined,
       }),
     });
-    await coordinator?.refreshApiOnce();
+    const body = (await response.json().catch(() => ({}))) as {
+      state?: NormalizedSpotifyPlayerState;
+      error?: string;
+    };
+    if (!response.ok) {
+      throw new Error(body.error ?? "control_failed");
+    }
+    if (body.state) {
+      coordinator?.applyApiState(body.state);
+    } else {
+      await coordinator?.refreshSessionOnce();
+    }
   }, [syncMode, playback, preferredDeviceId]);
 
   const requiresDeviceSelection =
@@ -256,6 +273,7 @@ export function usePlaybackSync({
 
   return {
     playback,
+    spotifyQueue,
     syncMode,
     preferredDeviceId,
     activeDeviceName,

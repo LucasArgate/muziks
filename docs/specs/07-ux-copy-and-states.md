@@ -23,6 +23,8 @@
 | Sem fichas | Economia de fichas ativa | Explicar que fichas são do **estabelecimento** para **votar**; onde conseguir (balcão). |
 | Erro de rede | Offline / timeout | Retry claro; preservar rascunho local se aplicável ([10-pwa-strategy.md](10-pwa-strategy.md)). |
 | Conflito / voto duplicado | Regra de negócio | Mensagem curta, sem acusar trapaça. |
+| Feedback enviado | Relato in-app aceito | Confirmação com ID curto; tom de gratidão, não burocracia ([17-feedback-in-app-e-linear.md](17-feedback-in-app-e-linear.md)). |
+| Feedback falhou | API/Linear indisponível | Retry; não perder texto digitado quando possível. |
 
 ## Exemplos de mensagens (não normativas — orientação)
 

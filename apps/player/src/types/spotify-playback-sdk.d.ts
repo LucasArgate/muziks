@@ -56,6 +56,8 @@ declare namespace Spotify {
     duration: number;
     track_window: {
       current_track: PlaybackTrack;
+      next_tracks: PlaybackTrack[];
+      previous_tracks?: PlaybackTrack[];
     };
   }
 

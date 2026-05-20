@@ -1,41 +1,37 @@
-import Link from "next/link";
 import { cn } from "@muziks/utils";
-
-export type LandingNavItem = {
-  label: string;
-  href: string;
-  external?: boolean;
-};
+import { LANDING_URLS } from "@/src/config/landing-content";
 
 export type LandingNavProps = {
-  items: LandingNavItem[];
   className?: string;
 };
 
-export function LandingNav({ items, className }: LandingNavProps) {
+export function LandingNav({ className }: LandingNavProps) {
+  const linkClass =
+    "text-sm text-on-surface-variant transition hover:text-on-surface";
+
   return (
-    <nav className={cn("flex flex-wrap items-center justify-center gap-x-6 gap-y-2", className)} aria-label="Principal">
-      {items.map((item) =>
-        item.external ? (
-          <a
-            key={item.href}
-            href={item.href}
-            className="text-sm font-medium text-on-surface-variant transition-colors hover:text-on-surface"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {item.label}
-          </a>
-        ) : (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="text-sm font-medium text-on-surface-variant transition-colors hover:text-on-surface"
-          >
-            {item.label}
-          </Link>
-        ),
-      )}
+    <nav
+      className={cn("hidden items-center gap-7 md:flex", className)}
+      aria-label="Principal"
+    >
+      <a href="#como-funciona" className={linkClass}>
+        Como funciona
+      </a>
+      <a href="#para-bares" className={linkClass}>
+        Para bares
+      </a>
+      <a href="#manifesto" className={linkClass}>
+        Manifesto
+      </a>
+      <a
+        href={LANDING_URLS.github}
+        target="_blank"
+        rel="noreferrer"
+        className={linkClass}
+      >
+        GitHub
+      </a>
     </nav>
   );
 }
+

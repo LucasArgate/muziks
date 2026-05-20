@@ -83,6 +83,8 @@ No repositório, isso está explícito no ficheiro [`LICENSE`](../../LICENSE) (A
 
 **Infra:** o *free tier* **subvenciona** aquisição — exige **teto técnico** (cotas) e **disciplina** para não virar prejuízo silencioso (ver egress/MAU no doc de custos).
 
+**Playback (decisão fechada):** plano gratuito = **SDK/Web API no Master** (camada 1); plano pago = direito ao **bridge/sidecar** (`spotify-bridge` + librespot) para custo de VM/worker e confiabilidade 24/7. Detalhe: [04-playback-bridge-e-tiering.md](04-playback-bridge-e-tiering.md).
+
 ### Híbrido recomendado como **linha de raciocínio** (hipótese)
 
 | Camada | Público | Promessa |
@@ -143,6 +145,7 @@ O mesmo produto **não** precisa ter o mesmo **pacote** para os dois; confundir 
 ## 8. Checklist “show me the money” (para revisão periódica)
 
 - [ ] Para cada plano (grátis/pago), existe **teto** de uso que protege a infra?
+- [ ] Bridge/sidecar está **fora** do free e listado no packaging pago? ([04-playback-bridge-e-tiering.md](04-playback-bridge-e-tiering.md))
 - [ ] O dono de bar sabe **em uma frase** o que compra e o que **não** está incluído (música, hardware, internet)?
 - [ ] O dev sabe **em uma frase** como *self-host* e onde pedir ajuda **sem** fila de suporte B2B?
 - [ ] Há **caminho** de upgrade (free → hosted → parceiro) sem reescrever a stack?

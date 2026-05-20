@@ -2,6 +2,7 @@ import { transferPlayback } from "@muziks/spotify";
 import { z } from "zod";
 
 import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
+import { readNormalizedSpotifyPlaybackState } from "@/src/lib/spotify/read-playback-state";
 
 const transferBodySchema = z.object({
   deviceId: z.string().min(1),
@@ -28,5 +29,7 @@ export async function transferSpotifyPlaybackHandler(rawBody: unknown) {
     play: parsed.data.play,
   });
 
-  return { status: 200 as const, body: { ok: true } };
+  const state = await readNormalizedSpotifyPlaybackState(accessToken);
+
+  return { status: 200 as const, body: { ok: true, state } };
 }

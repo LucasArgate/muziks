@@ -1,16 +1,12 @@
-import { spotifyFetch, type SpotifyFetchOptions } from "../api";
+import { sdkForAccessToken } from "../client";
 
-export type PlaybackControlParams = Pick<SpotifyFetchOptions, "accessToken"> & {
+export type PlaybackControlParams = {
+  accessToken: string;
   deviceId?: string;
 };
 
-function withDeviceQuery(
-  path: string,
-  deviceId?: string,
-): string {
-  if (!deviceId) return path;
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}device_id=${encodeURIComponent(deviceId)}`;
+function deviceArg(deviceId?: string): string {
+  return deviceId ?? "";
 }
 
 export async function startPlayback(
@@ -19,43 +15,35 @@ export async function startPlayback(
     contextUri?: string;
   },
 ): Promise<void> {
-  const body: Record<string, unknown> = {};
-  if (params.uris?.length) body.uris = params.uris;
-  if (params.contextUri) body.context_uri = params.contextUri;
-
-  await spotifyFetch<void>(withDeviceQuery("/me/player/play", params.deviceId), {
-    accessToken: params.accessToken,
-    method: "PUT",
-    body: JSON.stringify(body),
-  });
+  const sdk = sdkForAccessToken(params.accessToken);
+  await sdk.player.startResumePlayback(
+    deviceArg(params.deviceId),
+    params.contextUri,
+    params.uris,
+  );
 }
 
 export async function pausePlayback(
   params: PlaybackControlParams,
 ): Promise<void> {
-  await spotifyFetch<void>(withDeviceQuery("/me/player/pause", params.deviceId), {
-    accessToken: params.accessToken,
-    method: "PUT",
-  });
+  const sdk = sdkForAccessToken(params.accessToken);
+  await sdk.player.pausePlayback(deviceArg(params.deviceId));
 }
 
 export async function skipToNext(
   params: PlaybackControlParams,
 ): Promise<void> {
-  await spotifyFetch<void>(withDeviceQuery("/me/player/next", params.deviceId), {
-    accessToken: params.accessToken,
-    method: "POST",
-  });
+  const sdk = sdkForAccessToken(params.accessToken);
+  await sdk.player.skipToNext(deviceArg(params.deviceId));
 }
 
 export async function addToQueue(
   params: PlaybackControlParams & { uri: string },
 ): Promise<void> {
-  await spotifyFetch<void>(
-    `/me/player/queue?uri=${encodeURIComponent(params.uri)}`,
-    {
-      accessToken: params.accessToken,
-      method: "POST",
-    },
+  const sdk = sdkForAccessToken(params.accessToken);
+  const deviceId = params.deviceId;
+  await sdk.player.addItemToPlaybackQueue(
+    params.uri,
+    deviceId ? deviceId : undefined,
   );
 }

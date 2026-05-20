@@ -4,6 +4,7 @@ import type {
 } from "@muziks/types";
 
 import type { SpotifyApiPlaybackState, SpotifyApiTrack } from "./types";
+import { isSpotifyApiTrack } from "./types";
 
 function pickAlbumImageUrl(track: SpotifyApiTrack | null): string | null {
   const images = track?.album.images;
@@ -15,7 +16,8 @@ function deriveStatus(
   state: SpotifyApiPlaybackState | null,
 ): PlaybackSessionStatus {
   if (!state) return "idle";
-  if (!state.item) return "ready";
+  const item = isSpotifyApiTrack(state.item) ? state.item : null;
+  if (!item) return "ready";
   if (!state.is_playing) return "paused";
   return "playing";
 }
@@ -37,7 +39,7 @@ export function normalizeApiPlaybackState(
     };
   }
 
-  const track = state.item;
+  const track = isSpotifyApiTrack(state.item) ? state.item : null;
   const deviceId = state.device?.id ?? null;
 
   return {

@@ -71,6 +71,19 @@ Quando `staging` for criada para o app participante, **novas** features de `apps
 - Servidor **Muziks** no Discord, centrais de notificação (`ops-*`, `community`) e agentes **MCP admin** (consulta/extração) estão definidos em [MEIOS-DE-COMUNICACAO-E-OPERACAO.md](MEIOS-DE-COMUNICACAO-E-OPERACAO.md).
 - **Linear** permanece fonte de verdade para trabalho; Discord é **coordenação e alerta**, não substitui issue nem spec no git.
 
+### 1.5 Feedback in-app → backlog (princípio de elegibilidade)
+
+Norma de produto: [17-feedback-in-app-e-linear.md](../specs/17-feedback-in-app-e-linear.md).
+
+| Regra | Aplicação |
+|-------|-----------|
+| **Nova issue de produto/bug** | Preferencialmente rastreável a feedback in-app (`feedback_id`), piloto, ou spec no git |
+| **Criação automática** | `POST /api/feedback` abre issue Linear com label `feedback` + contexto técnico |
+| **Triagem** | Antes de sprint: revisar fila `feedback` (produto + engenharia) |
+| **PR de código** | Continua obrigatório `MUZ-n`; issue pode ter sido aberta pelo widget |
+
+Issues `infra` / `debt` internos sem feedback são exceção documentada. Fechar feedback duplicado no Linear com link para issue canônica.
+
 ---
 
 ## 2. GitFlow, git workflow e GitHub Actions (esclarecimento)

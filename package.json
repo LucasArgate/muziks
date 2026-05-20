@@ -7,6 +7,7 @@
     "dev:landing": "turbo run dev --filter=@muziks/landing",
     "dev:web": "turbo run dev --filter=@muziks/web",
     "dev:player": "turbo run dev --filter=@muziks/player",
+    "dev:spotify-bridge": "turbo run dev --filter=@muziks/spotify-bridge",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "db:generate": "pnpm --filter @muziks/db db:generate",

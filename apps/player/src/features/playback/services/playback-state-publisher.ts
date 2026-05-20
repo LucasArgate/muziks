@@ -17,6 +17,8 @@ const DEBOUNCE_MS = 800;
 const PLAYING_POSITION_BUCKET_MS = 5000;
 const PAUSED_POSITION_BUCKET_MS = 10000;
 
+export type PublishRemoteMode = "off" | "minimal" | "full";
+
 export type PlaybackStatePublisherOptions = {
   slug: string;
   playerId?: string | null;
@@ -24,6 +26,8 @@ export type PlaybackStatePublisherOptions = {
   preferredDeviceId?: string | null;
   activeDeviceName?: string | null;
   stateVersion?: number;
+  /** Master default: semantic-only POST + broadcast (no progress buckets). */
+  publishRemote?: PublishRemoteMode;
   onLocalState: (state: NormalizedSpotifyPlayerState) => void;
   onStateVersion?: (version: number) => void;
   onTrackChanged?: (state: NormalizedSpotifyPlayerState) => void;
@@ -34,7 +38,7 @@ function positionBucket(ms: number, paused: boolean): number {
   return Math.floor(ms / bucket);
 }
 
-function fingerprint(state: NormalizedSpotifyPlayerState): string {
+function fingerprintFull(state: NormalizedSpotifyPlayerState): string {
   return [
     state.trackUri ?? "",
     state.paused ? "1" : "0",
@@ -44,17 +48,37 @@ function fingerprint(state: NormalizedSpotifyPlayerState): string {
   ].join("|");
 }
 
-export function shouldPublish(
+function fingerprintSemantic(state: NormalizedSpotifyPlayerState): string {
+  return [
+    state.trackUri ?? "",
+    state.paused ? "1" : "0",
+    state.status ?? "",
+    state.deviceId ?? "",
+  ].join("|");
+}
+
+export function shouldPublishRemote(
   prev: NormalizedSpotifyPlayerState | null,
   next: NormalizedSpotifyPlayerState,
+  mode: PublishRemoteMode,
 ): boolean {
+  if (mode === "off") return false;
   if (!prev) return true;
   if (prev.trackUri !== next.trackUri) return true;
   if (prev.paused !== next.paused) return true;
   if (prev.status !== next.status) return true;
   if (prev.deviceId !== next.deviceId) return true;
+  if (mode === "minimal") return false;
   return positionBucket(prev.positionMs, prev.paused) !==
     positionBucket(next.positionMs, next.paused);
+}
+
+/** @deprecated Use shouldPublishRemote with explicit mode. */
+export function shouldPublish(
+  prev: NormalizedSpotifyPlayerState | null,
+  next: NormalizedSpotifyPlayerState,
+): boolean {
+  return shouldPublishRemote(prev, next, "full");
 }
 
 export class PlaybackStatePublisher {
@@ -108,6 +132,11 @@ export class PlaybackStatePublisher {
   ): void {
     this.emitLocal(state);
 
+    const remoteMode = this.options?.publishRemote ?? "minimal";
+    if (remoteMode === "off") {
+      return;
+    }
+
     const trackChanged = state.trackUri !== this.lastTrackUri;
     if (trackChanged && state.trackUri) {
       this.lastTrackUri = state.trackUri;
@@ -116,7 +145,7 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    if (!shouldPublish(this.lastPublished, state)) {
+    if (!shouldPublishRemote(this.lastPublished, state, remoteMode)) {
       return;
     }
 
@@ -145,7 +174,12 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    if (!shouldPublish(this.lastPublished, display)) {
+    const remoteMode = this.options?.publishRemote ?? "minimal";
+    if (remoteMode === "off") {
+      return;
+    }
+
+    if (!shouldPublishRemote(this.lastPublished, display, remoteMode)) {
       return;
     }
 
@@ -174,7 +208,15 @@ export class PlaybackStatePublisher {
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): Promise<void> {
-    const fp = fingerprint(state);
+    const remoteMode = this.options?.publishRemote ?? "minimal";
+    if (remoteMode === "off") {
+      return;
+    }
+
+    const fp =
+      remoteMode === "full"
+        ? fingerprintFull(state)
+        : fingerprintSemantic(state);
     if (fp === this.lastFingerprint) {
       return;
     }

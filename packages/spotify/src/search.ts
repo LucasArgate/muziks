@@ -1,5 +1,7 @@
-import { SPOTIFY_API_BASE } from "./constants";
-import { spotifyFetch } from "./api";
+import type { MaxInt } from "@spotify/web-api-ts-sdk";
+
+import { sdkForAccessToken } from "./client";
+import { isSpotifyApiTrack } from "./playback/types";
 
 export type SpotifySearchTrack = {
   spotifyUri: string;
@@ -8,37 +10,21 @@ export type SpotifySearchTrack = {
   albumImageUrl: string | null;
 };
 
-type SpotifySearchResponse = {
-  tracks?: {
-    items?: Array<{
-      uri: string;
-      name: string;
-      artists?: Array<{ name: string }>;
-      album?: { images?: Array<{ url: string }> };
-    }>;
-  };
-};
-
 export async function searchTracks(
   accessToken: string,
   query: string,
   limit = 12,
 ): Promise<SpotifySearchTrack[]> {
-  const params = new URLSearchParams({
-    q: query,
-    type: "track",
-    limit: String(Math.min(limit, 20)),
-  });
+  const sdk = sdkForAccessToken(accessToken);
+  const cappedLimit = Math.min(Math.max(1, limit), 20) as MaxInt<50>;
+  const result = await sdk.search(query, ["track"], undefined, cappedLimit);
 
-  const response = await spotifyFetch<SpotifySearchResponse>(
-    `${SPOTIFY_API_BASE}/search?${params.toString()}`,
-    { accessToken },
-  );
-
-  return (response.tracks?.items ?? []).map((item) => ({
-    spotifyUri: item.uri,
-    title: item.name,
-    artist: item.artists?.map((a) => a.name).join(", ") ?? "Desconhecido",
-    albumImageUrl: item.album?.images?.[0]?.url ?? null,
-  }));
+  return (result.tracks?.items ?? [])
+    .filter(isSpotifyApiTrack)
+    .map((item) => ({
+      spotifyUri: item.uri,
+      title: item.name,
+      artist: item.artists?.map((a) => a.name).join(", ") ?? "Desconhecido",
+      albumImageUrl: item.album?.images?.[0]?.url ?? null,
+    }));
 }
