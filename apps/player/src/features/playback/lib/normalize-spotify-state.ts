@@ -1,5 +1,7 @@
 import type {
+  NormalizedSpotifyPlaybackQueue,
   NormalizedSpotifyPlayerState,
+  NormalizedSpotifyQueueTrack,
   PlaybackSessionStatus,
 } from "@muziks/types";
 
@@ -74,6 +76,36 @@ export function normalizeReadyState(
     paused: true,
     deviceId,
     status: "ready",
+  };
+}
+
+function normalizeSdkQueueTrack(
+  track: Spotify.PlaybackTrack,
+  durationMs: number,
+): NormalizedSpotifyQueueTrack {
+  return {
+    uri: track.uri,
+    name: track.name,
+    artistName: track.artists.map((artist) => artist.name).join(", "),
+    albumImageUrl: pickAlbumImageUrl(track),
+    durationMs,
+  };
+}
+
+/** Queue lookahead from Web Playback SDK `track_window` (no HTTP poll). */
+export function normalizeSdkPlaybackQueue(
+  state: Spotify.PlaybackState | null,
+): NormalizedSpotifyPlaybackQueue | null {
+  if (!state?.track_window.current_track) {
+    return null;
+  }
+
+  const current = state.track_window.current_track;
+  const nextTracks = state.track_window.next_tracks ?? [];
+
+  return {
+    currentlyPlaying: normalizeSdkQueueTrack(current, state.duration ?? 0),
+    upcoming: nextTracks.map((track) => normalizeSdkQueueTrack(track, 0)),
   };
 }
 

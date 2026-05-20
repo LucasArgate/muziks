@@ -5,10 +5,10 @@ import type { PlayerMasterViewState } from "@muziks/types";
 import { PlayerAppFrame } from "@/src/components/organisms/player-app-frame";
 import { SpotifyConnectButton } from "@/src/components/molecules/spotify-connect-button";
 import { Button } from "@/src/components/ui/button";
-import { DeviceSelector } from "@/src/features/playback/components/DeviceSelector";
-import { PlaybackMasterGate } from "@/src/features/playback/components/PlaybackMasterGate";
-import { DequeueTestButton } from "@/src/features/queue/components/DequeueTestButton";
-import { SpotifyPlaybackQueueList } from "@/src/features/queue/components/SpotifyPlaybackQueueList";
+import { DequeueTestButton } from "@/src/components/molecules/dequeue-test-button";
+import { DeviceSelector } from "@/src/components/molecules/device-selector";
+import { PlaybackMasterGate } from "@/src/components/organisms/playback-master-gate";
+import { SpotifyPlaybackQueueList } from "@/src/components/organisms/spotify-playback-queue-list";
 
 type PlayerMasterShellProps = {
   slug: string;
@@ -40,6 +40,8 @@ export function PlayerMasterShell({
               <>
                 <SpotifyPlaybackQueueList
                   enabled={hasSpotify}
+                  syncMode={sync.syncMode}
+                  sdkQueue={sync.spotifyQueue}
                   trackUri={sync.playback?.trackUri}
                   paused={sync.playback?.paused ?? true}
                 />

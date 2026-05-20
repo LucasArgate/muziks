@@ -1,10 +1,14 @@
 import type {
+  NormalizedSpotifyPlaybackQueue,
   NormalizedSpotifyPlayerState,
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
 
-import { PlaybackStatePublisher } from "./playback-state-publisher";
+import {
+  PlaybackStatePublisher,
+  type PublishRemoteMode,
+} from "./playback-state-publisher";
 import { SdkPlaybackSource } from "./sdk-playback-source";
 import { SessionPlaybackPoller } from "./session-playback-poller";
 import type { SpotifyServiceInstance } from "./SpotifyService";
@@ -13,7 +17,9 @@ export type PlaybackSyncCoordinatorOptions = {
   slug: string;
   playerId?: string | null;
   sessionMeta: PlayerMasterSessionMeta | null;
+  publishRemote?: PublishRemoteMode;
   onLocalState: (state: NormalizedSpotifyPlayerState) => void;
+  onSdkQueue?: (queue: NormalizedSpotifyPlaybackQueue | null) => void;
   onStateVersion?: (version: number) => void;
   onTrackChanged?: (state: NormalizedSpotifyPlayerState) => void;
   onPollError?: (message: string) => void;
@@ -92,6 +98,7 @@ export class PlaybackSyncCoordinator {
       onState: (state, status) => {
         this.publisher.ingest(state, status, "sdk");
       },
+      onQueue: (queue) => this.options?.onSdkQueue?.(queue),
     });
   }
 
@@ -105,6 +112,7 @@ export class PlaybackSyncCoordinator {
       onState: (state, status) => {
         this.publisher.ingest(state, status, "sdk");
       },
+      onQueue: (queue) => this.options?.onSdkQueue?.(queue),
     });
   }
 
@@ -112,6 +120,7 @@ export class PlaybackSyncCoordinator {
     this.sdkSource.stop();
     this.sdkService?.disconnect();
     this.sdkService = null;
+    this.options?.onSdkQueue?.(null);
   }
 
   stop(): void {
@@ -136,21 +145,13 @@ export class PlaybackSyncCoordinator {
 
     if (this.syncMode === "hybrid" && this.sdkService) {
       this.sessionPoller.stop();
-      this.sdkSource.start(this.sdkService, {
-        onState: (state, status) => {
-          this.publisher.ingest(state, status, "sdk");
-        },
-      });
+      this.startSdkListeners();
       return;
     }
 
     if (this.syncMode === "sdk" && this.sdkService) {
       this.sessionPoller.stop();
-      this.sdkSource.start(this.sdkService, {
-        onState: (state, status) => {
-          this.publisher.ingest(state, status, "sdk");
-        },
-      });
+      this.startSdkListeners();
     }
   }
 
@@ -165,6 +166,8 @@ export class PlaybackSyncCoordinator {
   private refreshPublisherConfig(): void {
     if (!this.options) return;
 
+    const publishRemote = this.options.publishRemote ?? "minimal";
+
     this.publisher.configure({
       slug: this.options.slug,
       playerId: this.options.playerId,
@@ -172,9 +175,21 @@ export class PlaybackSyncCoordinator {
       preferredDeviceId: this.preferredDeviceId,
       activeDeviceName: this.activeDeviceName,
       stateVersion: this.publisher.currentStateVersion,
+      publishRemote,
       onLocalState: this.options.onLocalState,
       onStateVersion: this.options.onStateVersion,
       onTrackChanged: this.options.onTrackChanged,
+    });
+  }
+
+  private startSdkListeners(): void {
+    if (!this.sdkService) return;
+
+    this.sdkSource.start(this.sdkService, {
+      onState: (state, status) => {
+        this.publisher.ingest(state, status, "sdk");
+      },
+      onQueue: (queue) => this.options?.onSdkQueue?.(queue),
     });
   }
 }

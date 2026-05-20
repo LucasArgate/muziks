@@ -1,9 +1,14 @@
-import type { NormalizedSpotifyPlayerState, PlaybackSessionStatus } from "@muziks/types";
+import type {
+  NormalizedSpotifyPlaybackQueue,
+  NormalizedSpotifyPlayerState,
+  PlaybackSessionStatus,
+} from "@muziks/types";
 
 import {
   normalizeErrorState,
   normalizeIdleState,
   normalizeReadyState,
+  normalizeSdkPlaybackQueue,
   normalizeSpotifyPlaybackState,
 } from "../lib/normalize-spotify-state";
 import type { SpotifyServiceInstance } from "./SpotifyService";
@@ -15,6 +20,7 @@ type ListenerEntry = {
 
 export type SdkPlaybackSourceOptions = {
   onState: (state: NormalizedSpotifyPlayerState, status?: PlaybackSessionStatus) => void;
+  onQueue?: (queue: NormalizedSpotifyPlaybackQueue | null) => void;
 };
 
 export class SdkPlaybackSource {
@@ -50,6 +56,7 @@ export class SdkPlaybackSource {
       const state = normalizeSpotifyPlaybackState(playbackState, deviceId);
       const status = state.status ?? (state.paused ? "paused" : "playing");
       emit(state, status);
+      options.onQueue?.(normalizeSdkPlaybackQueue(playbackState));
     };
 
     const onError = (message: string) => {

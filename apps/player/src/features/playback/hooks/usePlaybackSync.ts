@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  NormalizedSpotifyPlaybackQueue,
   NormalizedSpotifyPlayerState,
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
@@ -48,6 +49,8 @@ export function usePlaybackSync({
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [pollError, setPollError] = useState<string | null>(null);
   const [hybridInitAttempted, setHybridInitAttempted] = useState(false);
+  const [spotifyQueue, setSpotifyQueue] =
+    useState<NormalizedSpotifyPlaybackQueue | null>(null);
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
   const onLocalStateRef = useRef(onLocalState);
@@ -94,13 +97,18 @@ export function usePlaybackSync({
             stateVersion: 0,
           },
       onLocalState: handleLocalState,
+      onSdkQueue: setSpotifyQueue,
       onStateVersion: setStateVersion,
       onPollError: setPollError,
+      publishRemote: "minimal",
     });
 
     setSyncMode(resolvedMode);
 
-    if (resolvedMode === "api_device" && sessionMeta?.preferredDeviceId) {
+    if (
+      resolvedMode === "api_device" &&
+      sessionMeta?.preferredDeviceId
+    ) {
       coordinator.setPreferredDevice(
         sessionMeta.preferredDeviceId,
         sessionMeta.activeDeviceName ?? "",
@@ -148,19 +156,9 @@ export function usePlaybackSync({
         setSdkReady(Boolean(instance.getDeviceId()));
       } catch (err) {
         setSdkError(err instanceof Error ? err.message : "playback_error");
-        if (preferredDeviceId) {
-          coordinator.setSyncMode("api_device");
-          setSyncMode("api_device");
-        }
       }
     })();
-  }, [
-    enabled,
-    hybridInitAttempted,
-    playerName,
-    preferredDeviceId,
-    syncMode,
-  ]);
+  }, [enabled, hybridInitAttempted, playerName, syncMode]);
 
   const selectDevice = useCallback(
     async (deviceId: string, deviceName: string) => {
@@ -275,6 +273,7 @@ export function usePlaybackSync({
 
   return {
     playback,
+    spotifyQueue,
     syncMode,
     preferredDeviceId,
     activeDeviceName,

@@ -9,8 +9,11 @@ import { MuziksLogo } from "@muziks/ui";
 import { OwnerProfileBlock } from "@/src/components/molecules/owner-profile-block";
 import { Button } from "@/src/components/ui/button";
 
-import { PlayerBar } from "./PlayerBar";
-import { getPlayerNavItems, type PlayerNavSection } from "./player-nav-items";
+import { PlayerBar } from "@/src/components/molecules/player-bar";
+import {
+  getPlayerNavItems,
+  type PlayerNavSection,
+} from "@/src/lib/player-nav-items";
 
 type PlayerSidebarProps = {
   slug: string;

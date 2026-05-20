@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 
 export type UseSpotifyPlaybackQueueOptions = {
   enabled: boolean;
+  /** When false, skips periodic GET /api/spotify/playback/queue (SDK supplies queue). */
+  pollEnabled?: boolean;
   trackUri: string | null | undefined;
   pollPlayingMs?: number;
   pollPausedMs?: number;
@@ -12,6 +14,7 @@ export type UseSpotifyPlaybackQueueOptions = {
 
 export function useSpotifyPlaybackQueue({
   enabled,
+  pollEnabled = true,
   trackUri,
   pollPlayingMs = 8000,
   pollPausedMs = 20000,
@@ -50,15 +53,15 @@ export function useSpotifyPlaybackQueue({
   }, [enabled]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !pollEnabled) {
       return;
     }
 
     void refresh();
-  }, [enabled, refresh, trackUri]);
+  }, [enabled, pollEnabled, refresh, trackUri]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !pollEnabled) {
       return;
     }
 
@@ -68,7 +71,7 @@ export function useSpotifyPlaybackQueue({
     }, intervalMs);
 
     return () => window.clearInterval(timer);
-  }, [enabled, pollPausedMs, pollPlayingMs, refresh, trackUri]);
+  }, [enabled, pollEnabled, pollPausedMs, pollPlayingMs, refresh, trackUri]);
 
   return { queue, loading, error, refresh };
 }

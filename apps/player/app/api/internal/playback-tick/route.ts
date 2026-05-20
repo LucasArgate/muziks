@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isPlaybackWorkerAuthorized } from "@/src/config/playback-worker-env";
-import { runPlaybackOrchestrator } from "@/src/services/playback-orchestrator-runner";
+import { runPlaybackOrchestrator } from "@/src/features/playback/services/playback-orchestrator-runner";
 
 export async function POST(request: Request) {
   const auth = request.headers.get("authorization");
