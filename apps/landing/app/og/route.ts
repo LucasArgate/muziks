@@ -1,22 +1,23 @@
 import {
-  defaultOgImageInput,
+  defaultOgImageCopy,
   generateOgImage,
 } from "@/src/config/generate-og-image";
-import { DEFAULT_OG_SOURCE_IMAGE } from "@/src/config/og-site";
+import { getDefaultOgSourceImage } from "@/src/config/og-site";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
+  const requestUrl = new URL(request.url);
   const title =
-    url.searchParams.get("title")?.trim() || defaultOgImageInput.title;
+    requestUrl.searchParams.get("title")?.trim() || defaultOgImageCopy.title;
   const shortDescription =
-    url.searchParams.get("description")?.trim() ||
-    url.searchParams.get("shortDescription")?.trim() ||
-    defaultOgImageInput.shortDescription;
+    requestUrl.searchParams.get("description")?.trim() ||
+    requestUrl.searchParams.get("shortDescription")?.trim() ||
+    defaultOgImageCopy.shortDescription;
   const image =
-    url.searchParams.get("image")?.trim() || DEFAULT_OG_SOURCE_IMAGE;
-  const accentHex = url.searchParams.get("color")?.trim() ?? undefined;
+    requestUrl.searchParams.get("image")?.trim() ||
+    getDefaultOgSourceImage(requestUrl.origin);
+  const accentHex = requestUrl.searchParams.get("color")?.trim() ?? undefined;
 
   try {
     const png = await generateOgImage({

@@ -2,11 +2,7 @@ import { getAverageColor } from "fast-average-color-node";
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 
-import {
-  DEFAULT_OG_SOURCE_IMAGE,
-  OG_IMAGE_HEIGHT,
-  OG_IMAGE_WIDTH,
-} from "@/src/config/og-site";
+import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/src/config/og-site";
 
 export type GenerateOgImageInput = {
   title: string;
@@ -270,9 +266,8 @@ export async function generateOgImage({
   return resvg.render().asPng();
 }
 
-export const defaultOgImageInput: GenerateOgImageInput = {
+export const defaultOgImageCopy = {
   title: "Muziks — música compartilhada com regras claras",
   shortDescription:
     "Player democrático para bares e espaços. O público vota, o dono mantém a curadoria.",
-  image: DEFAULT_OG_SOURCE_IMAGE,
-};
+} as const;

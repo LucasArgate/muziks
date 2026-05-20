@@ -21,18 +21,21 @@
 | `DATABASE_URL` | Sim | Transaction pooler (porta 6543) |
 | `NEXT_PUBLIC_WEB_APP_URL` | Sim | URL pública do participante (ex.: `https://muziks.app`) |
 | `NEXT_PUBLIC_PLAYER_APP_URL` | Sim | URL do player master — link "crie o seu player" |
+| `NEXT_PUBLIC_LANDING_APP_URL` | Recomendada | Site institucional — paridade entre projetos Vercel |
 | `NEXT_PUBLIC_SPOTIFY_CLIENT_ID` | Sim | Client ID Spotify |
 | `SPOTIFY_CLIENT_SECRET` | Sim | OAuth participante |
 
-| Escopo Vercel | `NEXT_PUBLIC_WEB_APP_URL` | `NEXT_PUBLIC_PLAYER_APP_URL` |
-|---------------|---------------------------|------------------------------|
-| **Production** | `https://muziks.app` | `https://player.muziks.app` |
-| **Preview / staging** | `https://staging.muziks.app` | `https://staging-player.muziks.app` |
+Matriz completa (staging + prod, três apps): [AMBIENTES-E-URLS-PUBLICAS.md](../../docs/tech/AMBIENTES-E-URLS-PUBLICAS.md).
+
+| Escopo Vercel | `NEXT_PUBLIC_WEB_APP_URL` | `NEXT_PUBLIC_PLAYER_APP_URL` | `NEXT_PUBLIC_LANDING_APP_URL` |
+|---------------|---------------------------|------------------------------|-------------------------------|
+| **Production** | `https://muziks.app` | `https://player.muziks.app` | `https://muziks.com.br` |
+| **Preview** (staging) | `https://staging.muziks.app` | `https://staging-player.muziks.app` | `https://staging.muziks.com.br` |
 
 ## Domínios
 
 - **Produção:** `muziks.app`
-- **Staging (futuro):** `staging.muziks.app`
+- **Staging:** `staging.muziks.app`
 
 ## Cloudflare
 

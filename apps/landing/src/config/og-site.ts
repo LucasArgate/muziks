@@ -1,10 +1,7 @@
-import { LANDING_SITE_URL } from "@/src/config/landing-site";
+import { LANDING_SITE } from "@/src/config/landing-site";
 
 export const OG_IMAGE_WIDTH = 800;
 export const OG_IMAGE_HEIGHT = 420;
-
-/** Imagem padrão para extrair cor de fundo e preview no card OG. */
-export const DEFAULT_OG_SOURCE_IMAGE = `${LANDING_SITE_URL}/brand/muziks-og-icon.png`;
 
 export type OgImageQuery = {
   title: string;
@@ -12,7 +9,7 @@ export type OgImageQuery = {
   image?: string;
 };
 
-/** Monta URL absoluta do endpoint `/og` com query params para redes sociais. */
+/** Caminho relativo do endpoint OG (Next resolve com `metadataBase`). */
 export function buildOgImageUrl({
   title,
   shortDescription,
@@ -25,5 +22,10 @@ export function buildOgImageUrl({
   if (image) {
     params.set("image", image);
   }
-  return new URL(`/og?${params.toString()}`, LANDING_SITE_URL).toString();
+  return `/og?${params.toString()}`;
+}
+
+/** URL absoluta da imagem de marca para extração de cor (usa a origem do request). */
+export function getDefaultOgSourceImage(siteUrl: string): string {
+  return new URL(LANDING_SITE.ogImagePath, siteUrl).toString();
 }
