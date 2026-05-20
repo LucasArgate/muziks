@@ -8,7 +8,11 @@ import type {
 } from "@muziks/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { sdkEventToPhase, type SdkPhase } from "../lib/sdk-events";
+import {
+  sdkEventToPhase,
+  type SdkPhase,
+  type SdkPlaybackEvent,
+} from "../lib/sdk-events";
 import { PlaybackSyncCoordinator } from "../services/playback-sync-coordinator";
 import { initializeSpotifyPlayer } from "../services/SpotifyService";
 
@@ -60,13 +64,17 @@ export function usePlaybackSync({
 
   const handleLocalState = useCallback((state: NormalizedSpotifyPlayerState) => {
     setPlayback(state);
-    if (state.status === "ready" || state.status === "playing") {
-      setSdkReady(true);
+    onLocalStateRef.current(state);
+  }, []);
+
+  const handleSdkEvent = useCallback((event: SdkPlaybackEvent) => {
+    setSdkPhase(sdkEventToPhase(event));
+    if (event.kind === "lifecycle") {
+      setSdkReady(event.phase === "ready");
     }
-    if (state.status === "idle") {
+    if (event.kind === "error") {
       setSdkReady(false);
     }
-    onLocalStateRef.current(state);
   }, []);
 
   useEffect(() => {
@@ -102,7 +110,7 @@ export function usePlaybackSync({
       onSdkQueue: setSpotifyQueue,
       onStateVersion: setStateVersion,
       onPollError: setPollError,
-      onSdkEvent: (event) => setSdkPhase(sdkEventToPhase(event)),
+      onSdkEvent: handleSdkEvent,
       publishRemote: "minimal",
     });
 
@@ -122,7 +130,7 @@ export function usePlaybackSync({
       coordinator.stop();
       coordinatorRef.current = null;
     };
-  }, [enabled, slug, playerId, sessionMeta, handleLocalState]);
+  }, [enabled, slug, playerId, sessionMeta, handleLocalState, handleSdkEvent]);
 
   useEffect(() => {
     if (initialPlayback) {

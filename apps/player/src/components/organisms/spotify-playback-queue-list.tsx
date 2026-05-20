@@ -23,7 +23,9 @@ export function SpotifyPlaybackQueueList({
   trackUri,
   paused,
 }: SpotifyPlaybackQueueListProps) {
-  const useSdkQueue = syncMode === "hybrid" || syncMode === "sdk";
+  const useSdkQueue =
+    syncMode === "sdk" ||
+    (syncMode === "hybrid" && Boolean(sdkQueue?.currentlyPlaying));
 
   const { queue: polledQueue, loading, error } = useSpotifyPlaybackQueue({
     enabled,

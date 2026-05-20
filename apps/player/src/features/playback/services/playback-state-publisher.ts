@@ -10,6 +10,7 @@ import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-chan
 import {
   mergeApiOverSdk,
   type PlaybackStateSource,
+  shouldSdkSuppressLocalDisplay,
   statesDiverge,
 } from "./playback-state-merge";
 
@@ -87,6 +88,7 @@ export class PlaybackStatePublisher {
   private lastFingerprint: string | null = null;
   private lastTrackUri: string | null = null;
   private lastSdkState: NormalizedSpotifyPlayerState | null = null;
+  private lastApiState: NormalizedSpotifyPlayerState | null = null;
   private lastBridgeState: NormalizedSpotifyPlayerState | null = null;
   private bridgeActive = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -162,6 +164,11 @@ export class PlaybackStatePublisher {
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): void {
+    const mode = this.options?.syncMode ?? "hybrid";
+    if (shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState)) {
+      return;
+    }
+
     this.emitLocal(state);
     this.publishIfNeeded(state, status);
   }
@@ -197,6 +204,8 @@ export class PlaybackStatePublisher {
     if (this.bridgeActive && this.lastBridgeState) {
       return;
     }
+
+    this.lastApiState = state;
 
     const mode = this.options?.syncMode ?? "api_device";
     const diverged = statesDiverge(this.lastSdkState, state);
@@ -333,6 +342,7 @@ export class PlaybackStatePublisher {
     this.lastFingerprint = null;
     this.lastTrackUri = null;
     this.lastSdkState = null;
+    this.lastApiState = null;
     this.lastBridgeState = null;
     this.bridgeActive = false;
   }
