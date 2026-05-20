@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LANDING_SITE } from "@/src/config/landing-site";
+import { buildOgImageUrl, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/src/config/og-site";
 
 export type LandingPageSeo = {
   /** Título da página (sem sufixo de marca na home). */
@@ -34,6 +35,10 @@ export function createLandingMetadata({
   const pageTitle = isHome ? title : `${title} | ${LANDING_SITE.name}`;
   const canonicalPath = path === "/" ? "/" : path;
   const url = new URL(canonicalPath, LANDING_SITE.url).toString();
+  const ogImageUrl = buildOgImageUrl({
+    title: pageTitle,
+    shortDescription: description,
+  });
 
   return {
     title: pageTitle,
@@ -68,19 +73,19 @@ export function createLandingMetadata({
       description,
       images: [
         {
-          url: LANDING_SITE.ogImagePath,
-          width: 1607,
-          height: 1405,
-          alt: `${LANDING_SITE.name} — ícone`,
+          url: ogImageUrl,
+          width: OG_IMAGE_WIDTH,
+          height: OG_IMAGE_HEIGHT,
+          alt: pageTitle,
           type: "image/png",
         },
       ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: pageTitle,
       description,
-      images: [LANDING_SITE.ogImagePath],
+      images: [ogImageUrl],
     },
   };
 }
