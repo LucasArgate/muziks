@@ -15,7 +15,10 @@ import {
   SheetTitle,
 } from "@/src/components/ui/sheet";
 
-import { getPlayerNavItems, type PlayerNavSection } from "./player-nav-items";
+import {
+  getPlayerNavItems,
+  type PlayerNavSection,
+} from "@/src/lib/player-nav-items";
 
 type PlayerMobileNavProps = {
   open: boolean;

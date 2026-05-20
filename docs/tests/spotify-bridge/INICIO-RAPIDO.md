@@ -191,6 +191,20 @@ Se algo falhar, use a tabela **Problemas comuns** em [docker-e2e.md §9](docker-
 
 ---
 
+## Player Master — tráfego no DevTools (Network)
+
+No **Master com Web Playback SDK** (`syncMode` **hybrid** ou **sdk**, badge no player):
+
+| Request | Esperado |
+|---------|----------|
+| `GET …/api/spotify/playback/queue` em loop | **Não** — fila vem do SDK (`track_window`) |
+| `POST …/api/players/{slug}/playback/session` | Só em troca de faixa, pause/play ou device — **não** a cada ~5s de progresso |
+| `GET …/playback/session` em loop | **Não** — indica modo **api_device** (Connect externo) ou fallback antigo; use «Ativar player neste navegador» |
+
+Poll contínuo de sessão **não** significa falta de WebSocket no Master: telão/observadores usam Supabase Realtime (`session.snapshot`), não WS customizado no browser.
+
+---
+
 ## Próximos passos
 
 | Quer… | Leia |

@@ -1,36 +1,36 @@
-import Link from "next/link";
-import { MuziksLogo } from "@muziks/ui";
-import { landingVisibility } from "@/src/config/landing-visibility";
-import { GithubLink } from "@/src/components/molecules/github-link";
-import { LandingNav, type LandingNavItem } from "@/src/components/molecules/landing-nav";
+import { MuziksWordmark } from "@/src/components/atoms/muziks-wordmark";
+import { LandingNav } from "@/src/components/molecules/landing-nav";
+import { LANDING_URLS } from "@/src/config/landing-content";
 
-const defaultNavItems: LandingNavItem[] = [
-  { label: "Aplicativo", href: "/#aplicativo" },
-  { label: "Bares", href: "/bares" },
-  { label: "Planos", href: "/planos" },
-  { label: "Blog", href: "https://blog.muziks.com.br", external: true },
-  { label: "Contato", href: "/contato" },
-];
-
-export type LandingHeaderProps = {
-  navItems?: LandingNavItem[];
-};
-
-export function LandingHeader({ navItems = defaultNavItems }: LandingHeaderProps) {
+export function LandingHeader() {
   return (
-    <header className="relative z-20 border-b border-white/10 bg-surface/80 backdrop-blur-glass">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-5 md:flex-row md:justify-between">
-        <Link href="/" className="shrink-0">
-          <MuziksLogo />
-        </Link>
-        <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
-          <div
-            className={landingVisibility.nav ? undefined : "hidden"}
-            aria-hidden={!landingVisibility.nav}
+    <header className="fixed inset-x-0 top-0 z-40">
+      <div className="mx-auto mt-4 flex max-w-6xl items-center justify-between gap-4 rounded-full px-5 py-3 muziks-glass">
+        <a
+          href="#top"
+          className="flex shrink-0 items-center"
+          aria-label="Muziks — início"
+        >
+          <MuziksWordmark size="nav" />
+        </a>
+        <LandingNav />
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href={LANDING_URLS.player}
+            target="_blank"
+            rel="noreferrer"
+            className="muziks-glass inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-on-surface transition hover:bg-white/10"
           >
-            <LandingNav items={navItems} />
-          </div>
-          <GithubLink />
+            Player
+          </a>
+          <a
+            href={LANDING_URLS.app}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+          >
+            Abrir App
+          </a>
         </div>
       </div>
     </header>

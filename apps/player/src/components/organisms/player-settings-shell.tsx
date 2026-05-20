@@ -3,7 +3,7 @@
 import type { PlayerMasterViewState } from "@muziks/types";
 
 import { PlayerAppFrame } from "@/src/components/organisms/player-app-frame";
-import { PlayerSettingsView } from "@/src/features/settings/components/PlayerSettingsView";
+import { PlayerSettingsView } from "@/src/components/organisms/player-settings-view";
 
 type PlayerSettingsShellProps = {
   slug: string;

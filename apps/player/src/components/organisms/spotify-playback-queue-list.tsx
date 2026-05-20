@@ -1,26 +1,39 @@
 "use client";
 
+import type {
+  NormalizedSpotifyPlaybackQueue,
+  PlaybackSyncMode,
+} from "@muziks/types";
 import { QueueListShell, QueueTrackRow } from "@muziks/ui";
 
 import { useSpotifyPlaybackQueue } from "@/src/features/queue/hooks/useSpotifyPlaybackQueue";
 
 type SpotifyPlaybackQueueListProps = {
   enabled: boolean;
+  syncMode: PlaybackSyncMode;
+  sdkQueue: NormalizedSpotifyPlaybackQueue | null;
   trackUri: string | null | undefined;
   paused: boolean;
 };
 
 export function SpotifyPlaybackQueueList({
   enabled,
+  syncMode,
+  sdkQueue,
   trackUri,
   paused,
 }: SpotifyPlaybackQueueListProps) {
-  const { queue, loading, error } = useSpotifyPlaybackQueue({
+  const useSdkQueue = syncMode === "hybrid" || syncMode === "sdk";
+
+  const { queue: polledQueue, loading, error } = useSpotifyPlaybackQueue({
     enabled,
+    pollEnabled: !useSdkQueue,
     trackUri,
     pollPlayingMs: 8000,
     pollPausedMs: 20000,
   });
+
+  const queue = useSdkQueue ? sdkQueue : polledQueue;
 
   const tracks = [
     ...(queue?.currentlyPlaying
@@ -32,8 +45,12 @@ export function SpotifyPlaybackQueueList({
   return (
     <QueueListShell
       title="Próximas no Spotify"
-      description="Espelho da fila nativa do dispositivo Connect (a API do Spotify mostra poucas faixas à frente)."
-      loading={loading && !queue}
+      description={
+        useSdkQueue
+          ? "Próximas faixas a partir do player neste navegador (SDK)."
+          : "Espelho da fila nativa do dispositivo Connect (a API do Spotify mostra poucas faixas à frente)."
+      }
+      loading={!useSdkQueue && loading && !queue}
       isEmpty={!loading && tracks.length === 0}
       emptyMessage={
         error

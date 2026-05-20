@@ -3,7 +3,7 @@
 import type { PlayerMasterViewState } from "@muziks/types";
 
 import { PlayerAppFrame } from "@/src/components/organisms/player-app-frame";
-import { MuziksCustomerQueueList } from "@/src/features/queue/components/MuziksCustomerQueueList";
+import { MuziksCustomerQueueList } from "@/src/components/organisms/muziks-customer-queue-list";
 import { useMuziksCustomerQueue } from "@/src/features/queue/hooks/useMuziksCustomerQueue";
 
 type PlayerQueueShellProps = {

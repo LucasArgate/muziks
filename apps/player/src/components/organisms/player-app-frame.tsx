@@ -3,8 +3,8 @@
 import type { PlayerMasterViewState } from "@muziks/types";
 import type { ReactNode } from "react";
 
-import { PlayerMasterLayout } from "@/src/features/playback/components/PlayerMasterLayout";
-import type { PlayerNavSection } from "@/src/features/playback/components/player-nav-items";
+import type { PlayerNavSection } from "@/src/lib/player-nav-items";
+import { PlayerMasterLayout } from "@/src/components/templates/player-master-layout";
 import { usePlaybackSession } from "@/src/features/playback/hooks/usePlaybackSession";
 import { usePlaybackSync } from "@/src/features/playback/hooks/usePlaybackSync";
 

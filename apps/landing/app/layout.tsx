@@ -1,27 +1,24 @@
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
+import { Inter } from "next/font/google";
+import { rootLandingMetadata } from "@/src/config/landing-metadata";
 import "./globals.css";
+
+export const dynamic = "force-static";
+
+export const metadata = rootLandingMetadata;
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#000000",
-};
-
-export const metadata: Metadata = {
-  title: "Muziks — música compartilhada no seu bar",
-  description:
-    "Ideal para criar playlists e música ambiente de acordo com o gosto dos seus clientes. Fila democrática com regras claras.",
-  icons: {
-    icon: "/brand/Muziks-152.png",
-    apple: "/brand/Muziks-152.png",
-  },
-  openGraph: {
-    title: "Muziks",
-    description:
-      "Música compartilhada com regras claras — democracia da fila com política.",
-    type: "website",
-    locale: "pt_BR",
-  },
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -30,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
+    <html lang="pt-BR" className={inter.variable}>
+      <body className="font-sans">{children}</body>
     </html>
   );
 }

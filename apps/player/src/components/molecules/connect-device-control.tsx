@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/src/components/ui/dialog";
 
-import { DeviceSelector } from "@/src/features/playback/components/DeviceSelector";
+import { DeviceSelector } from "@/src/components/molecules/device-selector";
 
 const modeLabels: Record<PlaybackSyncMode, string> = {
   api_device: "Spotify Connect",
