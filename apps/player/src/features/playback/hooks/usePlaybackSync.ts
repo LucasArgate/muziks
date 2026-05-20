@@ -8,6 +8,7 @@ import type {
 } from "@muziks/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { sdkEventToPhase, type SdkPhase } from "../lib/sdk-events";
 import { PlaybackSyncCoordinator } from "../services/playback-sync-coordinator";
 import { initializeSpotifyPlayer } from "../services/SpotifyService";
 
@@ -51,6 +52,7 @@ export function usePlaybackSync({
   const [hybridInitAttempted, setHybridInitAttempted] = useState(false);
   const [spotifyQueue, setSpotifyQueue] =
     useState<NormalizedSpotifyPlaybackQueue | null>(null);
+  const [sdkPhase, setSdkPhase] = useState<SdkPhase>("idle");
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
   const onLocalStateRef = useRef(onLocalState);
@@ -100,6 +102,7 @@ export function usePlaybackSync({
       onSdkQueue: setSpotifyQueue,
       onStateVersion: setStateVersion,
       onPollError: setPollError,
+      onSdkEvent: (event) => setSdkPhase(sdkEventToPhase(event)),
       publishRemote: "minimal",
     });
 
@@ -154,6 +157,9 @@ export function usePlaybackSync({
         }
         await instance.connect();
         setSdkReady(Boolean(instance.getDeviceId()));
+        if (syncMode === "hybrid") {
+          await coordinator.refreshApiOnce();
+        }
       } catch (err) {
         setSdkError(err instanceof Error ? err.message : "playback_error");
       }
@@ -207,6 +213,7 @@ export function usePlaybackSync({
       setSyncMode("hybrid");
       await instance.connect();
       setSdkReady(Boolean(instance.getDeviceId()));
+      await coordinatorRef.current?.refreshApiOnce();
     } catch (err) {
       setSdkError(err instanceof Error ? err.message : "playback_error");
     }
@@ -282,8 +289,13 @@ export function usePlaybackSync({
     ready,
     sdkReady,
     sdkError,
+    sdkPhase,
     pollError,
     selectDevice,
+    applyBridgeState: (state: NormalizedSpotifyPlayerState) =>
+      coordinatorRef.current?.applyBridgeState(state),
+    setBridgeActive: (active: boolean) =>
+      coordinatorRef.current?.setBridgeActive(active),
     connectSdk,
     disconnectSdk,
     togglePlay,

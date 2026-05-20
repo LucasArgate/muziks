@@ -63,7 +63,15 @@ flowchart TB
 
 ## Camada 1 — Master → API → Postgres → Broadcast
 
-**Status:** implementado em `apps/player` (Fase 1–2).
+**Status:** implementado em `apps/player` (Fase 1–2), com reconciliação Web API no browser e hooks de bridge no publisher.
+
+| Peça | Status |
+|------|--------|
+| `SdkPlaybackSource` + taxonomia `SdkPlaybackEvent` | Implementado — lifecycle, playback, errors; hidratação via `getCurrentState()` no `ready` |
+| `SpotifyApiPlaybackPoller` (`GET /api/spotify/playback/state`) | Implementado — cache 3,5s; 18s playing / 35s paused |
+| `PlaybackSyncCoordinator` | Implementado — `hybrid` = SDK + API poll; `api_device` = API poll (não eco Postgres) |
+| `SessionPlaybackPoller` no Master | **Não usado** para now playing ao vivo — mantido no repo para outros consumidores |
+| Fonte `bridge` no `PlaybackStatePublisher` | Hook (`applyBridgeState`, `setBridgeActive`) — librespot/WS em PR futuro |
 
 ### Diagrama de fluxo (principal)
 
@@ -105,7 +113,9 @@ sequenceDiagram
 
 | Peça | Papel |
 |------|--------|
-| `PlaybackManager` | Inicializa SDK, listeners, modo `hybrid` / `api_device` |
+| `PlaybackSyncCoordinator` | SDK + poll Web API; modos `hybrid` / `api_device` / `sdk` |
+| `SdkPlaybackSource` | Listeners Web Playback SDK; eventos tipados |
+| `SpotifyApiPlaybackPoller` | Poll `GET /api/spotify/playback/state` no browser |
 | `PlaybackStatePublisher` | Normaliza estado, evita spam, chama API e Broadcast |
 | `publishSessionStateHandler` | Auth do dono (`assertPlayerSlugAccess`), upsert autoritativo |
 | `player_sessions` | Fonte de verdade persistida (não criar `player_now_playing`) |
@@ -319,7 +329,10 @@ Participantes e telão: `GET` inicial + `subscribeSessionSnapshots` / `subscribe
 
 | Arquivo | Função |
 |---------|--------|
-| `src/features/playback/services/PlaybackManager.ts` | SDK + integração publisher |
+| `src/features/playback/services/playback-sync-coordinator.ts` | SDK + API poll + bridge hooks |
+| `src/features/playback/services/sdk-playback-source.ts` | Eventos Web Playback SDK |
+| `src/features/playback/services/spotify-api-playback-poller.ts` | Poll Web API no Master |
+| `src/features/playback/lib/sdk-events.ts` | Taxonomia `SdkPlaybackEvent` |
 | `src/features/playback/services/playback-state-publisher.ts` | Debounce, POST, Broadcast |
 | `app/api/players/[slug]/playback/session/route.ts` | Rota HTTP |
 | `src/slices/playback/publish-session-state/handler.ts` | Upsert autoritativo |
