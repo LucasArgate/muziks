@@ -14,6 +14,8 @@ export const LANDING_URLS = {
 export const LANDING_ASSETS = {
   heroArtwork: "/hero/hero-artwork.jpg",
   logoWhite: "/brand/muziks-white.png",
+  /** Ícone de faders (OG / marca em cards). */
+  ogIcon: "/brand/muziks-og-icon.png",
   icon: "/brand/muziks-icon.png",
 } as const;
 
