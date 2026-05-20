@@ -3,6 +3,12 @@ import { LANDING_SITE } from "@/src/config/landing-site";
 export const OG_IMAGE_WIDTH = 800;
 export const OG_IMAGE_HEIGHT = 420;
 
+/**
+ * PNG estático em `public/og/default.png` (< 300 KB — limite WhatsApp).
+ * Regenerar após mudar copy padrão: `pnpm og:static` em `apps/landing`.
+ */
+export const STATIC_OG_IMAGE_PATH = "/og/default.png";
+
 export type OgImageQuery = {
   title: string;
   shortDescription: string;
