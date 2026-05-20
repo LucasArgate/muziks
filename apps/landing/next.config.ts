@@ -7,6 +7,7 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   transpilePackages: ["@muziks/ui", "@muziks/utils"],
+  serverExternalPackages: ["@resvg/resvg-js", "fast-average-color-node"],
 };
 
 export default nextConfig;

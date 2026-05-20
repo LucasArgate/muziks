@@ -1,6 +1,10 @@
-/** URL de produção — override com NEXT_PUBLIC_SITE_URL em preview/staging. */
-export const LANDING_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://muziks.com.br";
+import { getLandingAppUrl } from "@/src/config/app-urls";
+
+export function getLandingSiteUrl(): string {
+  return getLandingAppUrl();
+}
+
+export const LANDING_SITE_URL = getLandingSiteUrl();
 
 export const LANDING_SITE = {
   name: "Muziks",

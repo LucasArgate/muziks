@@ -24,6 +24,7 @@
 | `NEXT_PUBLIC_SPOTIFY_CLIENT_ID` | Sim | Client ID do app no Spotify Dashboard |
 | `NEXT_PUBLIC_PLAYER_APP_URL` | Sim | URL pública (ex.: `https://player.muziks.app`) |
 | `NEXT_PUBLIC_WEB_APP_URL` | Sim | URL do web participante — botão "Compartilhar fila" |
+| `NEXT_PUBLIC_LANDING_APP_URL` | Recomendada | Site institucional — paridade entre projetos Vercel |
 | `SPOTIFY_CLIENT_SECRET` | Sim | OAuth + assinatura do `state` PKCE |
 | `SPOTIFY_TOKEN_ENCRYPTION_KEY` | Recomendada | Cifra refresh em `spotify_connections` |
 
@@ -65,10 +66,12 @@ Ver [Building with AI (Spotify)](https://developer.spotify.com/documentation/web
 
 O OAuth usa `NEXT_PUBLIC_PLAYER_APP_URL` para montar redirects. **Cada ambiente na Vercel precisa da sua própria URL** — não copie a de produção para Preview/Staging.
 
-| Escopo Vercel | Domínio player | `NEXT_PUBLIC_PLAYER_APP_URL` | `NEXT_PUBLIC_WEB_APP_URL` |
-|---------------|----------------|------------------------------|----------------------------|
-| **Production** | `player.muziks.app` | `https://player.muziks.app` | `https://muziks.app` |
-| **Preview** (branch `develop`, etc.) | `staging-player.muziks.app` | `https://staging-player.muziks.app` | `https://staging.muziks.app` |
+Matriz completa (staging + prod, três apps): [AMBIENTES-E-URLS-PUBLICAS.md](../../docs/tech/AMBIENTES-E-URLS-PUBLICAS.md).
+
+| Escopo Vercel | Domínio player | `NEXT_PUBLIC_PLAYER_APP_URL` | `NEXT_PUBLIC_WEB_APP_URL` | `NEXT_PUBLIC_LANDING_APP_URL` |
+|---------------|----------------|------------------------------|----------------------------|-------------------------------|
+| **Production** | `player.muziks.app` | `https://player.muziks.app` | `https://muziks.app` | `https://muziks.com.br` |
+| **Preview** (staging) | `staging-player.muziks.app` | `https://staging-player.muziks.app` | `https://staging.muziks.app` | `https://staging.muziks.com.br` |
 
 Se staging ainda redirecionar para produção, confira no projeto Vercel → Settings → Environment Variables que Preview não herda o valor de Production.
 
