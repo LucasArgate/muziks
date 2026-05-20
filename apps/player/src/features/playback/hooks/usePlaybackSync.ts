@@ -73,6 +73,9 @@ export function usePlaybackSync({
     setSdkPhase(sdkEventToPhase(event));
     if (event.kind === "lifecycle") {
       setSdkReady(event.phase === "ready");
+      if (event.phase === "not_ready") {
+        void coordinatorRef.current?.refreshApiOnce();
+      }
     }
     if (event.kind === "error") {
       setSdkReady(false);
@@ -172,6 +175,21 @@ export function usePlaybackSync({
       }
     })();
   }, [enabled, hybridInitAttempted, playerName, syncMode]);
+
+  useEffect(() => {
+    if (!enabled || syncMode !== "hybrid") {
+      return;
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void coordinatorRef.current?.refreshApiOnce();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [enabled, syncMode]);
 
   const selectDevice = useCallback(
     async (deviceId: string, deviceName: string) => {

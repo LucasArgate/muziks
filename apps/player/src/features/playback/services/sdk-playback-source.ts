@@ -4,6 +4,11 @@ import type {
   PlaybackSessionStatus,
 } from "@muziks/types";
 
+import {
+  logSdkRawPlayerEvent,
+  playbackDebug,
+  summarizeSdkPlaybackEvent,
+} from "../lib/playback-debug";
 import type { SdkErrorCode, SdkPlaybackEvent } from "../lib/sdk-events";
 import {
   normalizeErrorState,
@@ -37,8 +42,14 @@ export class SdkPlaybackSource {
     this.stop();
     this.service = service;
     this.options = options;
+    playbackDebug("sdk", "source:start");
 
     const emitEvent = (event: SdkPlaybackEvent) => {
+      playbackDebug(
+        "sdk",
+        `event:${event.kind}`,
+        summarizeSdkPlaybackEvent(event, service.getDeviceId()),
+      );
       this.options?.onEvent?.(event);
     };
 
@@ -46,6 +57,13 @@ export class SdkPlaybackSource {
       state: NormalizedSpotifyPlayerState,
       status?: PlaybackSessionStatus,
     ) => {
+      playbackDebug("sdk", "normalized_state", {
+        status,
+        trackUri: state.trackUri,
+        paused: state.paused,
+        positionMs: state.positionMs,
+        deviceId: state.deviceId,
+      });
       this.options?.onState(state, status);
     };
 
@@ -59,8 +77,21 @@ export class SdkPlaybackSource {
     };
 
     const hydrateFromCurrentState = () => {
+      playbackDebug("sdk", "hydrate:getCurrentState");
       void service.getCurrentState().then((playbackState) => {
         if (!this.service || this.options !== options) return;
+        playbackDebug(
+          "sdk",
+          "hydrate:result",
+          playbackState
+            ? {
+                paused: playbackState.paused,
+                position: playbackState.position,
+                trackUri:
+                  playbackState.track_window.current_track?.uri ?? null,
+              }
+            : { empty: true },
+        );
         if (playbackState?.track_window.current_track) {
           emitPlayback(playbackState);
         }
@@ -112,6 +143,7 @@ export class SdkPlaybackSource {
   }
 
   stop(): void {
+    playbackDebug("sdk", "source:stop");
     if (this.service) {
       for (const { event, callback } of this.listeners) {
         this.service.player.removeListener(event, callback);
@@ -132,10 +164,16 @@ export class SdkPlaybackSource {
     callback: (payload: Spotify.PlayerEventMap[E]) => void,
   ): void {
     if (!this.service) return;
-    this.service.player.addListener(event, callback);
+
+    const wrapped = (payload: Spotify.PlayerEventMap[E]) => {
+      logSdkRawPlayerEvent(event, payload, this.service?.getDeviceId() ?? null);
+      callback(payload);
+    };
+
+    this.service.player.addListener(event, wrapped);
     this.listeners.push({
       event,
-      callback: callback as ListenerEntry["callback"],
+      callback: wrapped as ListenerEntry["callback"],
     });
   }
 }

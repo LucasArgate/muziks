@@ -102,7 +102,11 @@ export class PlaybackSyncCoordinator {
   startApiPolling(): void {
     if (this.requiresDeviceSelection) return;
 
+    const profile =
+      this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
+
     this.apiPoller.start({
+      profile,
       onState: (state) => this.applyApiState(state),
       onError: (message) => this.options?.onPollError?.(message),
     });
@@ -128,6 +132,7 @@ export class PlaybackSyncCoordinator {
 
     this.sdkSource.start(service, this.sdkSourceOptions());
     this.startApiPolling();
+    void this.apiPoller.refreshOnce();
   }
 
   stopSdk(): void {

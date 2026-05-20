@@ -58,19 +58,23 @@ export function mergeApiOverSdk(
   };
 }
 
-/** Hybrid: browser SDK playing — timing comes from SDK events, not API poll. */
+/**
+ * Hybrid: borrow SDK position only when API and SDK agree on track, device, and play state.
+ * When diverged (e.g. pause on phone), keep API display — do not copy SDK paused/playing.
+ */
 export function preferSdkProgressInHybrid(
   sdk: NormalizedSpotifyPlayerState | null,
   display: NormalizedSpotifyPlayerState,
 ): NormalizedSpotifyPlayerState {
-  if (!sdk?.trackUri || sdk.paused || sdk.status !== "playing") {
+  if (!sdk?.trackUri || statesDiverge(sdk, display)) {
+    return display;
+  }
+  if (sdk.paused || sdk.status !== "playing") {
     return display;
   }
   return {
     ...display,
     positionMs: sdk.positionMs,
     positionUpdatedAt: sdk.positionUpdatedAt,
-    paused: sdk.paused,
-    status: sdk.status,
   };
 }
