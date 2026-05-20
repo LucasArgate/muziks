@@ -17,7 +17,11 @@ export function PlayerHeroNowPlaying({
   loading = false,
 }: PlayerHeroNowPlayingProps) {
   return (
-    <GlassPanel className="relative overflow-hidden p-6">
+    <GlassPanel
+      variant="liquid"
+      glow
+      className="relative overflow-hidden p-6"
+    >
       {session?.albumImageUrl ? (
         <img
           src={session.albumImageUrl}

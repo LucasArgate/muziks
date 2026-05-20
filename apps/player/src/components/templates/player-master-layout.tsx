@@ -8,6 +8,8 @@ import type {
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { AmbientSpotlight } from "@muziks/ui";
+
 import { PlayerBar } from "@/src/components/molecules/player-bar";
 import { PlayerMobileHeader } from "@/src/components/molecules/player-mobile-header";
 import { PlayerMobileNav } from "@/src/components/molecules/player-mobile-nav";
@@ -76,10 +78,12 @@ export function PlayerMasterLayout({
           onOpenNav={() => setNavOpen(true)}
         />
 
-        <main className="min-h-0 flex-1 overflow-y-auto pb-36 md:pb-0">
-          <PlayerMain slug={slug} spotifyNotice={spotifyNotice} error={error}>
-            {children}
-          </PlayerMain>
+        <main className="relative min-h-0 flex-1 overflow-y-auto pb-36 md:pb-0">
+          <AmbientSpotlight opacity={0.45} className="min-h-full">
+            <PlayerMain slug={slug} spotifyNotice={spotifyNotice} error={error}>
+              {children}
+            </PlayerMain>
+          </AmbientSpotlight>
         </main>
       </div>
 

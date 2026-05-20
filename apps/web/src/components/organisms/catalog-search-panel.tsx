@@ -1,12 +1,13 @@
 "use client";
 
 import type { CatalogTrack } from "@muziks/types";
-import { GlassPanel } from "@muziks/ui";
+import { GlassPanel, glassHoverClass } from "@muziks/ui";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
 import { CatalogTrackRow } from "@/src/components/molecules/catalog-track-row";
 import { Button } from "@/src/components/ui/button";
+import { cn } from "@muziks/utils";
 import { Input } from "@/src/components/ui/input";
 
 type CatalogSearchPanelProps = {
@@ -62,7 +63,7 @@ export function CatalogSearchPanel({
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className={cn("w-full border-white/[0.12]", glassHoverClass)}
         onClick={() => setOpen(true)}
       >
         <Search className="h-4 w-4" />
