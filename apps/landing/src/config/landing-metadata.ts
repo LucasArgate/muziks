@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { LANDING_SITE } from "@/src/config/landing-site";
-import { buildOgImageUrl, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH } from "@/src/config/og-site";
+import {
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_WIDTH,
+  STATIC_OG_IMAGE_PATH,
+} from "@/src/config/og-site";
 
 export type LandingPageSeo = {
   /** Título da página (sem sufixo de marca na home). */
@@ -35,18 +39,21 @@ export function createLandingMetadata({
   const pageTitle = isHome ? title : `${title} | ${LANDING_SITE.name}`;
   const canonicalPath = path === "/" ? "/" : path;
   const url = new URL(canonicalPath, LANDING_SITE.url).toString();
-  const ogImageUrl = buildOgImageUrl({
-    title: pageTitle,
-    shortDescription: description,
-  });
+  const ogImageUrl = new URL(STATIC_OG_IMAGE_PATH, LANDING_SITE.url).toString();
 
   return {
     title: pageTitle,
     description,
     metadataBase: new URL(LANDING_SITE.url),
     icons: {
-      icon: LANDING_SITE.iconPath,
-      apple: LANDING_SITE.iconPath,
+      icon: [
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: LANDING_SITE.iconPath, sizes: "152x152", type: "image/png" },
+      ],
+      apple: [
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+        { url: LANDING_SITE.iconPath, sizes: "152x152", type: "image/png" },
+      ],
     },
     alternates: {
       canonical: canonicalPath,
