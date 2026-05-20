@@ -30,7 +30,7 @@ export function PlayerMain({
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:px-8">
         <div className="w-full max-w-xl">
-          <GlassPanel className="p-6 md:p-8">
+          <GlassPanel className="isolate overflow-hidden p-6 md:p-8">
             {spotifyNotice ? (
               <p
                 className={cn(

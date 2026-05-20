@@ -15,7 +15,7 @@ Não existe **webhook oficial** do Spotify para o servidor reagir a cada mudanç
 | **Web API** (`GET /me/player`) | Qualquer device Connect ativo | Poll com rate limit; latência |
 | **Bridge librespot** (container dedicado) | Espaço com bridge ativo | Operação extra; reverse engineering (sensor) |
 
-Este ADR consolida **dois níveis** de solução que se complementam. Detalhes de fila e dequeue continuam em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md); modo híbrido SDK+API em [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md). **Preload near-end e espelho da fila Spotify (Next.js):** [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md).
+Este ADR consolida **dois níveis** de solução que se complementam. Detalhes de fila e dequeue continuam em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md); modo híbrido SDK+API em [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md). **Fluxo cliente Master (diagramas + arquivos):** [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md). **Preload near-end e espelho da fila Spotify (Next.js):** [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md).
 
 ---
 
@@ -68,7 +68,7 @@ flowchart TB
 | Peça | Status |
 |------|--------|
 | `SdkPlaybackSource` + taxonomia `SdkPlaybackEvent` | Implementado — lifecycle, playback, errors; hidratação via `getCurrentState()` no `ready` |
-| `SpotifyApiPlaybackPoller` (`GET /api/spotify/playback/state`) | Implementado — cache 3,5s; 18s playing / 35s paused |
+| `SpotifyApiPlaybackPoller` (`GET /api/spotify/playback/state`) | Implementado — perfil `hybrid` ~3,5 s; perfil `default` ~18 s / 35 s — ver [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) |
 | `PlaybackSyncCoordinator` | Implementado — `hybrid` = SDK + API poll; `api_device` = API poll (não eco Postgres) |
 | `SessionPlaybackPoller` no Master | **Não usado** para now playing ao vivo — mantido no repo para outros consumidores |
 | Fonte `bridge` no `PlaybackStatePublisher` | Hook (`applyBridgeState`, `setBridgeActive`) — librespot/WS em PR futuro |

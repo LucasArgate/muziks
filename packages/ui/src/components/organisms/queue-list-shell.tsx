@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@muziks/utils";
 
-import { GlassPanel } from "../atoms/glass-panel";
-
 export type QueueListShellProps = {
   title: string;
   description?: string;
@@ -23,7 +21,12 @@ export function QueueListShell({
   className,
 }: QueueListShellProps) {
   return (
-    <GlassPanel variant="functional" className={cn("p-4", className)}>
+    <section
+      className={cn(
+        "rounded-2xl border border-white/[0.12] bg-surface-container p-4",
+        className,
+      )}
+    >
       <header className="mb-4 space-y-1">
         <h2 className="text-base font-semibold text-on-surface">{title}</h2>
         {description ? (
@@ -47,6 +50,6 @@ export function QueueListShell({
       ) : (
         <ul className="space-y-1">{children}</ul>
       )}
-    </GlassPanel>
+    </section>
   );
 }

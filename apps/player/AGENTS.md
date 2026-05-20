@@ -4,6 +4,8 @@ App **master Spotify** em `player.muziks.com/{slug}`. Playback, login Spotify, f
 
 Leitura obrigatória do monorepo: [`AGENTS.md`](../../AGENTS.md). Specs: [09-frontend-architecture.md](../../docs/specs/09-frontend-architecture.md), [ATOMIC-DESIGN.md](../../docs/tech/ATOMIC-DESIGN.md), [06-arquitetura-playback-spotify.md](../../docs/mvp/06-arquitetura-playback-spotify.md).
 
+**Playback no browser (implementado):** fluxo SDK + poll API + merge + fila «Próximas no Spotify» + debug — [`docs/tech/PLAYBACK-MASTER-CLIENT-SYNC.md`](../../docs/tech/PLAYBACK-MASTER-CLIENT-SYNC.md). ADRs: [ADR-playback-hybrid-realtime.md](../../docs/tech/ADR-playback-hybrid-realtime.md), [ADR-spotify-state-sync.md](../../docs/tech/ADR-spotify-state-sync.md).
+
 ## Árvore `src/`
 
 ```

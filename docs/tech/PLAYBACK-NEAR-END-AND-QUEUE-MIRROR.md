@@ -9,6 +9,7 @@ Documentos irmãos:
 
 - Regras de produto e fila dupla: [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) §7.1, §8
 - Estado e bridge: [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md)
+- Sync cliente Master (SDK + API + fila Spotify UI): [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md)
 - Fim de faixa / dequeue autoritativo: [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)
 - Integrações: [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) §4
 
