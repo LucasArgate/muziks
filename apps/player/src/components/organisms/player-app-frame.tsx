@@ -69,7 +69,9 @@ export function PlayerAppFrame({
       playback={displayPlayback}
       ready={sync.ready}
       error={error}
+      spotifyActionLoading={sync.spotifyActionLoading}
       onTogglePlay={() => void sync.togglePlay()}
+      onSkipNext={() => void sync.skipToNext()}
       syncMode={sync.syncMode}
       deviceName={sync.activeDeviceName}
       showConnectBadge={hasSpotify}

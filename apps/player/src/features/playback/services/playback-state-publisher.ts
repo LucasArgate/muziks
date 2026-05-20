@@ -9,6 +9,7 @@ import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-chan
 
 import {
   mergeApiOverSdk,
+  preferSdkProgressInHybrid,
   type PlaybackStateSource,
   shouldSdkSuppressLocalDisplay,
   statesDiverge,
@@ -214,7 +215,10 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    const display = mergeApiOverSdk(this.lastSdkState, state);
+    let display = mergeApiOverSdk(this.lastSdkState, state);
+    if (mode === "hybrid") {
+      display = preferSdkProgressInHybrid(this.lastSdkState, display);
+    }
     this.emitLocal(display);
 
     const trackChanged = display.trackUri !== this.lastTrackUri;

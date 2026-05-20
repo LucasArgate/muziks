@@ -2,7 +2,7 @@
 
 import type { NormalizedSpotifyPlayerState, PlaybackSyncMode } from "@muziks/types";
 import { cn } from "@muziks/utils";
-import { Pause, Play } from "lucide-react";
+import { Loader2, Pause, Play, SkipForward } from "lucide-react";
 
 import { ConnectDeviceControl } from "@/src/components/molecules/connect-device-control";
 import { Button } from "@/src/components/ui/button";
@@ -11,7 +11,9 @@ import { usePlaybackProgress } from "@/src/features/playback/hooks/usePlaybackPr
 type PlayerBarProps = {
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
-  onTogglePlay: () => void;
+  spotifyActionLoading?: boolean;
+  onTogglePlay: () => void | Promise<void>;
+  onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
   deviceName?: string | null;
   showConnectBadge?: boolean;
@@ -22,7 +24,9 @@ type PlayerBarProps = {
 export function PlayerBar({
   playback,
   ready,
+  spotifyActionLoading = false,
   onTogglePlay,
+  onSkipNext,
   syncMode,
   deviceName,
   showConnectBadge = false,
@@ -30,6 +34,7 @@ export function PlayerBar({
   className,
 }: PlayerBarProps) {
   const progress = usePlaybackProgress(playback);
+  const controlsDisabled = !ready || spotifyActionLoading;
 
   return (
     <div className={cn("flex flex-col", className)}>
@@ -64,20 +69,40 @@ export function PlayerBar({
             ) : null}
           </div>
 
-          <Button
-            type="button"
-            size="icon"
-            onClick={onTogglePlay}
-            disabled={!ready}
-            className="h-10 w-10 shrink-0 rounded-full"
-            aria-label={playback?.paused !== false ? "Reproduzir" : "Pausar"}
-          >
-            {playback?.paused !== false ? (
-              <Play className="h-5 w-5 fill-current" />
-            ) : (
-              <Pause className="h-5 w-5 fill-current" />
-            )}
-          </Button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              onClick={() => void onTogglePlay()}
+              disabled={controlsDisabled}
+              className="h-8 w-8 rounded-full"
+              aria-label={playback?.paused !== false ? "Reproduzir" : "Pausar"}
+            >
+              {spotifyActionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : playback?.paused !== false ? (
+                <Play className="h-4 w-4 fill-current" />
+              ) : (
+                <Pause className="h-4 w-4 fill-current" />
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              size="icon"
+              onClick={() => void onSkipNext()}
+              disabled={controlsDisabled}
+              className="h-11 w-11 rounded-full"
+              aria-label="Próxima faixa"
+            >
+              {spotifyActionLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+              ) : (
+                <SkipForward className="h-5 w-5 fill-current" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {progress.hasDuration ? (

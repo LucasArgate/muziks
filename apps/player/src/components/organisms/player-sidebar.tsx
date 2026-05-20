@@ -20,7 +20,9 @@ type PlayerSidebarProps = {
   profile: ProfileSummary | null;
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
-  onTogglePlay: () => void;
+  spotifyActionLoading?: boolean;
+  onTogglePlay: () => void | Promise<void>;
+  onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
   deviceName?: string | null;
   showConnectBadge?: boolean;
@@ -34,7 +36,9 @@ export function PlayerSidebar({
   profile,
   playback,
   ready,
+  spotifyActionLoading,
   onTogglePlay,
+  onSkipNext,
   syncMode,
   deviceName,
   showConnectBadge,
@@ -89,7 +93,9 @@ export function PlayerSidebar({
         <PlayerBar
           playback={playback}
           ready={ready}
+          spotifyActionLoading={spotifyActionLoading}
           onTogglePlay={onTogglePlay}
+          onSkipNext={onSkipNext}
           syncMode={syncMode}
           deviceName={deviceName}
           showConnectBadge={showConnectBadge}

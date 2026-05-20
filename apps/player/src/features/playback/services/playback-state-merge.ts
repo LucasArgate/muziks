@@ -42,7 +42,7 @@ export function shouldSdkSuppressLocalDisplay(
   return false;
 }
 
-/** When fields match, keep SDK progress only if it looks valid (ms + within duration). */
+/** When fields match, keep SDK progress from the latest SDK event. */
 export function mergeApiOverSdk(
   sdk: NormalizedSpotifyPlayerState | null,
   api: NormalizedSpotifyPlayerState,
@@ -51,19 +51,26 @@ export function mergeApiOverSdk(
     return api;
   }
 
-  const sdkProgressValid =
-    sdk.durationMs > 0 &&
-    sdk.positionMs >= 0 &&
-    sdk.positionMs <= sdk.durationMs + 1500 &&
-    (sdk.positionUpdatedAt ?? 0) > 0;
-
-  if (!sdkProgressValid) {
-    return api;
-  }
-
   return {
     ...api,
     positionMs: sdk.positionMs,
     positionUpdatedAt: sdk.positionUpdatedAt,
+  };
+}
+
+/** Hybrid: browser SDK playing — timing comes from SDK events, not API poll. */
+export function preferSdkProgressInHybrid(
+  sdk: NormalizedSpotifyPlayerState | null,
+  display: NormalizedSpotifyPlayerState,
+): NormalizedSpotifyPlayerState {
+  if (!sdk?.trackUri || sdk.paused || sdk.status !== "playing") {
+    return display;
+  }
+  return {
+    ...display,
+    positionMs: sdk.positionMs,
+    positionUpdatedAt: sdk.positionUpdatedAt,
+    paused: sdk.paused,
+    status: sdk.status,
   };
 }

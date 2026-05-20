@@ -52,11 +52,9 @@ declare namespace Spotify {
 
   interface PlaybackState {
     paused: boolean;
-    /** Current position in ms (SDK may briefly report seconds — normalize before use). */
+    /** Current position in ms at the time of this event. */
     position: number;
     duration: number;
-    /** Present on some SDK builds; ms epoch when this state was sampled. */
-    timestamp?: number;
     track_window: {
       current_track: PlaybackTrack;
       next_tracks: PlaybackTrack[];

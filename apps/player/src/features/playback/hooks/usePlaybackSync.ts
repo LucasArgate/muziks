@@ -57,8 +57,10 @@ export function usePlaybackSync({
   const [spotifyQueue, setSpotifyQueue] =
     useState<NormalizedSpotifyPlaybackQueue | null>(null);
   const [sdkPhase, setSdkPhase] = useState<SdkPhase>("idle");
+  const [spotifyActionLoading, setSpotifyActionLoading] = useState(false);
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
+  const spotifyActionLoadingRef = useRef(false);
   const onLocalStateRef = useRef(onLocalState);
   onLocalStateRef.current = onLocalState;
 
@@ -165,9 +167,6 @@ export function usePlaybackSync({
         }
         await instance.connect();
         setSdkReady(Boolean(instance.getDeviceId()));
-        if (syncMode === "hybrid") {
-          await coordinator.refreshApiOnce();
-        }
       } catch (err) {
         setSdkError(err instanceof Error ? err.message : "playback_error");
       }
@@ -221,7 +220,6 @@ export function usePlaybackSync({
       setSyncMode("hybrid");
       await instance.connect();
       setSdkReady(Boolean(instance.getDeviceId()));
-      await coordinatorRef.current?.refreshApiOnce();
     } catch (err) {
       setSdkError(err instanceof Error ? err.message : "playback_error");
     }
@@ -243,38 +241,79 @@ export function usePlaybackSync({
     }
   }, [preferredDeviceId, activeDeviceName]);
 
-  const togglePlay = useCallback(async () => {
-    const coordinator = coordinatorRef.current;
-    if (
-      (syncMode === "hybrid" || syncMode === "sdk") &&
-      coordinator?.sdkPlayer
-    ) {
-      await coordinator.sdkPlayer.togglePlay();
-      return;
+  const runSpotifyAction = useCallback(async (fn: () => Promise<void>) => {
+    if (spotifyActionLoadingRef.current) return;
+    spotifyActionLoadingRef.current = true;
+    setSpotifyActionLoading(true);
+    setSdkError(null);
+    try {
+      await fn();
+    } catch (err) {
+      setSdkError(err instanceof Error ? err.message : "spotify_action_failed");
+      throw err;
+    } finally {
+      spotifyActionLoadingRef.current = false;
+      setSpotifyActionLoading(false);
     }
+  }, []);
 
-    const action = playback?.paused ? "play" : "pause";
-    const response = await fetch("/api/spotify/playback/control", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action,
-        deviceId: preferredDeviceId ?? playback?.deviceId ?? undefined,
-      }),
+  const controlViaApi = useCallback(
+    async (action: "play" | "pause" | "next") => {
+      const coordinator = coordinatorRef.current;
+      const response = await fetch("/api/spotify/playback/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          deviceId: preferredDeviceId ?? playback?.deviceId ?? undefined,
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        state?: NormalizedSpotifyPlayerState;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(body.error ?? "control_failed");
+      }
+      if (body.state) {
+        coordinator?.applyApiState(body.state);
+      } else {
+        await coordinator?.refreshSessionOnce();
+      }
+    },
+    [playback?.deviceId, preferredDeviceId],
+  );
+
+  const togglePlay = useCallback(async () => {
+    await runSpotifyAction(async () => {
+      const coordinator = coordinatorRef.current;
+      if (
+        (syncMode === "hybrid" || syncMode === "sdk") &&
+        coordinator?.sdkPlayer
+      ) {
+        await coordinator.sdkPlayer.togglePlay();
+        return;
+      }
+
+      const action = playback?.paused ? "play" : "pause";
+      await controlViaApi(action);
     });
-    const body = (await response.json().catch(() => ({}))) as {
-      state?: NormalizedSpotifyPlayerState;
-      error?: string;
-    };
-    if (!response.ok) {
-      throw new Error(body.error ?? "control_failed");
-    }
-    if (body.state) {
-      coordinator?.applyApiState(body.state);
-    } else {
-      await coordinator?.refreshSessionOnce();
-    }
-  }, [syncMode, playback, preferredDeviceId]);
+  }, [syncMode, playback?.paused, runSpotifyAction, controlViaApi]);
+
+  const skipToNext = useCallback(async () => {
+    await runSpotifyAction(async () => {
+      const coordinator = coordinatorRef.current;
+      if (
+        (syncMode === "hybrid" || syncMode === "sdk") &&
+        coordinator?.sdkPlayer
+      ) {
+        await coordinator.sdkPlayer.nextTrack();
+        return;
+      }
+
+      await controlViaApi("next");
+    });
+  }, [syncMode, runSpotifyAction, controlViaApi]);
 
   const requiresDeviceSelection =
     syncMode === "api_device" && !preferredDeviceId;
@@ -299,6 +338,7 @@ export function usePlaybackSync({
     sdkError,
     sdkPhase,
     pollError,
+    spotifyActionLoading,
     selectDevice,
     applyBridgeState: (state: NormalizedSpotifyPlayerState) =>
       coordinatorRef.current?.applyBridgeState(state),
@@ -307,5 +347,6 @@ export function usePlaybackSync({
     connectSdk,
     disconnectSdk,
     togglePlay,
+    skipToNext,
   };
 }

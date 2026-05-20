@@ -13,29 +13,6 @@ function pickAlbumImageUrl(
   return images[0]?.url ?? null;
 }
 
-/**
- * Web Playback SDK sometimes reports `position` in seconds (see spotify/web-playback-sdk#115).
- */
-export function coerceSdkPositionMs(
-  position: number,
-  durationMs: number,
-): number {
-  if (!Number.isFinite(position) || position < 0) {
-    return 0;
-  }
-  if (durationMs <= 0) {
-    return position >= 1000 ? position : position * 1000;
-  }
-  if (
-    position < 10_000 &&
-    durationMs > 30_000 &&
-    position * 1000 <= durationMs + 1000
-  ) {
-    return position * 1000;
-  }
-  return position;
-}
-
 function deriveStatus(
   state: Spotify.PlaybackState | null,
   deviceId: string | null,
@@ -52,13 +29,10 @@ export function normalizeSpotifyPlaybackState(
 ): NormalizedSpotifyPlayerState {
   const track = state?.track_window.current_track;
   const durationMs = state?.duration ?? 0;
-  const positionMs = state
-    ? coerceSdkPositionMs(state.position, durationMs)
-    : 0;
-  const positionUpdatedAt =
-    state?.timestamp && state.timestamp > 1_000_000_000_000
-      ? state.timestamp
-      : Date.now();
+  // Web Playback SDK: `position` is already ms at event time (Spotify reference).
+  const positionMs =
+    state && Number.isFinite(state.position) ? Math.max(0, state.position) : 0;
+  const positionUpdatedAt = Date.now();
 
   return {
     trackUri: track?.uri ?? null,
