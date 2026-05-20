@@ -87,6 +87,8 @@ export class PlaybackStatePublisher {
   private lastFingerprint: string | null = null;
   private lastTrackUri: string | null = null;
   private lastSdkState: NormalizedSpotifyPlayerState | null = null;
+  private lastBridgeState: NormalizedSpotifyPlayerState | null = null;
+  private bridgeActive = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private stateVersion = 0;
 
@@ -103,6 +105,14 @@ export class PlaybackStatePublisher {
     this.stateVersion = version;
   }
 
+  /** When true, bridge snapshots take priority over SDK and API ingest. */
+  setBridgeActive(active: boolean): void {
+    this.bridgeActive = active;
+    if (!active) {
+      this.lastBridgeState = null;
+    }
+  }
+
   emitLocal(state: NormalizedSpotifyPlayerState): void {
     this.options?.onLocalState(state);
   }
@@ -117,13 +127,35 @@ export class PlaybackStatePublisher {
       status: status ?? state.status,
     };
 
-    if (source === "sdk") {
-      this.lastSdkState = resolved;
-      this.ingestSdk(resolved, status);
+    if (source === "bridge") {
+      this.lastBridgeState = resolved;
+      this.ingestBridge(resolved, status);
       return;
     }
 
-    this.ingestApi(resolved, status);
+    if (source === "api") {
+      this.ingestApi(resolved, status);
+      return;
+    }
+
+    if (
+      this.bridgeActive &&
+      this.lastBridgeState &&
+      statesDiverge(resolved, this.lastBridgeState)
+    ) {
+      return;
+    }
+
+    this.lastSdkState = resolved;
+    this.ingestSdk(resolved, status);
+  }
+
+  private ingestBridge(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+  ): void {
+    this.emitLocal(state);
+    this.publishIfNeeded(state, status);
   }
 
   private ingestSdk(
@@ -131,7 +163,13 @@ export class PlaybackStatePublisher {
     status?: PlaybackSessionStatus,
   ): void {
     this.emitLocal(state);
+    this.publishIfNeeded(state, status);
+  }
 
+  private publishIfNeeded(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+  ): void {
     const remoteMode = this.options?.publishRemote ?? "minimal";
     if (remoteMode === "off") {
       return;
@@ -156,6 +194,10 @@ export class PlaybackStatePublisher {
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): void {
+    if (this.bridgeActive && this.lastBridgeState) {
+      return;
+    }
+
     const mode = this.options?.syncMode ?? "api_device";
     const diverged = statesDiverge(this.lastSdkState, state);
 
@@ -291,5 +333,7 @@ export class PlaybackStatePublisher {
     this.lastFingerprint = null;
     this.lastTrackUri = null;
     this.lastSdkState = null;
+    this.lastBridgeState = null;
+    this.bridgeActive = false;
   }
 }
