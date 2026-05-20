@@ -9,8 +9,10 @@ export const LANDING_SITE = {
     "Player democrático para bares e espaços. O público escolhe e vota na fila — com política antes do volume.",
   locale: "pt_BR",
   url: LANDING_SITE_URL,
-  /** Imagem padrão para Open Graph / Twitter (absoluta via metadataBase). */
-  ogImagePath: "/brand/Muziks-152.png",
+  /** Favicon / apple-touch (quadrados — DESIGN.md §7). */
+  iconPath: "/brand/Muziks-152.png",
+  /** Ícone de faders para Open Graph / Twitter (docs/images/identity/favicon-large.png). */
+  ogImagePath: "/brand/muziks-og-icon.png",
   contactEmail: "contato@muziks.com.br",
 } as const;
 

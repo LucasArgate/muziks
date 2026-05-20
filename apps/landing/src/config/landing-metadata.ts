@@ -40,8 +40,8 @@ export function createLandingMetadata({
     description,
     metadataBase: new URL(LANDING_SITE.url),
     icons: {
-      icon: LANDING_SITE.ogImagePath,
-      apple: LANDING_SITE.ogImagePath,
+      icon: LANDING_SITE.iconPath,
+      apple: LANDING_SITE.iconPath,
     },
     alternates: {
       canonical: canonicalPath,
@@ -69,14 +69,15 @@ export function createLandingMetadata({
       images: [
         {
           url: LANDING_SITE.ogImagePath,
-          width: 152,
-          height: 152,
-          alt: `${LANDING_SITE.name} — ${LANDING_SITE.tagline}`,
+          width: 1607,
+          height: 1405,
+          alt: `${LANDING_SITE.name} — ícone`,
+          type: "image/png",
         },
       ],
     },
     twitter: {
-      card: "summary_large_image",
+      card: "summary",
       title: pageTitle,
       description,
       images: [LANDING_SITE.ogImagePath],
