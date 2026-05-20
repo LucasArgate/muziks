@@ -1,6 +1,6 @@
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
 
-export type PlaybackStateSource = "sdk" | "api";
+export type PlaybackStateSource = "sdk" | "api" | "bridge";
 
 /** API is authoritative for track, device, pause, and status. */
 export function statesDiverge(
