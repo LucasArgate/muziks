@@ -104,6 +104,20 @@ export class PlaybackStatePublisher {
     return this.stateVersion;
   }
 
+  /** Last normalized state from Web API poll (authoritative in hybrid). */
+  get apiPlaybackState(): NormalizedSpotifyPlayerState | null {
+    return this.lastApiState;
+  }
+
+  /** Device id for Web API play/pause/skip (API state, then preferred Connect device). */
+  get activeControlDeviceId(): string | null {
+    const mode = this.options?.syncMode ?? "hybrid";
+    if (mode === "api_device") {
+      return this.options?.preferredDeviceId ?? this.lastApiState?.deviceId ?? null;
+    }
+    return this.lastApiState?.deviceId ?? this.lastSdkState?.deviceId ?? null;
+  }
+
   setStateVersion(version: number): void {
     this.stateVersion = version;
   }

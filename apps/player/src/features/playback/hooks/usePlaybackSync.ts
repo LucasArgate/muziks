@@ -9,6 +9,9 @@ import type {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  shouldControlViaSdk,
+} from "../lib/playback-control-routing";
+import {
   sdkEventToPhase,
   type SdkPhase,
   type SdkPlaybackEvent,
@@ -57,10 +60,15 @@ export function usePlaybackSync({
   const [spotifyQueue, setSpotifyQueue] =
     useState<NormalizedSpotifyPlaybackQueue | null>(null);
   const [sdkPhase, setSdkPhase] = useState<SdkPhase>("idle");
-  const [spotifyActionLoading, setSpotifyActionLoading] = useState(false);
+  const [playPauseLoading, setPlayPauseLoading] = useState(false);
+  const [skipLoading, setSkipLoading] = useState(false);
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
-  const spotifyActionLoadingRef = useRef(false);
+  const playPauseLoadingRef = useRef(false);
+  const skipLoadingRef = useRef(false);
+  const playbackBeforeActionRef = useRef<NormalizedSpotifyPlayerState | null>(
+    null,
+  );
   const onLocalStateRef = useRef(onLocalState);
   onLocalStateRef.current = onLocalState;
 
@@ -259,31 +267,28 @@ export function usePlaybackSync({
     }
   }, [preferredDeviceId, activeDeviceName]);
 
-  const runSpotifyAction = useCallback(async (fn: () => Promise<void>) => {
-    if (spotifyActionLoadingRef.current) return;
-    spotifyActionLoadingRef.current = true;
-    setSpotifyActionLoading(true);
-    setSdkError(null);
-    try {
-      await fn();
-    } catch (err) {
-      setSdkError(err instanceof Error ? err.message : "spotify_action_failed");
-      throw err;
-    } finally {
-      spotifyActionLoadingRef.current = false;
-      setSpotifyActionLoading(false);
+  const resolveControlDeviceId = useCallback((): string | undefined => {
+    const coordinator = coordinatorRef.current;
+    if (syncMode === "api_device" && preferredDeviceId) {
+      return preferredDeviceId;
     }
-  }, []);
+    return (
+      coordinator?.activeControlDeviceId ??
+      playback?.deviceId ??
+      undefined
+    );
+  }, [syncMode, preferredDeviceId, playback?.deviceId]);
 
   const controlViaApi = useCallback(
     async (action: "play" | "pause" | "next") => {
       const coordinator = coordinatorRef.current;
+      const deviceId = resolveControlDeviceId();
       const response = await fetch("/api/spotify/playback/control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
-          deviceId: preferredDeviceId ?? playback?.deviceId ?? undefined,
+          deviceId,
         }),
       });
       const body = (await response.json().catch(() => ({}))) as {
@@ -296,42 +301,104 @@ export function usePlaybackSync({
       if (body.state) {
         coordinator?.applyApiState(body.state);
       } else {
-        await coordinator?.refreshSessionOnce();
+        await coordinator?.refreshApiOnce();
       }
     },
-    [playback?.deviceId, preferredDeviceId],
+    [resolveControlDeviceId],
   );
 
+  const runPlayPauseAction = useCallback(
+    async (fn: () => Promise<void>) => {
+      if (playPauseLoadingRef.current) return;
+      playPauseLoadingRef.current = true;
+      setPlayPauseLoading(true);
+      setSdkError(null);
+      playbackBeforeActionRef.current = playback;
+      try {
+        await fn();
+      } catch (err) {
+        if (playbackBeforeActionRef.current) {
+          setPlayback(playbackBeforeActionRef.current);
+          onLocalStateRef.current(playbackBeforeActionRef.current);
+        } else {
+          void coordinatorRef.current?.refreshApiOnce();
+        }
+        setSdkError(
+          err instanceof Error ? err.message : "spotify_action_failed",
+        );
+        throw err;
+      } finally {
+        playPauseLoadingRef.current = false;
+        setPlayPauseLoading(false);
+        playbackBeforeActionRef.current = null;
+      }
+    },
+    [playback],
+  );
+
+  const runSkipAction = useCallback(async (fn: () => Promise<void>) => {
+    if (skipLoadingRef.current) return;
+    skipLoadingRef.current = true;
+    setSkipLoading(true);
+    setSdkError(null);
+    try {
+      await fn();
+    } catch (err) {
+      setSdkError(err instanceof Error ? err.message : "spotify_action_failed");
+      throw err;
+    } finally {
+      skipLoadingRef.current = false;
+      setSkipLoading(false);
+    }
+  }, []);
+
   const togglePlay = useCallback(async () => {
-    await runSpotifyAction(async () => {
+    await runPlayPauseAction(async () => {
       const coordinator = coordinatorRef.current;
-      if (
-        (syncMode === "hybrid" || syncMode === "sdk") &&
-        coordinator?.sdkPlayer
-      ) {
-        await coordinator.sdkPlayer.togglePlay();
-        return;
+      const useSdk = shouldControlViaSdk(syncMode, playback);
+
+      if (useSdk && coordinator?.sdkPlayer) {
+        try {
+          await coordinator.sdkPlayer.togglePlay();
+          return;
+        } catch {
+          // fall through to Web API
+        }
+      }
+
+      if (playback) {
+        const optimistic: NormalizedSpotifyPlayerState = {
+          ...playback,
+          paused: !playback.paused,
+          status: playback.paused ? "playing" : "paused",
+          lastError: null,
+        };
+        setPlayback(optimistic);
+        onLocalStateRef.current(optimistic);
       }
 
       const action = playback?.paused ? "play" : "pause";
       await controlViaApi(action);
     });
-  }, [syncMode, playback?.paused, runSpotifyAction, controlViaApi]);
+  }, [syncMode, playback, runPlayPauseAction, controlViaApi]);
 
   const skipToNext = useCallback(async () => {
-    await runSpotifyAction(async () => {
+    await runSkipAction(async () => {
       const coordinator = coordinatorRef.current;
-      if (
-        (syncMode === "hybrid" || syncMode === "sdk") &&
-        coordinator?.sdkPlayer
-      ) {
-        await coordinator.sdkPlayer.nextTrack();
-        return;
+      const useSdk = shouldControlViaSdk(syncMode, playback);
+
+      if (useSdk && coordinator?.sdkPlayer) {
+        try {
+          await coordinator.sdkPlayer.nextTrack();
+          return;
+        } catch {
+          // fall through to Web API
+        }
       }
 
       await controlViaApi("next");
     });
-  }, [syncMode, runSpotifyAction, controlViaApi]);
+  }, [syncMode, playback, runSkipAction, controlViaApi]);
 
   const requiresDeviceSelection =
     syncMode === "api_device" && !preferredDeviceId;
@@ -356,7 +423,8 @@ export function usePlaybackSync({
     sdkError,
     sdkPhase,
     pollError,
-    spotifyActionLoading,
+    playPauseLoading,
+    skipLoading,
     selectDevice,
     applyBridgeState: (state: NormalizedSpotifyPlayerState) =>
       coordinatorRef.current?.applyBridgeState(state),

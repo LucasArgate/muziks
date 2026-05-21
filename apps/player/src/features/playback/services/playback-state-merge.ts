@@ -27,7 +27,15 @@ export function shouldSdkSuppressLocalDisplay(
   sdk: NormalizedSpotifyPlayerState,
   api: NormalizedSpotifyPlayerState | null,
 ): boolean {
-  if (mode !== "hybrid" || !api?.trackUri) {
+  if (mode !== "hybrid") {
+    return false;
+  }
+
+  if (sdk.status === "error" && api?.trackUri) {
+    return true;
+  }
+
+  if (!api?.trackUri) {
     return false;
   }
   if (!statesDiverge(sdk, api)) {

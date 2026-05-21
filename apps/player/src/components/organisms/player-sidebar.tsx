@@ -19,7 +19,8 @@ type PlayerSidebarProps = {
   profile: ProfileSummary | null;
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
-  spotifyActionLoading?: boolean;
+  playPauseLoading?: boolean;
+  skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
   onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
@@ -35,7 +36,8 @@ export function PlayerSidebar({
   profile,
   playback,
   ready,
-  spotifyActionLoading,
+  playPauseLoading,
+  skipLoading,
   onTogglePlay,
   onSkipNext,
   syncMode,
@@ -86,7 +88,8 @@ export function PlayerSidebar({
         <PlayerBar
           playback={playback}
           ready={ready}
-          spotifyActionLoading={spotifyActionLoading}
+          playPauseLoading={playPauseLoading}
+          skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}
           onSkipNext={onSkipNext}
           syncMode={syncMode}

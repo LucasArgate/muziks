@@ -24,7 +24,8 @@ type PlayerMasterLayoutProps = {
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
   error: string | null;
-  spotifyActionLoading?: boolean;
+  playPauseLoading?: boolean;
+  skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
   onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
@@ -42,7 +43,8 @@ export function PlayerMasterLayout({
   playback,
   ready,
   error,
-  spotifyActionLoading,
+  playPauseLoading,
+  skipLoading,
   onTogglePlay,
   onSkipNext,
   syncMode,
@@ -61,7 +63,8 @@ export function PlayerMasterLayout({
         profile={profile}
         playback={playback}
         ready={ready}
-        spotifyActionLoading={spotifyActionLoading}
+        playPauseLoading={playPauseLoading}
+        skipLoading={skipLoading}
         onTogglePlay={onTogglePlay}
         onSkipNext={onSkipNext}
         syncMode={syncMode}
@@ -99,7 +102,8 @@ export function PlayerMasterLayout({
         <PlayerBar
           playback={playback}
           ready={ready}
-          spotifyActionLoading={spotifyActionLoading}
+          playPauseLoading={playPauseLoading}
+          skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}
           onSkipNext={onSkipNext}
           syncMode={syncMode}

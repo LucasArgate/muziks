@@ -186,6 +186,10 @@ export class PlaybackSyncCoordinator {
     return this.sdkSource.player;
   }
 
+  get activeControlDeviceId(): string | null {
+    return this.publisher.activeControlDeviceId;
+  }
+
   private sdkSourceOptions(): Parameters<SdkPlaybackSource["start"]>[1] {
     return {
       onState: (state, status) => {

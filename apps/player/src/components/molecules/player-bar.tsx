@@ -6,12 +6,14 @@ import { Loader2, Pause, Play, SkipForward } from "lucide-react";
 
 import { ConnectDeviceControl } from "@/src/components/molecules/connect-device-control";
 import { Button } from "@/src/components/ui/button";
+import { hasActivePlayback } from "@/src/features/playback/lib/playback-control-routing";
 import { usePlaybackProgress } from "@/src/features/playback/hooks/usePlaybackProgress";
 
 type PlayerBarProps = {
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
-  spotifyActionLoading?: boolean;
+  playPauseLoading?: boolean;
+  skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
   onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
@@ -24,7 +26,8 @@ type PlayerBarProps = {
 export function PlayerBar({
   playback,
   ready,
-  spotifyActionLoading = false,
+  playPauseLoading = false,
+  skipLoading = false,
   onTogglePlay,
   onSkipNext,
   syncMode,
@@ -34,7 +37,7 @@ export function PlayerBar({
   className,
 }: PlayerBarProps) {
   const progress = usePlaybackProgress(playback);
-  const controlsDisabled = !ready || spotifyActionLoading;
+  const canControl = hasActivePlayback(playback);
 
   return (
     <div className={cn("flex flex-col", className)}>
@@ -75,11 +78,11 @@ export function PlayerBar({
               size="icon"
               variant="secondary"
               onClick={() => void onTogglePlay()}
-              disabled={controlsDisabled}
+              disabled={!ready || !canControl || playPauseLoading || skipLoading}
               className="h-8 w-8 rounded-full"
               aria-label={playback?.paused !== false ? "Reproduzir" : "Pausar"}
             >
-              {spotifyActionLoading ? (
+              {playPauseLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               ) : playback?.paused !== false ? (
                 <Play className="h-4 w-4 fill-current" />
@@ -92,11 +95,11 @@ export function PlayerBar({
               type="button"
               size="icon"
               onClick={() => void onSkipNext()}
-              disabled={controlsDisabled}
+              disabled={!ready || !canControl || playPauseLoading || skipLoading}
               className="h-11 w-11 rounded-full"
               aria-label="Próxima faixa"
             >
-              {spotifyActionLoading ? (
+              {skipLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
               ) : (
                 <SkipForward className="h-5 w-5 fill-current" />
