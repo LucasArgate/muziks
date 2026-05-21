@@ -37,8 +37,7 @@ export function summarizeSdkRawPlaybackState(
     trackName: current?.name ?? null,
     nextUri: next?.uri ?? null,
     upcomingCount: state.track_window.next_tracks?.length ?? 0,
-    timestamp: state.timestamp,
-    disallows: state.restrictions?.disallow_reasons ?? null,
+    disallows: state.disallows ?? null,
   };
 }
 

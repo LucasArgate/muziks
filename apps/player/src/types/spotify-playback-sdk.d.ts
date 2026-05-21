@@ -50,11 +50,22 @@ declare namespace Spotify {
     };
   }
 
+  interface PlaybackDisallows {
+    pausing?: boolean;
+    peeking_next?: boolean;
+    peeking_prev?: boolean;
+    resuming?: boolean;
+    seeking?: boolean;
+    skipping_next?: boolean;
+    skipping_prev?: boolean;
+  }
+
   interface PlaybackState {
     paused: boolean;
     /** Current position in ms at the time of this event. */
     position: number;
     duration: number;
+    disallows?: PlaybackDisallows;
     track_window: {
       current_track: PlaybackTrack;
       next_tracks: PlaybackTrack[];
