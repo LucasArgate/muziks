@@ -16,8 +16,8 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 | **Spotify Web Playback SDK** | UI em tempo real (`player_state_changed`) |
 | **Spotify Web API** (`GET /me/player`) | Reconciliação: device ativo, faixa alterada noutro cliente, idle |
 
-- Poll da API no **browser** com token curto (`GET /api/spotify/token`), cache 3–4s, intervalos lentos em hybrid (18s playing / 35s paused).
-- Em divergência, **API vence** para `trackUri`, `deviceId`, `paused`, `status`.
+- Poll da API no **browser** via `GET /api/spotify/playback/state` (perfil **`hybrid`**: ~3,5 s playing/paused, cache ~1,2 s; perfil **`default`** / `api_device`: ~18 s / 35 s). Detalhe de merge, timer, fila Spotify e debug: [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md).
+- Em divergência, **API vence** para `trackUri`, `deviceId`, `paused`, `status` (`preferSdkProgressInHybrid` não sobrescreve `paused` quando divergiu).
 - Modo `api_device`: só API (Connect externo, sem SDK).
 
 ### 2. Distribuição de sessão (telão / outras abas)
@@ -54,6 +54,7 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 
 ## Referências
 
+- [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) — fluxo implementado no cliente Master (SDK, poll, fila Spotify, timer)
 - [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) — diagramas consolidados (Master → API → Broadcast; bridge)
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)

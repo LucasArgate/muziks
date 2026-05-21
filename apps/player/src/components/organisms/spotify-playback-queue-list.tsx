@@ -5,6 +5,7 @@ import type {
   PlaybackSyncMode,
 } from "@muziks/types";
 import { QueueListShell, QueueTrackRow } from "@muziks/ui";
+import { useEffect } from "react";
 
 import { useSpotifyPlaybackQueue } from "@/src/features/queue/hooks/useSpotifyPlaybackQueue";
 
@@ -23,17 +24,37 @@ export function SpotifyPlaybackQueueList({
   trackUri,
   paused,
 }: SpotifyPlaybackQueueListProps) {
-  const useSdkQueue = syncMode === "hybrid" || syncMode === "sdk";
+  const hasSdkQueueSource =
+    syncMode === "sdk" ||
+    (syncMode === "hybrid" && Boolean(sdkQueue?.currentlyPlaying));
 
-  const { queue: polledQueue, loading, error } = useSpotifyPlaybackQueue({
+  const sdkQueueAligned =
+    hasSdkQueueSource &&
+    Boolean(trackUri) &&
+    sdkQueue?.currentlyPlaying?.uri === trackUri;
+
+  const { queue: polledQueue, loading, error, refresh } = useSpotifyPlaybackQueue({
     enabled,
-    pollEnabled: !useSdkQueue,
+    pollEnabled: !hasSdkQueueSource || !sdkQueueAligned,
     trackUri,
     pollPlayingMs: 8000,
     pollPausedMs: 20000,
   });
 
-  const queue = useSdkQueue ? sdkQueue : polledQueue;
+  const queue: NormalizedSpotifyPlaybackQueue | null = sdkQueueAligned
+    ? sdkQueue
+    : polledQueue;
+
+  const listCurrentUri = queue?.currentlyPlaying?.uri ?? null;
+
+  useEffect(() => {
+    if (!enabled || !trackUri) {
+      return;
+    }
+    if (trackUri !== listCurrentUri) {
+      void refresh();
+    }
+  }, [enabled, trackUri, listCurrentUri, refresh]);
 
   const tracks = [
     ...(queue?.currentlyPlaying
@@ -46,11 +67,11 @@ export function SpotifyPlaybackQueueList({
     <QueueListShell
       title="Próximas no Spotify"
       description={
-        useSdkQueue
+        sdkQueueAligned
           ? "Próximas faixas a partir do player neste navegador (SDK)."
           : "Espelho da fila nativa do dispositivo Connect (a API do Spotify mostra poucas faixas à frente)."
       }
-      loading={!useSdkQueue && loading && !queue}
+      loading={!sdkQueueAligned && loading && !queue}
       isEmpty={!loading && tracks.length === 0}
       emptyMessage={
         error

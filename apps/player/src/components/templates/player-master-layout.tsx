@@ -8,6 +8,8 @@ import type {
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { AmbientSpotlight } from "@muziks/ui";
+
 import { PlayerBar } from "@/src/components/molecules/player-bar";
 import { PlayerMobileHeader } from "@/src/components/molecules/player-mobile-header";
 import { PlayerMobileNav } from "@/src/components/molecules/player-mobile-nav";
@@ -22,7 +24,10 @@ type PlayerMasterLayoutProps = {
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
   error: string | null;
-  onTogglePlay: () => void;
+  playPauseLoading?: boolean;
+  skipLoading?: boolean;
+  onTogglePlay: () => void | Promise<void>;
+  onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
   deviceName?: string | null;
   showConnectBadge?: boolean;
@@ -38,7 +43,10 @@ export function PlayerMasterLayout({
   playback,
   ready,
   error,
+  playPauseLoading,
+  skipLoading,
   onTogglePlay,
+  onSkipNext,
   syncMode,
   deviceName,
   showConnectBadge = false,
@@ -55,7 +63,10 @@ export function PlayerMasterLayout({
         profile={profile}
         playback={playback}
         ready={ready}
+        playPauseLoading={playPauseLoading}
+        skipLoading={skipLoading}
         onTogglePlay={onTogglePlay}
+        onSkipNext={onSkipNext}
         syncMode={syncMode}
         deviceName={deviceName}
         showConnectBadge={showConnectBadge}
@@ -70,10 +81,12 @@ export function PlayerMasterLayout({
           onOpenNav={() => setNavOpen(true)}
         />
 
-        <main className="min-h-0 flex-1 overflow-y-auto pb-36 md:pb-0">
-          <PlayerMain slug={slug} spotifyNotice={spotifyNotice} error={error}>
-            {children}
-          </PlayerMain>
+        <main className="relative min-h-0 flex-1 overflow-y-auto pb-36 md:pb-0">
+          <AmbientSpotlight opacity={0.45} className="min-h-full">
+            <PlayerMain slug={slug} spotifyNotice={spotifyNotice} error={error}>
+              {children}
+            </PlayerMain>
+          </AmbientSpotlight>
         </main>
       </div>
 
@@ -89,7 +102,10 @@ export function PlayerMasterLayout({
         <PlayerBar
           playback={playback}
           ready={ready}
+          playPauseLoading={playPauseLoading}
+          skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}
+          onSkipNext={onSkipNext}
           syncMode={syncMode}
           deviceName={deviceName}
           showConnectBadge={showConnectBadge}

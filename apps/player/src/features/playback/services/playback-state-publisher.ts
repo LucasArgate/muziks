@@ -9,7 +9,9 @@ import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-chan
 
 import {
   mergeApiOverSdk,
+  preferSdkProgressInHybrid,
   type PlaybackStateSource,
+  shouldSdkSuppressLocalDisplay,
   statesDiverge,
 } from "./playback-state-merge";
 
@@ -87,6 +89,9 @@ export class PlaybackStatePublisher {
   private lastFingerprint: string | null = null;
   private lastTrackUri: string | null = null;
   private lastSdkState: NormalizedSpotifyPlayerState | null = null;
+  private lastApiState: NormalizedSpotifyPlayerState | null = null;
+  private lastBridgeState: NormalizedSpotifyPlayerState | null = null;
+  private bridgeActive = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private stateVersion = 0;
 
@@ -99,8 +104,30 @@ export class PlaybackStatePublisher {
     return this.stateVersion;
   }
 
+  /** Last normalized state from Web API poll (authoritative in hybrid). */
+  get apiPlaybackState(): NormalizedSpotifyPlayerState | null {
+    return this.lastApiState;
+  }
+
+  /** Device id for Web API play/pause/skip (API state, then preferred Connect device). */
+  get activeControlDeviceId(): string | null {
+    const mode = this.options?.syncMode ?? "hybrid";
+    if (mode === "api_device") {
+      return this.options?.preferredDeviceId ?? this.lastApiState?.deviceId ?? null;
+    }
+    return this.lastApiState?.deviceId ?? this.lastSdkState?.deviceId ?? null;
+  }
+
   setStateVersion(version: number): void {
     this.stateVersion = version;
+  }
+
+  /** When true, bridge snapshots take priority over SDK and API ingest. */
+  setBridgeActive(active: boolean): void {
+    this.bridgeActive = active;
+    if (!active) {
+      this.lastBridgeState = null;
+    }
   }
 
   emitLocal(state: NormalizedSpotifyPlayerState): void {
@@ -117,21 +144,54 @@ export class PlaybackStatePublisher {
       status: status ?? state.status,
     };
 
-    if (source === "sdk") {
-      this.lastSdkState = resolved;
-      this.ingestSdk(resolved, status);
+    if (source === "bridge") {
+      this.lastBridgeState = resolved;
+      this.ingestBridge(resolved, status);
       return;
     }
 
-    this.ingestApi(resolved, status);
+    if (source === "api") {
+      this.ingestApi(resolved, status);
+      return;
+    }
+
+    if (
+      this.bridgeActive &&
+      this.lastBridgeState &&
+      statesDiverge(resolved, this.lastBridgeState)
+    ) {
+      return;
+    }
+
+    this.lastSdkState = resolved;
+    this.ingestSdk(resolved, status);
+  }
+
+  private ingestBridge(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+  ): void {
+    this.emitLocal(state);
+    this.publishIfNeeded(state, status);
   }
 
   private ingestSdk(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): void {
-    this.emitLocal(state);
+    const mode = this.options?.syncMode ?? "hybrid";
+    if (shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState)) {
+      return;
+    }
 
+    this.emitLocal(state);
+    this.publishIfNeeded(state, status);
+  }
+
+  private publishIfNeeded(
+    state: NormalizedSpotifyPlayerState,
+    status?: PlaybackSessionStatus,
+  ): void {
     const remoteMode = this.options?.publishRemote ?? "minimal";
     if (remoteMode === "off") {
       return;
@@ -156,6 +216,12 @@ export class PlaybackStatePublisher {
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): void {
+    if (this.bridgeActive && this.lastBridgeState) {
+      return;
+    }
+
+    this.lastApiState = state;
+
     const mode = this.options?.syncMode ?? "api_device";
     const diverged = statesDiverge(this.lastSdkState, state);
 
@@ -163,7 +229,10 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    const display = mergeApiOverSdk(this.lastSdkState, state);
+    let display = mergeApiOverSdk(this.lastSdkState, state);
+    if (mode === "hybrid") {
+      display = preferSdkProgressInHybrid(this.lastSdkState, display);
+    }
     this.emitLocal(display);
 
     const trackChanged = display.trackUri !== this.lastTrackUri;
@@ -291,5 +360,8 @@ export class PlaybackStatePublisher {
     this.lastFingerprint = null;
     this.lastTrackUri = null;
     this.lastSdkState = null;
+    this.lastApiState = null;
+    this.lastBridgeState = null;
+    this.bridgeActive = false;
   }
 }
