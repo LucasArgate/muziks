@@ -85,6 +85,7 @@ declare namespace Spotify {
 }
 
 interface Window {
+  onSpotifyWebPlaybackSDKReady?: () => void;
   Spotify?: {
     Player: Spotify.PlayerConstructor;
   };

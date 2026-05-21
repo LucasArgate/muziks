@@ -2,6 +2,14 @@ const SDK_SCRIPT = "https://sdk.scdn.co/spotify-player.js";
 
 let sdkLoadPromise: Promise<void> | null = null;
 
+function installSdkReadyCallback(onReady: () => void): void {
+  const previous = window.onSpotifyWebPlaybackSDKReady;
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    previous?.();
+    onReady();
+  };
+}
+
 function loadSpotifySdk(): Promise<void> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Spotify SDK requires a browser"));
@@ -13,22 +21,36 @@ function loadSpotifySdk(): Promise<void> {
 
   if (!sdkLoadPromise) {
     sdkLoadPromise = new Promise((resolve, reject) => {
+      const finish = () => {
+        if (window.Spotify?.Player) {
+          resolve();
+          return;
+        }
+        sdkLoadPromise = null;
+        reject(new Error("Spotify Web Playback SDK unavailable"));
+      };
+
+      installSdkReadyCallback(finish);
+
       const existing = document.querySelector<HTMLScriptElement>(
         `script[src="${SDK_SCRIPT}"]`,
       );
       if (existing) {
-        existing.addEventListener("load", () => resolve());
-        existing.addEventListener("error", () =>
-          reject(new Error("Failed to load Spotify SDK")),
-        );
-        return;
+        if (window.Spotify?.Player) {
+          finish();
+          return;
+        }
+        // Script ran without our callback (e.g. race on fast CDN) — reload once.
+        existing.remove();
       }
 
       const script = document.createElement("script");
       script.src = SDK_SCRIPT;
       script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Failed to load Spotify SDK"));
+      script.onerror = () => {
+        sdkLoadPromise = null;
+        reject(new Error("Failed to load Spotify SDK"));
+      };
       document.body.appendChild(script);
     });
   }
