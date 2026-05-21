@@ -45,8 +45,9 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 ## Consequências
 
 - Menos invocações Vercel no hot path de leitura de playback.
-- Conexões Realtime por player (telão + observadores); monitorar cotas Supabase.
+- Conexões Realtime por player (telão + observadores + **`apps/web` participante**); monitorar cotas Supabase.
 - Token Spotify no browser limitado ao dono autenticado; refresh permanece no servidor.
+- Estado de UI compartilhado via `@muziks/playback-client` (Zustand); web usa `usePublicPlaybackStore` + Broadcast, com poll HTTP só como fallback (~30 s).
 
 ## Fallback
 

@@ -1,7 +1,8 @@
 "use client";
 
+import { useSpotifyQueueStore } from "@muziks/playback-client";
 import type { NormalizedSpotifyPlaybackQueue } from "@muziks/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 export type UseSpotifyPlaybackQueueOptions = {
   enabled: boolean;
@@ -19,11 +20,12 @@ export function useSpotifyPlaybackQueue({
   pollPlayingMs = 8000,
   pollPausedMs = 20000,
 }: UseSpotifyPlaybackQueueOptions) {
-  const [queue, setQueue] = useState<NormalizedSpotifyPlaybackQueue | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queue = useSpotifyQueueStore((s) => s.queue);
+  const loading = useSpotifyQueueStore((s) => s.loading);
+  const error = useSpotifyQueueStore((s) => s.error);
+  const setQueue = useSpotifyQueueStore((s) => s.setQueue);
+  const setLoading = useSpotifyQueueStore((s) => s.setLoading);
+  const setError = useSpotifyQueueStore((s) => s.setError);
 
   const refresh = useCallback(async () => {
     if (!enabled) {
@@ -50,7 +52,7 @@ export function useSpotifyPlaybackQueue({
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, setError, setLoading, setQueue]);
 
   useEffect(() => {
     if (!enabled || !pollEnabled) {

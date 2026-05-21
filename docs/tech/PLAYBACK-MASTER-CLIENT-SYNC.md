@@ -35,7 +35,8 @@ flowchart TB
   end
 
   subgraph UI["React Master"]
-    SYNC[usePlaybackSync]
+    STORE["@muziks/playback-client\nZustand SSOT"]
+    SYNC[usePlaybackSync actions]
     BAR[PlayerBar + usePlaybackProgress]
     QLIST[SpotifyPlaybackQueueList]
   end
@@ -55,9 +56,10 @@ flowchart TB
   COORD --> PUB
   PUB --> MERGE
   MERGE --> PUB
-  PUB --> SYNC
-  SYNC --> BAR
-  SYNC --> QLIST
+  PUB --> STORE
+  SYNC --> STORE
+  STORE --> BAR
+  STORE --> QLIST
   PUB --> POST --> DB
   PUB --> RT
 ```
@@ -70,7 +72,8 @@ flowchart TB
 | Near-end | `track-end-scheduler.ts` | Timer local a partir do SDK (`positionMs` + `durationMs`) |
 | Merge / publish | `playback-state-publisher.ts` | Debounce, fingerprint, POST sessão, Broadcast |
 | Regras híbrido | `playback-state-merge.ts` | Quem vence em divergência (API vs SDK) |
-| Hook UI | `usePlaybackSync.ts` | Estado React, connect/hybrid, controles |
+| Store UI | `@muziks/playback-client` | Zustand SSOT: playback, loading, filas |
+| Hook UI | `usePlaybackSync.ts` | Ações SDK/API, connect/hybrid (lê/escreve store) |
 | Progresso | `usePlaybackProgress.ts` | Timer RAF só quando `paused === false` |
 | Fila Spotify UI | `spotify-playback-queue-list.tsx` | SDK alinhado ou espelho API |
 | Debug | `config/debug.ts` + `playback-debug.ts` | `PLAYBACK_DEBUG` e logs `[muziks:playback]` |
@@ -139,7 +142,8 @@ sequenceDiagram
   Hook->>Hook: optimistic paused=true
   Hook->>SDK: togglePlay()
   SDK->>Pub: player_state_changed
-  Pub->>UI: paused=true
+  Pub->>Hook: applyMasterPlayback
+  Hook->>UI: paused=true
 ```
 
 `POST /api/spotify/playback/control` no fallback API retorna `{ ok: true }` **sem** re-fetch de estado (evita `is_playing` stale).
@@ -156,7 +160,21 @@ Timer local a partir de `positionMs`, `durationMs` e `positionUpdatedAt` do SDK 
 - **`requestAnimationFrame`** só roda se `paused === false` e há `durationMs`
 - Pause no celular → poll atualiza `playback.paused` → efeito limpa RAF → barra congela
 
-Não depende de Zustand: `usePlaybackSync` → `setPlayback` → props.
+`usePlaybackProgress` lê `playback` da store (via props derivadas de `useMasterPlaybackStore`).
+
+### 3.6 Estado global (Zustand) — cinco regras
+
+Pacote: [`packages/playback-client`](../../packages/playback-client/).
+
+| # | Regra | Implementação |
+|---|--------|----------------|
+| 1 | UI só reflete a store | `PlayerBar`, `PlayerMasterLayout` → selectors `useMasterPlaybackStore` |
+| 2 | Clique → SDK/API → store → UI | `togglePlay` / `skipToNext` → optimistic `applyMasterPlayback` → SDK ou `POST .../control` |
+| 3 | Evento SDK/API → publisher → store | `PlaybackStatePublisher.onLocalState` → `applyMasterPlayback` |
+| 4 | Mudança semântica → Postgres + Broadcast | `PlaybackStatePublisher` (inalterado) |
+| 5 | Observadores (web, telão) | `usePublicPlaybackStore` + `subscribeSessionSnapshots`; master mantém `subscribeRealtime: false` |
+
+Stores: `useMasterPlaybackStore`, `useSpotifyQueueStore`, `useMuziksQueueStore` (master); `usePublicPlaybackStore` (web participante).
 
 ---
 
@@ -211,7 +229,11 @@ Após mudança semântica relevante, `PlaybackStatePublisher`:
 2. `broadcastSessionSnapshot` → canal `player:{playerId}`, evento `session.snapshot`
 3. `broadcast.self: false` — Master não escuta o próprio envio
 
-Consumidores: `usePlaybackSession({ subscribeRealtime: true })` (telão). O Master usa `subscribeRealtime: false` e alimenta a UI pelo SDK/API local.
+Consumidores:
+
+- **Master:** `subscribeRealtime: false` — UI pelo SDK/API local → `useMasterPlaybackStore`.
+- **Telão / 2ª aba (player):** `usePlaybackSession({ subscribeRealtime: true })` → `applyMasterPlayback`.
+- **`apps/web`:** `usePublicPlaybackSession` — hydrate HTTP + `session.snapshot` → `usePublicPlaybackStore`; poll 30 s fallback.
 
 Ver [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md).
 
@@ -238,7 +260,7 @@ Logs no console com prefixo `[muziks:playback]`:
 | Fila votada Muziks | **Realtime** `queue.snapshot` (`useMuziksCustomerQueue` `transport: "realtime"`) |
 | Fila nativa Spotify | SDK + API conforme §4 (sem Realtime) |
 
-Público em `apps/web` continua com poll HTTP na fila Muziks (cardinalidade alta) — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) §2.1.
+Público em `apps/web`: fila Muziks via `queue.snapshot` (Realtime) + poll 30 s fallback; playback via §5 acima — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) §2.1.
 
 ---
 

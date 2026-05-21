@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "@muziks/queue",
     "@muziks/db",
     "@muziks/types",
+    "@muziks/playback-client",
   ],
 };
 

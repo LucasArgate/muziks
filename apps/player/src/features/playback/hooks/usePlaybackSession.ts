@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { applyMasterPlayback, useMasterPlaybackStore } from "@muziks/playback-client";
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
+import { useCallback, useEffect } from "react";
 
 import { subscribeSessionSnapshots } from "@/src/lib/realtime/player-session-channel";
 
@@ -17,12 +18,11 @@ export function usePlaybackSession({
   initialPlayback,
   subscribeRealtime = true,
 }: UsePlaybackSessionOptions) {
-  const [playback, setPlayback] = useState<NormalizedSpotifyPlayerState | null>(
-    initialPlayback ?? null,
-  );
+  const playback = useMasterPlaybackStore((s) => s.playback);
+
   useEffect(() => {
     if (initialPlayback) {
-      setPlayback(initialPlayback);
+      applyMasterPlayback(initialPlayback);
     }
   }, [initialPlayback]);
 
@@ -32,13 +32,13 @@ export function usePlaybackSession({
     }
 
     return subscribeSessionSnapshots(playerId, ({ playback: next }) => {
-      setPlayback(next);
+      applyMasterPlayback(next);
     });
   }, [playerId, subscribeRealtime]);
 
   const onLocalState = useCallback((state: NormalizedSpotifyPlayerState) => {
-    setPlayback(state);
+    applyMasterPlayback(state);
   }, []);
 
-  return { playback, onLocalState, setPlayback };
+  return { playback, onLocalState, setPlayback: applyMasterPlayback };
 }

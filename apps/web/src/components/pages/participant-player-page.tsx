@@ -14,25 +14,34 @@ import {
   savePendingVote,
 } from "@/src/features/auth/pending-vote";
 import { useParticipantSession } from "@/src/features/auth/hooks/useParticipantSession";
+import { usePublicPlaybackStore } from "@muziks/playback-client";
+
 import { usePublicPlaybackSession } from "@/src/features/participant/hooks/usePublicPlaybackSession";
 import { useMuziksCustomerQueue } from "@/src/features/queue/hooks/useMuziksCustomerQueue";
 
 type ParticipantPlayerPageProps = {
   slug: string;
+  playerId: string;
   displayName: string;
 };
 
 export function ParticipantPlayerPage({
   slug,
+  playerId,
   displayName,
 }: ParticipantPlayerPageProps) {
   const searchParams = useSearchParams();
   const { session, isAuthenticated, refresh: refreshSession } =
     useParticipantSession();
-  const { session: playback, loading: playbackLoading } =
-    usePublicPlaybackSession(slug);
-  const { items, loading, error, refresh: refreshQueue } =
-    useMuziksCustomerQueue(slug);
+  usePublicPlaybackSession({ slug, playerId });
+  const playback = usePublicPlaybackStore((s) => s.session);
+  const playbackLoading = usePublicPlaybackStore((s) => s.loading);
+
+  const { items, loading, error, refresh: refreshQueue } = useMuziksCustomerQueue({
+    slug,
+    playerId,
+    transport: "realtime",
+  });
 
   const [gateOpen, setGateOpen] = useState(false);
   const [votingItemId, setVotingItemId] = useState<string | null>(null);

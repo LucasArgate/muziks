@@ -1,5 +1,6 @@
 "use client";
 
+import { useMasterPlaybackStore } from "@muziks/playback-client";
 import type { PlayerMasterViewState } from "@muziks/types";
 import type { ReactNode } from "react";
 
@@ -34,7 +35,7 @@ export function PlayerAppFrame({
       ? viewState.muziks.player.id
       : null;
 
-  const session = usePlaybackSession({
+  usePlaybackSession({
     playerId,
     initialPlayback: viewState.playback,
     subscribeRealtime: false,
@@ -47,10 +48,12 @@ export function PlayerAppFrame({
     enabled: hasSpotify,
     sessionMeta: viewState.sessionMeta,
     initialPlayback: viewState.playback,
-    onLocalState: session.onLocalState,
   });
 
-  const displayPlayback = sync.playback;
+  const displayPlayback = useMasterPlaybackStore((s) => s.playback);
+  const playPauseLoading = useMasterPlaybackStore((s) => s.playPauseLoading);
+  const skipLoading = useMasterPlaybackStore((s) => s.skipLoading);
+
   const error =
     sync.pollError ?? sync.sdkError ?? displayPlayback?.lastError ?? null;
   const profile =
@@ -69,8 +72,8 @@ export function PlayerAppFrame({
       playback={displayPlayback}
       ready={sync.ready}
       error={error}
-      playPauseLoading={sync.playPauseLoading}
-      skipLoading={sync.skipLoading}
+      playPauseLoading={playPauseLoading}
+      skipLoading={skipLoading}
       onTogglePlay={() => void sync.togglePlay()}
       onSkipNext={() => void sync.skipToNext()}
       syncMode={sync.syncMode}

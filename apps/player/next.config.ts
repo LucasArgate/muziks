@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     "@muziks/spotify",
     "@muziks/types",
     "@muziks/db",
+    "@muziks/playback-client",
   ],
 };
 

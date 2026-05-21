@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@muziks/playback-client": "workspace:*",
     "@muziks/db": "workspace:*",
     "@muziks/queue": "workspace:*",
     "@muziks/spotify": "workspace:*",

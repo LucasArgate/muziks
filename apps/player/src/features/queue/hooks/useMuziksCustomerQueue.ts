@@ -1,7 +1,8 @@
 "use client";
 
+import { useMuziksQueueStore } from "@muziks/playback-client";
 import type { MuziksQueueSnapshot } from "@muziks/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 import { subscribeQueueSnapshots } from "@/src/lib/realtime/muziks-queue-channel";
 
@@ -18,9 +19,12 @@ export function useMuziksCustomerQueue({
   transport = "poll",
   pollMs = 4000,
 }: UseMuziksCustomerQueueOptions) {
-  const [snapshot, setSnapshot] = useState<MuziksQueueSnapshot | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const snapshot = useMuziksQueueStore((s) => s.snapshot);
+  const loading = useMuziksQueueStore((s) => s.loading);
+  const error = useMuziksQueueStore((s) => s.error);
+  const setSnapshot = useMuziksQueueStore((s) => s.setSnapshot);
+  const setLoading = useMuziksQueueStore((s) => s.setLoading);
+  const setError = useMuziksQueueStore((s) => s.setError);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -45,7 +49,7 @@ export function useMuziksCustomerQueue({
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [setError, setLoading, setSnapshot, slug]);
 
   useEffect(() => {
     void refresh();
@@ -71,11 +75,14 @@ export function useMuziksCustomerQueue({
     return subscribeQueueSnapshots(playerId, (next) => {
       setSnapshot(next);
     });
-  }, [playerId, transport]);
+  }, [playerId, setSnapshot, transport]);
 
-  const applySnapshot = useCallback((next: MuziksQueueSnapshot) => {
-    setSnapshot(next);
-  }, []);
+  const applySnapshot = useCallback(
+    (next: MuziksQueueSnapshot) => {
+      setSnapshot(next);
+    },
+    [setSnapshot],
+  );
 
   return {
     snapshot,
