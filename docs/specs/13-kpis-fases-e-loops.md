@@ -89,6 +89,14 @@ Métricas ligadas a [06-queue-voting-and-chips.md](06-queue-voting-and-chips.md)
 
 Viralidade sobre fila morta **amplifica frustração**, não crescimento sustentável.
 
+### Participação desigual e espectadores (fit de mercado)
+
+Nem todo participante precisa votar em toda sessão — ver [agencia-pertencimento-e-aderencia-comportamental.md](../disruption/agencia-pertencimento-e-aderencia-comportamental.md).
+
+- **Não** usar “% de cadastros que votaram” como única métrica de sucesso em piloto.
+- **Sugerir** acompanhar: razão espectador → primeira ação válida; profundidade **entre quem ativou**; liquidez da fila no **espaço com fit** (ICP).
+- Baseline histórico: concentração em poucos super-usuários ([05-insights](../analytics/reports/05-insights-para-muziks-hoje.md)) — limites de voto/cooldown são produto, não falha de educação do público.
+
 ### Confiança, abuso e operação (B2B2C)
 
 Riscos em [05-discovery-and-access.md](05-discovery-and-access.md) e [08-nfr-privacy-accessibility.md](08-nfr-privacy-accessibility.md) sugerem acompanhar:

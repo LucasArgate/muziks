@@ -12,7 +12,7 @@ O Muziks é um **player democrático e geoposicionado**: o público pode **influ
 
 ## Mapeamento manifesto → specs
 
-Contexto de campo e inferências que antecedem o manifesto (histórias, design thinking): [design-thinking-evidence-and-inferences.md](../disruption/design-thinking-evidence-and-inferences.md).
+Contexto de campo e inferências que antecedem o manifesto (histórias, design thinking): [design-thinking-evidence-and-inferences.md](../disruption/design-thinking-evidence-and-inferences.md). Tese de mercado — agência e pertencimento vs “bolha” de curadoria: [agencia-pertencimento-e-aderencia-comportamental.md](../disruption/agencia-pertencimento-e-aderencia-comportamental.md).
 
 | Princípio (manifesto) | Onde detalhar |
 |----------------------|---------------|
@@ -55,6 +55,7 @@ Definição: o menor conjunto que demonstra **“público participa; espaço man
 
 - O **dono do player** é o responsável legal/operacional pelo ambiente físico e pelo volume; o Muziks fornece **ferramentas de política e UX**, não substitui compliance local. Quadro de responsabilidades e narrativa para termos legais: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 - Haverá **backend ou serviços** para estado compartilhado (fila, votos, política); o detalhe é aberto em [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
+- **Tração não assume** que todo participante “ama música” ou quer ser curador; a proposta é **agência no ambiente** com fricção mínima, em espaços com fit ([agencia-pertencimento-e-aderencia-comportamental.md](../disruption/agencia-pertencimento-e-aderencia-comportamental.md)).
 
 ## Não-objetivos (para evitar escopo oculto)
 
