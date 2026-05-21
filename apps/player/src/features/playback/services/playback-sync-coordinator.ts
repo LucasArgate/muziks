@@ -5,13 +5,16 @@ import type {
   PlayerMasterSessionMeta,
 } from "@muziks/types";
 
+import { isSdkUiAuthoritative } from "../lib/playback-control-routing";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
 import {
   PlaybackStatePublisher,
   type PublishRemoteMode,
 } from "./playback-state-publisher";
+import { statesDiverge } from "./playback-state-merge";
 import { SdkPlaybackSource } from "./sdk-playback-source";
 import { SpotifyApiPlaybackPoller } from "./spotify-api-playback-poller";
+import { TrackEndScheduler } from "./track-end-scheduler";
 import type { SpotifyServiceInstance } from "./SpotifyService";
 
 export type PlaybackSyncCoordinatorOptions = {
@@ -25,6 +28,7 @@ export type PlaybackSyncCoordinatorOptions = {
   onTrackChanged?: (state: NormalizedSpotifyPlayerState) => void;
   onPollError?: (message: string) => void;
   onSdkEvent?: (event: SdkPlaybackEvent) => void;
+  onNearEnd?: (state: NormalizedSpotifyPlayerState) => void;
 };
 
 /**
@@ -36,10 +40,12 @@ export class PlaybackSyncCoordinator {
   private syncMode: PlaybackSyncMode = "hybrid";
   private preferredDeviceId: string | null = null;
   private activeDeviceName: string | null = null;
+  private externalReconcileActive = false;
 
   private readonly publisher = new PlaybackStatePublisher();
   private readonly apiPoller = new SpotifyApiPlaybackPoller();
   private readonly sdkSource = new SdkPlaybackSource();
+  private readonly trackEndScheduler = new TrackEndScheduler();
   private sdkService: SpotifyServiceInstance | null = null;
 
   configure(options: PlaybackSyncCoordinatorOptions): void {
@@ -50,6 +56,9 @@ export class PlaybackSyncCoordinator {
       this.activeDeviceName = options.sessionMeta.activeDeviceName;
       this.publisher.setStateVersion(options.sessionMeta.stateVersion);
     }
+    this.trackEndScheduler.configure({
+      onNearEnd: (state) => options.onNearEnd?.(state),
+    });
     this.refreshPublisherConfig();
     this.reconcileSources();
   }
@@ -79,17 +88,20 @@ export class PlaybackSyncCoordinator {
     this.reconcileSources();
   }
 
-  /** Future: enable when bridge WS session is connected. */
   setBridgeActive(active: boolean): void {
     this.publisher.setBridgeActive(active);
+  }
+
+  setPendingIntent(paused: boolean): void {
+    this.publisher.setPendingIntent(paused);
   }
 
   applyApiState(state: NormalizedSpotifyPlayerState): void {
     const status = state.status ?? (state.paused ? "paused" : "playing");
     this.publisher.ingest(state, status, "api");
+    this.updateSdkAuthoritative();
   }
 
-  /** Future: called by bridge WS client when librespot reports playback. */
   applyBridgeState(state: NormalizedSpotifyPlayerState): void {
     const status = state.status ?? (state.paused ? "paused" : "playing");
     this.publisher.ingest(state, status, "bridge");
@@ -102,8 +114,7 @@ export class PlaybackSyncCoordinator {
   startApiPolling(): void {
     if (this.requiresDeviceSelection) return;
 
-    const profile =
-      this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
+    const profile = this.resolveApiPollProfile();
 
     this.apiPoller.start({
       profile,
@@ -114,6 +125,7 @@ export class PlaybackSyncCoordinator {
 
   stopApiPolling(): void {
     this.apiPoller.stop();
+    this.externalReconcileActive = false;
   }
 
   startSdk(service: SpotifyServiceInstance): void {
@@ -121,6 +133,7 @@ export class PlaybackSyncCoordinator {
     this.syncMode = "sdk";
     this.refreshPublisherConfig();
     this.stopApiPolling();
+    this.publisher.setSdkAuthoritativeForUi(true);
 
     this.sdkSource.start(service, this.sdkSourceOptions());
   }
@@ -131,8 +144,8 @@ export class PlaybackSyncCoordinator {
     this.refreshPublisherConfig();
 
     this.sdkSource.start(service, this.sdkSourceOptions());
-    this.startApiPolling();
-    void this.apiPoller.refreshOnce();
+    this.updateSdkAuthoritative();
+    void this.refreshApiOnce();
   }
 
   stopSdk(): void {
@@ -140,12 +153,14 @@ export class PlaybackSyncCoordinator {
     this.sdkService?.disconnect();
     this.sdkService = null;
     this.options?.onSdkQueue?.(null);
+    this.publisher.setSdkAuthoritativeForUi(false);
   }
 
   stop(): void {
     this.stopApiPolling();
     this.stopSdk();
     this.publisher.dispose();
+    this.trackEndScheduler.dispose();
     this.options = null;
   }
 
@@ -154,6 +169,7 @@ export class PlaybackSyncCoordinator {
 
     if (this.syncMode === "api_device") {
       this.stopSdk();
+      this.publisher.setSdkAuthoritativeForUi(false);
       if (this.preferredDeviceId) {
         this.startApiPolling();
       } else {
@@ -164,12 +180,15 @@ export class PlaybackSyncCoordinator {
 
     if (this.syncMode === "hybrid" && this.sdkService) {
       this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
-      this.startApiPolling();
+      this.stopApiPolling();
+      this.updateSdkAuthoritative();
+      this.maybeStartExternalReconcile();
       return;
     }
 
     if (this.syncMode === "sdk" && this.sdkService) {
       this.stopApiPolling();
+      this.publisher.setSdkAuthoritativeForUi(true);
       this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
     }
   }
@@ -179,6 +198,24 @@ export class PlaybackSyncCoordinator {
   }
 
   async refreshApiOnce(): Promise<void> {
+    if (!this.options || this.requiresDeviceSelection) {
+      return;
+    }
+
+    if (!this.apiPoller.active) {
+      const profile = this.resolveApiPollProfile();
+      this.apiPoller.start({
+        profile,
+        onState: (state) => this.applyApiState(state),
+        onError: (message) => this.options?.onPollError?.(message),
+      });
+      await this.apiPoller.refreshOnce();
+      if (!this.externalReconcileActive) {
+        this.apiPoller.stop();
+      }
+      return;
+    }
+
     await this.apiPoller.refreshOnce();
   }
 
@@ -186,17 +223,86 @@ export class PlaybackSyncCoordinator {
     return this.sdkSource.player;
   }
 
+  get sdkDeviceId(): string | null {
+    return this.sdkService?.getDeviceId() ?? null;
+  }
+
   get activeControlDeviceId(): string | null {
     return this.publisher.activeControlDeviceId;
+  }
+
+  private resolveApiPollProfile(): "default" | "reconcile" {
+    if (this.syncMode === "hybrid" && this.sdkService) {
+      return "reconcile";
+    }
+    return "default";
+  }
+
+  private updateSdkAuthoritative(): void {
+    const sdkDeviceId = this.sdkService?.getDeviceId() ?? null;
+    const sdkState = this.publisher.lastSdkPlaybackState;
+    const apiState = this.publisher.apiPlaybackState;
+    const authoritative = isSdkUiAuthoritative(
+      this.syncMode,
+      sdkDeviceId,
+      sdkState?.deviceId,
+      apiState?.deviceId,
+    );
+    this.publisher.setSdkAuthoritativeForUi(authoritative);
+    this.maybeStartExternalReconcile();
+  }
+
+  private maybeStartExternalReconcile(): void {
+    if (this.syncMode !== "hybrid" || !this.sdkService) {
+      return;
+    }
+
+    const sdkDeviceId = this.sdkService.getDeviceId();
+    const apiState = this.publisher.apiPlaybackState;
+    const apiDeviceId = apiState?.deviceId;
+    const needsReconcile =
+      Boolean(sdkDeviceId) &&
+      Boolean(apiDeviceId) &&
+      apiDeviceId !== sdkDeviceId;
+
+    if (needsReconcile && !this.externalReconcileActive) {
+      this.externalReconcileActive = true;
+      this.publisher.setSdkAuthoritativeForUi(false);
+      this.startApiPolling();
+      return;
+    }
+
+    if (!needsReconcile && this.externalReconcileActive) {
+      this.stopApiPolling();
+      this.externalReconcileActive = false;
+      this.updateSdkAuthoritative();
+    }
   }
 
   private sdkSourceOptions(): Parameters<SdkPlaybackSource["start"]>[1] {
     return {
       onState: (state, status) => {
         this.publisher.ingest(state, status, "sdk");
+        this.updateSdkAuthoritative();
+        this.trackEndScheduler.schedule(state);
+
+        const apiState = this.publisher.apiPlaybackState;
+        if (
+          this.syncMode === "hybrid" &&
+          apiState &&
+          statesDiverge(state, apiState)
+        ) {
+          void this.refreshApiOnce();
+        }
       },
       onQueue: (queue) => this.options?.onSdkQueue?.(queue),
-      onEvent: (event) => this.options?.onSdkEvent?.(event),
+      onEvent: (event) => {
+        this.options?.onSdkEvent?.(event);
+        if (event.kind === "lifecycle" && event.phase === "ready") {
+          void this.refreshApiOnce();
+          this.updateSdkAuthoritative();
+        }
+      },
     };
   }
 

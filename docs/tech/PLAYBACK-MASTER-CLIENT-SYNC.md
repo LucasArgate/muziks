@@ -20,13 +20,15 @@ Documentos irmãos:
 flowchart TB
   subgraph Sources["Fontes de verdade Spotify"]
     SDK["Web Playback SDK\n(player_state_changed)"]
-    API["Web API GET /me/player\n(SpotifyApiPlaybackPoller)"]
+    API["Web API GET /me/player\n(reconcile pontual)"]
+    SCHED["TrackEndScheduler\n(timer local SDK)"]
     BR["Bridge WS\n(futuro: applyBridgeState)"]
   end
 
   subgraph Orchestration["features/playback/services"]
     SRC[SdkPlaybackSource]
     POLL[SpotifyApiPlaybackPoller]
+    SCHEDSVC[TrackEndScheduler]
     COORD[PlaybackSyncCoordinator]
     PUB[PlaybackStatePublisher]
     MERGE[playback-state-merge]
@@ -45,7 +47,10 @@ flowchart TB
   end
 
   SDK --> SRC --> COORD
-  API --> POLL --> COORD
+  SDK --> SCHEDSVC
+  API -.->|reconcile| POLL
+  POLL -.-> COORD
+  SCHEDSVC --> COORD
   BR -.-> COORD
   COORD --> PUB
   PUB --> MERGE
@@ -61,7 +66,8 @@ flowchart TB
 |------|---------|--------|
 | Orquestração | `playback-sync-coordinator.ts` | Liga SDK, poll API e publisher conforme `syncMode` |
 | Eventos SDK | `sdk-playback-source.ts` | Listeners Spotify → estado normalizado + fila `track_window` |
-| Poll API | `spotify-api-playback-poller.ts` | `GET /api/spotify/playback/state` no browser |
+| Poll API | `spotify-api-playback-poller.ts` | Reconcile pontual / `api_device` (perfil `reconcile` ~45 s só com device externo) |
+| Near-end | `track-end-scheduler.ts` | Timer local a partir do SDK (`positionMs` + `durationMs`) |
 | Merge / publish | `playback-state-publisher.ts` | Debounce, fingerprint, POST sessão, Broadcast |
 | Regras híbrido | `playback-state-merge.ts` | Quem vence em divergência (API vs SDK) |
 | Hook UI | `usePlaybackSync.ts` | Estado React, connect/hybrid, controles |
@@ -75,7 +81,7 @@ flowchart TB
 
 | Modo | SDK | Poll API | Uso |
 |------|-----|----------|-----|
-| **`hybrid`** (default Master) | Sim | Sim (perfil `hybrid`) | Browser + celular / outro Connect |
+| **`hybrid`** (default Master) | Sim — **fonte da UI** no browser | Reconcile **pontual** (não hot path) | Browser Master + celular / Connect |
 | **`sdk`** | Sim | Não | Áudio só no navegador Master |
 | **`api_device`** | Não | Sim (perfil `default`) | Device Connect escolhido (`DeviceSelector`) |
 
@@ -83,50 +89,66 @@ O coordinator expõe `startHybrid`, `startSdk`, `setPreferredDevice` + `api_devi
 
 ---
 
-## 3. Modo `hybrid` — now playing e pause no celular
+## 3. Modo `hybrid` — UI no SDK, reconcile pontual
 
-O SDK **não** recebe `player_state_changed` do app Spotify no telefone. Pause/play no celular entra pela **Web API** (`GET /me/player`).
+Com o browser como device ativo (`sdkAuthoritativeForUi`):
 
-### 3.1 Perfis de poll (`SpotifyApiPlaybackPoller`)
+- **UI** (ícone play/pause, faixa, progresso): `player_state_changed` → `PlaybackStatePublisher.ingestSdk`
+- **Controles locais**: `sdkPlayer.togglePlay()` / `nextTrack()` quando `shouldControlViaSdk` (device alinhado)
+- **Intent lock** (~3 s): ingest API que contradiz play/pause do usuário é ignorado
+- **POST remoto** (`publishRemote: minimal`): só mudança semântica a partir do SDK
 
-| Perfil | Cache | Playing | Paused | Idle |
-|--------|-------|---------|--------|------|
-| `default` | 3,5 s | 18 s | 35 s | 35 s |
-| **`hybrid`** | 1,2 s | **3,5 s** | **3,5 s** | 12 s |
+O SDK **não** recebe eventos do app Spotify no telefone. Pause/play no celular usa **reconcile pontual** da Web API (não loop de 3,5 s).
 
-Extras no perfil `hybrid`:
+### 3.1 Poll da API (`SpotifyApiPlaybackPoller`)
 
-- `refreshOnce()` ao iniciar hybrid e quando a aba volta a `visible`
-- Após mudança de `paused` na API, **follow-up** ~1,2 s
-- SDK `not_ready` → `refreshApiOnce()` (troca de device)
+| Perfil | Uso |
+|--------|-----|
+| `default` | `api_device` — now playing via API |
+| `reconcile` | Device externo ou gatilhos pontuais (~45 s) |
+| `hybrid` | **Legado** — não usado no hot path da UI |
 
-### 3.2 Merge quando API e SDK divergem
+Gatilhos de `refreshApiOnce()` (um GET, sem tick contínuo no browser Master):
 
-`statesDiverge` compara `trackUri`, `deviceId`, `paused`, `status`.
+- Hidratação ao `ready` do SDK
+- Aba `visibilitychange` → visible
+- SDK `not_ready`
+- `statesDiverge` entre último SDK e API (device/faixa)
+- Poll contínuo **só** enquanto `api.deviceId !== sdk.deviceId` (perfil `reconcile`)
+
+### 3.2 Merge e autoridade da UI
 
 | Situação | Regra |
 |----------|--------|
-| API ≠ SDK (ex.: pause no celular) | **API vence** em `trackUri`, `deviceId`, `paused`, `status` |
-| SDK com device/faixa vazia e API com playback | `shouldSdkSuppressLocalDisplay` — não sobrescrever UI |
-| Mesmo device, só progresso | `preferSdkProgressInHybrid` copia **só** `positionMs` do SDK (nunca `paused` se divergiu) |
+| Browser = device ativo (`sdkAuthoritativeForUi`) | API **não** atualiza UI para `paused`/`trackUri` iguais ao SDK |
+| Pause no celular / outro Connect | `shouldApiUpdateUi` + API vence |
+| Intent lock após clique local | API stale ignorada por ~3 s |
+| Mesmo device, só progresso | `preferSdkProgressInHybrid` — só `positionMs` do SDK |
+
+### 3.3 Controles locais (pause imediato)
 
 ```mermaid
 sequenceDiagram
-  participant Phone as Spotify celular
-  participant API as GET playback/state
-  participant Poll as ApiPoller hybrid
-  participant Pub as PlaybackStatePublisher
   participant UI as PlayerBar
+  participant Hook as usePlaybackSync
+  participant SDK as Web Playback SDK
+  participant Pub as PlaybackStatePublisher
 
-  Phone->>API: pause / play
-  Poll->>API: tick ~3.5s
-  API->>Poll: is_playing false/true
-  Poll->>Pub: ingest api
-  Pub->>UI: paused atualizado
-  Note over UI: usePlaybackProgress para RAF se paused
+  UI->>Hook: pause
+  Hook->>Pub: setPendingIntent(paused=true)
+  Hook->>Hook: optimistic paused=true
+  Hook->>SDK: togglePlay()
+  SDK->>Pub: player_state_changed
+  Pub->>UI: paused=true
 ```
 
-### 3.3 Barra de progresso (timer)
+`POST /api/spotify/playback/control` no fallback API retorna `{ ok: true }` **sem** re-fetch de estado (evita `is_playing` stale).
+
+### 3.4 Near-end (`TrackEndScheduler`)
+
+Timer local a partir de `positionMs`, `durationMs` e `positionUpdatedAt` do SDK (~10 s antes do fim). Dispara callback `onNearEnd` (espelho `mirror-next` em PR futuro). **Não** depende de poll de `GET /me/player` para a barra ou ícone.
+
+### 3.5 Barra de progresso (timer)
 
 `usePlaybackProgress(playback)`:
 
@@ -230,6 +252,6 @@ Público em `apps/web` continua com poll HTTP na fila Muziks (cardinalidade alta
 
 - [ ] Novo comportamento de sync → atualizar este doc + ADR se mudar decisão
 - [ ] Não usar `SessionPlaybackPoller` no Master para now playing ao vivo (Postgres é fallback / outros consumidores)
-- [ ] Pause/play remoto → API poll hybrid, não esperar só SDK
+- [ ] Pause/play no browser → SDK + intent lock; remoto (celular) → reconcile pontual
 - [ ] Troca de `trackUri` → verificar §4 (fila Spotify)
 - [ ] `PLAYBACK_DEBUG = false` antes de merge em produção se logs forem barulhentos

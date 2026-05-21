@@ -1,4 +1,5 @@
 import {
+  mapSpotifyPlaybackControlError,
   pausePlayback,
   skipToNext,
   startPlayback,
@@ -6,7 +7,6 @@ import {
 import { z } from "zod";
 
 import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
-import { readNormalizedSpotifyPlaybackState } from "@/src/lib/spotify/read-playback-state";
 
 const controlBodySchema = z.object({
   action: z.enum(["play", "pause", "next"]),
@@ -30,21 +30,30 @@ export async function controlSpotifyPlaybackHandler(rawBody: unknown) {
   }
 
   const { action, deviceId, uris, contextUri } = parsed.data;
-  const params = { accessToken, deviceId };
+  const params = {
+    accessToken,
+    deviceId: deviceId?.trim() || undefined,
+  };
 
-  switch (action) {
-    case "play":
-      await startPlayback({ ...params, uris, contextUri });
-      break;
-    case "pause":
-      await pausePlayback(params);
-      break;
-    case "next":
-      await skipToNext(params);
-      break;
+  try {
+    switch (action) {
+      case "play":
+        await startPlayback({ ...params, uris, contextUri });
+        break;
+      case "pause":
+        await pausePlayback(params);
+        break;
+      case "next":
+        await skipToNext(params);
+        break;
+    }
+  } catch (error) {
+    const mapped = mapSpotifyPlaybackControlError(error);
+    return {
+      status: mapped.status,
+      body: { error: mapped.code, message: mapped.message },
+    };
   }
 
-  const state = await readNormalizedSpotifyPlaybackState(accessToken);
-
-  return { status: 200 as const, body: { ok: true, state } };
+  return { status: 200 as const, body: { ok: true } };
 }

@@ -7,15 +7,19 @@ import type {
 
 import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-channel";
 
+import { parseJsonResponse } from "../lib/parse-json-response";
+
 import {
   mergeApiOverSdk,
   preferSdkProgressInHybrid,
   type PlaybackStateSource,
+  shouldApiUpdateUi,
   shouldSdkSuppressLocalDisplay,
   statesDiverge,
 } from "./playback-state-merge";
 
 const DEBOUNCE_MS = 800;
+const PENDING_INTENT_MS = 3000;
 const PLAYING_POSITION_BUCKET_MS = 5000;
 const PAUSED_POSITION_BUCKET_MS = 10000;
 
@@ -93,6 +97,9 @@ export class PlaybackStatePublisher {
   private lastBridgeState: NormalizedSpotifyPlayerState | null = null;
   private bridgeActive = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingIntentTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingIntent: { paused: boolean } | null = null;
+  private sdkAuthoritativeForUi = false;
   private stateVersion = 0;
 
   configure(options: PlaybackStatePublisherOptions): void {
@@ -128,6 +135,27 @@ export class PlaybackStatePublisher {
     if (!active) {
       this.lastBridgeState = null;
     }
+  }
+
+  /** Hybrid: browser SDK drives UI; API ingest is reconcile-only. */
+  setSdkAuthoritativeForUi(active: boolean): void {
+    this.sdkAuthoritativeForUi = active;
+  }
+
+  /** Blocks contradictory API ingest briefly after local play/pause. */
+  setPendingIntent(paused: boolean): void {
+    this.pendingIntent = { paused };
+    if (this.pendingIntentTimer) {
+      clearTimeout(this.pendingIntentTimer);
+    }
+    this.pendingIntentTimer = setTimeout(() => {
+      this.pendingIntentTimer = null;
+      this.pendingIntent = null;
+    }, PENDING_INTENT_MS);
+  }
+
+  get lastSdkPlaybackState(): NormalizedSpotifyPlayerState | null {
+    return this.lastSdkState;
   }
 
   emitLocal(state: NormalizedSpotifyPlayerState): void {
@@ -184,8 +212,33 @@ export class PlaybackStatePublisher {
       return;
     }
 
+    if (
+      this.pendingIntent &&
+      state.paused === this.pendingIntent.paused
+    ) {
+      this.clearPendingIntent();
+    }
+
     this.emitLocal(state);
     this.publishIfNeeded(state, status);
+  }
+
+  private clearPendingIntent(): void {
+    this.pendingIntent = null;
+    if (this.pendingIntentTimer) {
+      clearTimeout(this.pendingIntentTimer);
+      this.pendingIntentTimer = null;
+    }
+  }
+
+  private shouldIgnoreApiIngest(state: NormalizedSpotifyPlayerState): boolean {
+    if (
+      this.pendingIntent &&
+      state.paused !== this.pendingIntent.paused
+    ) {
+      return true;
+    }
+    return false;
   }
 
   private publishIfNeeded(
@@ -222,7 +275,23 @@ export class PlaybackStatePublisher {
 
     this.lastApiState = state;
 
+    if (this.shouldIgnoreApiIngest(state)) {
+      return;
+    }
+
     const mode = this.options?.syncMode ?? "api_device";
+
+    if (
+      !shouldApiUpdateUi(
+        mode,
+        this.lastSdkState,
+        state,
+        this.sdkAuthoritativeForUi,
+      )
+    ) {
+      return;
+    }
+
     const diverged = statesDiverge(this.lastSdkState, state);
 
     if (mode === "hybrid" && !diverged) {
@@ -325,10 +394,12 @@ export class PlaybackStatePublisher {
 
       if (!response.ok) return;
 
-      const session = (await response.json()) as {
+      const session = await parseJsonResponse<{
         stateVersion: number;
         accepted?: boolean;
-      };
+      }>(response);
+
+      if (!session) return;
 
       if (session.stateVersion !== undefined) {
         this.stateVersion = session.stateVersion;
@@ -355,6 +426,8 @@ export class PlaybackStatePublisher {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
+    this.clearPendingIntent();
+    this.sdkAuthoritativeForUi = false;
     this.options = null;
     this.lastPublished = null;
     this.lastFingerprint = null;

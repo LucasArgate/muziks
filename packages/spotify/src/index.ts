@@ -41,6 +41,12 @@ export {
   addToQueue,
   type PlaybackControlParams,
 } from "./playback/control";
+export {
+  controlErrorMessage,
+  mapSpotifyPlaybackControlError,
+  type MappedSpotifyControlError,
+  type SpotifyControlErrorCode,
+} from "./playback/control-errors";
 export { normalizeApiPlaybackState } from "./playback/normalize";
 export {
   getPlaybackQueue,

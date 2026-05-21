@@ -8,9 +8,9 @@ import type {
 } from "@muziks/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  shouldControlViaSdk,
-} from "../lib/playback-control-routing";
+import { parseJsonResponse } from "../lib/parse-json-response";
+import { resolvePlaybackControlErrorMessage } from "../lib/playback-control-errors";
+import { shouldControlViaSdk } from "../lib/playback-control-routing";
 import {
   sdkEventToPhase,
   type SdkPhase,
@@ -208,16 +208,14 @@ export function usePlaybackSync({
         body: JSON.stringify({ deviceId, play: false }),
       });
 
-      if (!response.ok) {
-        const body = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(body.error ?? "transfer_failed");
-      }
-
-      const body = (await response.json()) as {
+      const body = await parseJsonResponse<{
+        error?: string;
         state?: NormalizedSpotifyPlayerState;
-      };
+      }>(response);
+
+      if (!response.ok) {
+        throw new Error(body?.error ?? "transfer_failed");
+      }
 
       const coordinator = coordinatorRef.current;
       if (!coordinator) return;
@@ -229,7 +227,7 @@ export function usePlaybackSync({
       setActiveDeviceName(deviceName);
       setSyncMode("api_device");
       setSdkReady(false);
-      if (body.state) {
+      if (body?.state) {
         coordinator.applyApiState(body.state);
       } else {
         await coordinator.refreshSessionOnce();
@@ -272,16 +270,16 @@ export function usePlaybackSync({
     if (syncMode === "api_device" && preferredDeviceId) {
       return preferredDeviceId;
     }
+    // UI playback state is reconciled; prefer it over publisher internals.
     return (
-      coordinator?.activeControlDeviceId ??
       playback?.deviceId ??
+      coordinator?.activeControlDeviceId ??
       undefined
     );
   }, [syncMode, preferredDeviceId, playback?.deviceId]);
 
   const controlViaApi = useCallback(
     async (action: "play" | "pause" | "next") => {
-      const coordinator = coordinatorRef.current;
       const deviceId = resolveControlDeviceId();
       const response = await fetch("/api/spotify/playback/control", {
         method: "POST",
@@ -291,17 +289,13 @@ export function usePlaybackSync({
           deviceId,
         }),
       });
-      const body = (await response.json().catch(() => ({}))) as {
-        state?: NormalizedSpotifyPlayerState;
+      const body = await parseJsonResponse<{
+        ok?: boolean;
         error?: string;
-      };
+        message?: string;
+      }>(response);
       if (!response.ok) {
-        throw new Error(body.error ?? "control_failed");
-      }
-      if (body.state) {
-        coordinator?.applyApiState(body.state);
-      } else {
-        await coordinator?.refreshApiOnce();
+        throw new Error(resolvePlaybackControlErrorMessage(body));
       }
     },
     [resolveControlDeviceId],
@@ -326,7 +320,6 @@ export function usePlaybackSync({
         setSdkError(
           err instanceof Error ? err.message : "spotify_action_failed",
         );
-        throw err;
       } finally {
         playPauseLoadingRef.current = false;
         setPlayPauseLoading(false);
@@ -345,7 +338,6 @@ export function usePlaybackSync({
       await fn();
     } catch (err) {
       setSdkError(err instanceof Error ? err.message : "spotify_action_failed");
-      throw err;
     } finally {
       skipLoadingRef.current = false;
       setSkipLoading(false);
@@ -355,9 +347,22 @@ export function usePlaybackSync({
   const togglePlay = useCallback(async () => {
     await runPlayPauseAction(async () => {
       const coordinator = coordinatorRef.current;
-      const useSdk = shouldControlViaSdk(syncMode, playback);
+      const sdkDeviceId = coordinator?.sdkDeviceId ?? null;
+      const useSdk = shouldControlViaSdk(syncMode, playback, sdkDeviceId);
+      const targetPaused = !playback?.paused;
 
       if (useSdk && coordinator?.sdkPlayer) {
+        coordinator.setPendingIntent(targetPaused);
+        if (playback) {
+          const optimistic: NormalizedSpotifyPlayerState = {
+            ...playback,
+            paused: targetPaused,
+            status: targetPaused ? "paused" : "playing",
+            lastError: null,
+          };
+          setPlayback(optimistic);
+          onLocalStateRef.current(optimistic);
+        }
         try {
           await coordinator.sdkPlayer.togglePlay();
           return;
@@ -366,11 +371,13 @@ export function usePlaybackSync({
         }
       }
 
+      coordinator?.setPendingIntent(targetPaused);
+
       if (playback) {
         const optimistic: NormalizedSpotifyPlayerState = {
           ...playback,
-          paused: !playback.paused,
-          status: playback.paused ? "playing" : "paused",
+          paused: targetPaused,
+          status: targetPaused ? "paused" : "playing",
           lastError: null,
         };
         setPlayback(optimistic);
@@ -385,7 +392,8 @@ export function usePlaybackSync({
   const skipToNext = useCallback(async () => {
     await runSkipAction(async () => {
       const coordinator = coordinatorRef.current;
-      const useSdk = shouldControlViaSdk(syncMode, playback);
+      const sdkDeviceId = coordinator?.sdkDeviceId ?? null;
+      const useSdk = shouldControlViaSdk(syncMode, playback, sdkDeviceId);
 
       if (useSdk && coordinator?.sdkPlayer) {
         try {

@@ -7,9 +7,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const result = await controlSpotifyPlaybackHandler(body);
     return NextResponse.json(result.body, { status: result.status });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "spotify_control_error";
-    return NextResponse.json({ error: message }, { status: 502 });
+  } catch {
+    return NextResponse.json(
+      {
+        error: "spotify_control_failed",
+        message: "Não foi possível controlar a reprodução.",
+      },
+      { status: 502 },
+    );
   }
 }

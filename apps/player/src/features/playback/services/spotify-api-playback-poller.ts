@@ -1,5 +1,7 @@
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
 
+import { parseJsonResponse } from "../lib/parse-json-response";
+
 /** Slow reconcile — api_device / rate-limit friendly (ADR). */
 const DEFAULT_PROFILE = {
   cacheMs: 3500,
@@ -8,7 +10,7 @@ const DEFAULT_PROFILE = {
   idleMs: 35_000,
 } as const;
 
-/** Hybrid: phone / Connect controls — faster play/pause detection. */
+/** @deprecated UI poll; use reconcile + SDK events in hybrid. */
 const HYBRID_PROFILE = {
   cacheMs: 1200,
   playingMs: 3500,
@@ -16,9 +18,17 @@ const HYBRID_PROFILE = {
   idleMs: 12_000,
 } as const;
 
+/** External device / visibility reconcile only (no UI hot path). */
+const RECONCILE_PROFILE = {
+  cacheMs: 0,
+  playingMs: 45_000,
+  pausedMs: 45_000,
+  idleMs: 60_000,
+} as const;
+
 const FOLLOW_UP_AFTER_PLAY_STATE_MS = 1200;
 
-export type SpotifyApiPollProfile = "default" | "hybrid";
+export type SpotifyApiPollProfile = "default" | "hybrid" | "reconcile";
 
 export type SpotifyApiPlaybackPollerOptions = {
   profile?: SpotifyApiPollProfile;
@@ -93,7 +103,12 @@ export class SpotifyApiPlaybackPoller {
   }
 
   private resolveInterval(state: NormalizedSpotifyPlayerState | null): number {
-    const p = this.profile === "hybrid" ? HYBRID_PROFILE : DEFAULT_PROFILE;
+    const p =
+      this.profile === "reconcile"
+        ? RECONCILE_PROFILE
+        : this.profile === "hybrid"
+          ? HYBRID_PROFILE
+          : DEFAULT_PROFILE;
     if (!state || state.status === "idle") {
       return p.idleMs;
     }
@@ -123,7 +138,11 @@ export class SpotifyApiPlaybackPoller {
   private async fetchPlaybackState(): Promise<NormalizedSpotifyPlayerState> {
     const now = Date.now();
     const cacheMs =
-      this.profile === "hybrid" ? HYBRID_PROFILE.cacheMs : DEFAULT_PROFILE.cacheMs;
+      this.profile === "reconcile"
+        ? RECONCILE_PROFILE.cacheMs
+        : this.profile === "hybrid"
+          ? HYBRID_PROFILE.cacheMs
+          : DEFAULT_PROFILE.cacheMs;
     if (this.cachedState && now < this.cacheExpiresAt) {
       return this.cachedState;
     }
@@ -148,13 +167,17 @@ export class SpotifyApiPlaybackPoller {
     }
 
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(body.error ?? "spotify_playback_fetch_failed");
+      const body = await parseJsonResponse<{ error?: string }>(response);
+      throw new Error(body?.error ?? "spotify_playback_fetch_failed");
     }
 
-    const body = (await response.json()) as {
+    const body = await parseJsonResponse<{
       state: NormalizedSpotifyPlayerState;
-    };
+    }>(response);
+
+    if (!body?.state) {
+      throw new Error("spotify_playback_fetch_failed");
+    }
 
     const state = body.state;
     this.cachedState = state;

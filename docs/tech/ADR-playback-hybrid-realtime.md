@@ -16,8 +16,10 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 | **Spotify Web Playback SDK** | UI em tempo real (`player_state_changed`) |
 | **Spotify Web API** (`GET /me/player`) | Reconciliação: device ativo, faixa alterada noutro cliente, idle |
 
-- Poll da API no **browser** via `GET /api/spotify/playback/state` (perfil **`hybrid`**: ~3,5 s playing/paused, cache ~1,2 s; perfil **`default`** / `api_device`: ~18 s / 35 s). Detalhe de merge, timer, fila Spotify e debug: [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md).
-- Em divergência, **API vence** para `trackUri`, `deviceId`, `paused`, `status` (`preferSdkProgressInHybrid` não sobrescreve `paused` quando divergiu).
+- **UI no browser Master:** Web Playback SDK (`player_state_changed`) — não poll contínuo de `GET /api/spotify/playback/state` para now playing. Ver [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) (2026-05-20).
+- Poll da API no browser: perfil **`reconcile`** (~45 s) **somente** com device externo ou gatilhos pontuais (`visibility`, `not_ready`, divergência SDK/API). Perfil **`default`** em `api_device`.
+- Com browser como device ativo, API não é hot path da UI; **API vence** só para outro Connect / celular (`shouldApiUpdateUi`).
+- Near-end: `TrackEndScheduler` (timer local SDK), não tick de estado completo.
 - Modo `api_device`: só API (Connect externo, sem SDK).
 
 ### 2. Distribuição de sessão (telão / outras abas)

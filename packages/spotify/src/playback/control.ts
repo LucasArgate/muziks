@@ -5,10 +5,6 @@ export type PlaybackControlParams = {
   deviceId?: string;
 };
 
-function deviceArg(deviceId?: string): string {
-  return deviceId ?? "";
-}
-
 export async function startPlayback(
   params: PlaybackControlParams & {
     uris?: string[];
@@ -16,8 +12,9 @@ export async function startPlayback(
   },
 ): Promise<void> {
   const sdk = sdkForAccessToken(params.accessToken);
+  const deviceId = params.deviceId ?? "";
   await sdk.player.startResumePlayback(
-    deviceArg(params.deviceId),
+    deviceId,
     params.contextUri,
     params.uris,
   );
@@ -27,14 +24,14 @@ export async function pausePlayback(
   params: PlaybackControlParams,
 ): Promise<void> {
   const sdk = sdkForAccessToken(params.accessToken);
-  await sdk.player.pausePlayback(deviceArg(params.deviceId));
+  await sdk.player.pausePlayback(params.deviceId ?? "");
 }
 
 export async function skipToNext(
   params: PlaybackControlParams,
 ): Promise<void> {
   const sdk = sdkForAccessToken(params.accessToken);
-  await sdk.player.skipToNext(deviceArg(params.deviceId));
+  await sdk.player.skipToNext(params.deviceId ?? "");
 }
 
 export async function addToQueue(

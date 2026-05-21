@@ -70,6 +70,37 @@ export function mergeApiOverSdk(
  * Hybrid: borrow SDK position only when API and SDK agree on track, device, and play state.
  * When diverged (e.g. pause on phone), keep API display — do not copy SDK paused/playing.
  */
+/** Whether API ingest should drive local UI (hybrid SDK-authoritative vs external device). */
+export function shouldApiUpdateUi(
+  mode: PlaybackSyncMode,
+  sdk: NormalizedSpotifyPlayerState | null,
+  api: NormalizedSpotifyPlayerState,
+  sdkAuthoritative: boolean,
+): boolean {
+  if (mode === "api_device") return true;
+  if (mode !== "hybrid") return false;
+
+  if (shouldSdkSuppressLocalDisplay(mode, sdk ?? api, api)) {
+    return true;
+  }
+
+  if (!sdkAuthoritative) {
+    return statesDiverge(sdk, api);
+  }
+
+  if (!sdk) return true;
+  if (statesDiverge(sdk, api)) {
+    if (api.deviceId && sdk.deviceId && api.deviceId !== sdk.deviceId) {
+      return true;
+    }
+    if (!sdk.trackUri && api.trackUri) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function preferSdkProgressInHybrid(
   sdk: NormalizedSpotifyPlayerState | null,
   display: NormalizedSpotifyPlayerState,

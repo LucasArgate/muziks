@@ -10,21 +10,16 @@ import {
 } from "@/src/lib/playback/playback-track-lifecycle-repository";
 import { broadcastTrackEventFromServer } from "@/src/lib/realtime/player-session-broadcast-server";
 
+import { computeExpectedEndAt } from "../lib/expected-track-end";
+
 const END_TOLERANCE_MS = 2_000;
+
+export { computeExpectedEndAt } from "../lib/expected-track-end";
 
 export function spotifyTrackIdFromUri(uri: string | null): string | null {
   if (!uri) return null;
   const parts = uri.split(":");
   return parts[parts.length - 1] ?? uri;
-}
-
-export function computeExpectedEndAt(input: {
-  positionUpdatedAt: number;
-  positionMs: number;
-  durationMs: number;
-}): Date {
-  const remaining = Math.max(0, input.durationMs - input.positionMs);
-  return new Date(input.positionUpdatedAt + remaining);
 }
 
 /** Fim real da faixa (posição), não pausa no meio (BT desconectou, etc.). */
