@@ -35,10 +35,8 @@ export function SpotifyPlaybackQueueList({
 
   const { queue: polledQueue, loading, error, refresh } = useSpotifyPlaybackQueue({
     enabled,
-    pollEnabled: !hasSdkQueueSource || !sdkQueueAligned,
+    pollEnabled: syncMode === "api_device",
     trackUri,
-    pollPlayingMs: 8000,
-    pollPausedMs: 20000,
   });
 
   const queue: NormalizedSpotifyPlaybackQueue | null = sdkQueueAligned

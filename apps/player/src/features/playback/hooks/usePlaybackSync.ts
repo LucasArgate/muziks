@@ -6,6 +6,7 @@ import {
   useSpotifyQueueStore,
 } from "@muziks/playback-client";
 import type {
+  NormalizedSpotifyPlaybackQueue,
   NormalizedSpotifyPlayerState,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
@@ -14,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { parseJsonResponse } from "../lib/parse-json-response";
 import { resolvePlaybackControlErrorMessage } from "../lib/playback-control-errors";
 import { shouldControlViaSdk } from "../lib/playback-control-routing";
+import { buildOptimisticSkipState } from "../lib/playback-skip-optimistic";
 import {
   sdkEventToPhase,
   type SdkPhase,
@@ -78,7 +80,7 @@ export function usePlaybackSync({
     if (event.kind === "lifecycle") {
       setSdkReady(event.phase === "ready");
       if (event.phase === "not_ready") {
-        void coordinatorRef.current?.refreshApiOnce();
+        void coordinatorRef.current?.reconcileExternalPlaybackOnce();
       }
     }
     if (event.kind === "error") {
@@ -205,8 +207,15 @@ export function usePlaybackSync({
     }
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") {
-        void coordinatorRef.current?.refreshApiOnce();
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      const coordinator = coordinatorRef.current;
+      if (!coordinator) return;
+      if (syncMode === "api_device") {
+        void coordinator.refreshApiOnce();
+      } else {
+        void coordinator.reconcileExternalPlaybackOnce();
       }
     };
 
@@ -327,7 +336,7 @@ export function usePlaybackSync({
         if (playbackBeforeActionRef.current) {
           applyMasterPlayback(playbackBeforeActionRef.current);
         } else {
-          void coordinatorRef.current?.refreshApiOnce();
+          void coordinatorRef.current?.refreshSdkOnce();
         }
         setSdkError(
           err instanceof Error ? err.message : "spotify_action_failed",
@@ -341,22 +350,40 @@ export function usePlaybackSync({
     [playback, setPlayPauseLoading],
   );
 
+  const refreshSpotifyQueueFromApi = useCallback(async () => {
+    const response = await fetch("/api/spotify/playback/queue");
+    const body = await parseJsonResponse<{
+      queue?: NormalizedSpotifyPlaybackQueue;
+      error?: string;
+    }>(response);
+    if (response.ok && body?.queue) {
+      setSpotifyQueue(body.queue);
+    }
+  }, [setSpotifyQueue]);
+
   const runSkipAction = useCallback(
     async (fn: () => Promise<void>) => {
       if (skipLoadingRef.current) return;
       skipLoadingRef.current = true;
       setSkipLoading(true);
       setSdkError(null);
+      playbackBeforeActionRef.current = playback;
       try {
         await fn();
       } catch (err) {
+        if (playbackBeforeActionRef.current) {
+          applyMasterPlayback(playbackBeforeActionRef.current);
+        } else {
+          void coordinatorRef.current?.refreshSdkOnce();
+        }
         setSdkError(err instanceof Error ? err.message : "spotify_action_failed");
       } finally {
         skipLoadingRef.current = false;
         setSkipLoading(false);
+        playbackBeforeActionRef.current = null;
       }
     },
-    [setSkipLoading],
+    [playback, setSkipLoading],
   );
 
   const togglePlay = useCallback(async () => {
@@ -405,19 +432,53 @@ export function usePlaybackSync({
       const coordinator = coordinatorRef.current;
       const sdkDeviceId = coordinator?.sdkDeviceId ?? null;
       const useSdk = shouldControlViaSdk(syncMode, playback, sdkDeviceId);
+      const trackUriBefore = playback?.trackUri ?? null;
+
+      if (useSdk && playback) {
+        const optimistic = buildOptimisticSkipState(playback, spotifyQueue);
+        if (optimistic) {
+          applyMasterPlayback(optimistic.playback);
+          setSpotifyQueue(optimistic.queue);
+        }
+      }
 
       if (useSdk && coordinator?.sdkPlayer) {
         try {
           await coordinator.sdkPlayer.nextTrack();
+          await coordinator.refreshSdkOnce();
+          const currentUri =
+            useMasterPlaybackStore.getState().playback?.trackUri ?? null;
+          if (trackUriBefore && currentUri === trackUriBefore) {
+            window.setTimeout(() => {
+              void coordinator.refreshSdkOnce();
+            }, 500);
+          }
           return;
         } catch {
           // fall through to Web API
         }
       }
 
+      if (playback) {
+        const optimistic = buildOptimisticSkipState(playback, spotifyQueue);
+        if (optimistic) {
+          applyMasterPlayback(optimistic.playback);
+          setSpotifyQueue(optimistic.queue);
+        }
+      }
+
       await controlViaApi("next");
+      await refreshSpotifyQueueFromApi();
     });
-  }, [syncMode, playback, runSkipAction, controlViaApi]);
+  }, [
+    syncMode,
+    playback,
+    spotifyQueue,
+    runSkipAction,
+    controlViaApi,
+    refreshSpotifyQueueFromApi,
+    setSpotifyQueue,
+  ]);
 
   const requiresDeviceSelection =
     syncMode === "api_device" && !preferredDeviceId;

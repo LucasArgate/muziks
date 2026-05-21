@@ -6,6 +6,7 @@ import type {
 } from "@muziks/types";
 
 import { isSdkUiAuthoritative } from "../lib/playback-control-routing";
+import { playbackSemanticFingerprint } from "../lib/playback-semantic-state";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
 import {
   PlaybackStatePublisher,
@@ -16,6 +17,8 @@ import { SdkPlaybackSource } from "./sdk-playback-source";
 import { SpotifyApiPlaybackPoller } from "./spotify-api-playback-poller";
 import { TrackEndScheduler } from "./track-end-scheduler";
 import type { SpotifyServiceInstance } from "./SpotifyService";
+
+const API_RECONCILE_DEBOUNCE_MS = 2500;
 
 export type PlaybackSyncCoordinatorOptions = {
   slug: string;
@@ -41,6 +44,8 @@ export class PlaybackSyncCoordinator {
   private preferredDeviceId: string | null = null;
   private activeDeviceName: string | null = null;
   private externalReconcileActive = false;
+  private lastSdkSemanticFingerprint: string | null = null;
+  private reconcileDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly publisher = new PlaybackStatePublisher();
   private readonly apiPoller = new SpotifyApiPlaybackPoller();
@@ -145,7 +150,6 @@ export class PlaybackSyncCoordinator {
 
     this.sdkSource.start(service, this.sdkSourceOptions());
     this.updateSdkAuthoritative();
-    void this.refreshApiOnce();
   }
 
   stopSdk(): void {
@@ -157,11 +161,13 @@ export class PlaybackSyncCoordinator {
   }
 
   stop(): void {
+    this.clearReconcileDebounce();
     this.stopApiPolling();
     this.stopSdk();
     this.publisher.dispose();
     this.trackEndScheduler.dispose();
     this.options = null;
+    this.lastSdkSemanticFingerprint = null;
   }
 
   reconcileSources(): void {
@@ -197,26 +203,55 @@ export class PlaybackSyncCoordinator {
     await this.apiPoller.refreshOnce();
   }
 
+  async refreshSdkOnce(): Promise<void> {
+    await this.sdkSource.refreshFromCurrentState();
+  }
+
+  /** Single GET — only for `api_device` UI or hybrid reconcile when SDK is not authoritative. */
   async refreshApiOnce(): Promise<void> {
     if (!this.options || this.requiresDeviceSelection) {
       return;
     }
-
-    if (!this.apiPoller.active) {
-      const profile = this.resolveApiPollProfile();
-      this.apiPoller.start({
-        profile,
-        onState: (state) => this.applyApiState(state),
-        onError: (message) => this.options?.onPollError?.(message),
-      });
-      await this.apiPoller.refreshOnce();
-      if (!this.externalReconcileActive) {
-        this.apiPoller.stop();
-      }
+    if (this.syncMode === "hybrid" || this.syncMode === "sdk") {
       return;
     }
 
-    await this.apiPoller.refreshOnce();
+    if (this.apiPoller.active) {
+      await this.apiPoller.refreshOnce();
+      return;
+    }
+
+    await this.fetchApiPlaybackOnce();
+  }
+
+  /**
+   * Pontual reconcile when playback runs on another Connect device (hybrid).
+   * Never starts the continuous state poll loop.
+   */
+  async reconcileExternalPlaybackOnce(): Promise<void> {
+    if (
+      !this.options ||
+      this.requiresDeviceSelection ||
+      this.syncMode !== "hybrid"
+    ) {
+      return;
+    }
+    if (this.publisher.isSdkUiAuthoritative) {
+      return;
+    }
+    await this.fetchApiPlaybackOnce();
+  }
+
+  private async fetchApiPlaybackOnce(): Promise<void> {
+    if (!this.options) return;
+
+    await this.apiPoller.fetchOnce(
+      {
+        onState: (state) => this.applyApiState(state),
+        onError: (message) => this.options?.onPollError?.(message),
+      },
+      this.resolveApiPollProfile(),
+    );
   }
 
   get sdkPlayer(): Spotify.Player | null {
@@ -265,15 +300,13 @@ export class PlaybackSyncCoordinator {
       Boolean(apiDeviceId) &&
       apiDeviceId !== sdkDeviceId;
 
-    if (needsReconcile && !this.externalReconcileActive) {
-      this.externalReconcileActive = true;
+    if (needsReconcile) {
       this.publisher.setSdkAuthoritativeForUi(false);
-      this.startApiPolling();
+      this.externalReconcileActive = true;
       return;
     }
 
-    if (!needsReconcile && this.externalReconcileActive) {
-      this.stopApiPolling();
+    if (this.externalReconcileActive) {
       this.externalReconcileActive = false;
       this.updateSdkAuthoritative();
     }
@@ -282,28 +315,54 @@ export class PlaybackSyncCoordinator {
   private sdkSourceOptions(): Parameters<SdkPlaybackSource["start"]>[1] {
     return {
       onState: (state, status) => {
-        this.publisher.ingest(state, status, "sdk");
-        this.updateSdkAuthoritative();
         this.trackEndScheduler.schedule(state);
 
-        const apiState = this.publisher.apiPlaybackState;
-        if (
-          this.syncMode === "hybrid" &&
-          apiState &&
-          statesDiverge(state, apiState)
-        ) {
-          void this.refreshApiOnce();
+        const semanticFp = playbackSemanticFingerprint(state);
+        const semanticChanged = semanticFp !== this.lastSdkSemanticFingerprint;
+        if (semanticChanged) {
+          this.lastSdkSemanticFingerprint = semanticFp;
+          this.publisher.ingest(state, status, "sdk");
+          this.updateSdkAuthoritative();
+
+          const apiState = this.publisher.apiPlaybackState;
+          if (
+            this.syncMode === "hybrid" &&
+            apiState &&
+            statesDiverge(state, apiState) &&
+            !this.publisher.isSdkUiAuthoritative
+          ) {
+            this.scheduleApiReconcile();
+          }
         }
       },
       onQueue: (queue) => this.options?.onSdkQueue?.(queue),
       onEvent: (event) => {
         this.options?.onSdkEvent?.(event);
         if (event.kind === "lifecycle" && event.phase === "ready") {
-          void this.refreshApiOnce();
           this.updateSdkAuthoritative();
+        }
+        if (event.kind === "lifecycle" && event.phase === "not_ready") {
+          void this.reconcileExternalPlaybackOnce();
         }
       },
     };
+  }
+
+  private scheduleApiReconcile(): void {
+    if (this.reconcileDebounceTimer) {
+      return;
+    }
+    this.reconcileDebounceTimer = setTimeout(() => {
+      this.reconcileDebounceTimer = null;
+      void this.reconcileExternalPlaybackOnce();
+    }, API_RECONCILE_DEBOUNCE_MS);
+  }
+
+  private clearReconcileDebounce(): void {
+    if (this.reconcileDebounceTimer) {
+      clearTimeout(this.reconcileDebounceTimer);
+      this.reconcileDebounceTimer = null;
+    }
   }
 
   private refreshPublisherConfig(): void {

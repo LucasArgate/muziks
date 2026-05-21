@@ -8,6 +8,7 @@ import type {
 import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-channel";
 
 import { parseJsonResponse } from "../lib/parse-json-response";
+import { playbackSemanticFingerprint } from "../lib/playback-semantic-state";
 
 import {
   mergeApiOverSdk,
@@ -100,6 +101,7 @@ export class PlaybackStatePublisher {
   private pendingIntentTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingIntent: { paused: boolean } | null = null;
   private sdkAuthoritativeForUi = false;
+  private lastSdkSemanticFingerprint: string | null = null;
   private stateVersion = 0;
 
   configure(options: PlaybackStatePublisherOptions): void {
@@ -140,6 +142,10 @@ export class PlaybackStatePublisher {
   /** Hybrid: browser SDK drives UI; API ingest is reconcile-only. */
   setSdkAuthoritativeForUi(active: boolean): void {
     this.sdkAuthoritativeForUi = active;
+  }
+
+  get isSdkUiAuthoritative(): boolean {
+    return this.sdkAuthoritativeForUi;
   }
 
   /** Blocks contradictory API ingest briefly after local play/pause. */
@@ -218,6 +224,12 @@ export class PlaybackStatePublisher {
     ) {
       this.clearPendingIntent();
     }
+
+    const semanticFp = playbackSemanticFingerprint(state);
+    if (semanticFp === this.lastSdkSemanticFingerprint) {
+      return;
+    }
+    this.lastSdkSemanticFingerprint = semanticFp;
 
     this.emitLocal(state);
     this.publishIfNeeded(state, status);
@@ -435,6 +447,7 @@ export class PlaybackStatePublisher {
     this.lastSdkState = null;
     this.lastApiState = null;
     this.lastBridgeState = null;
+    this.lastSdkSemanticFingerprint = null;
     this.bridgeActive = false;
   }
 }

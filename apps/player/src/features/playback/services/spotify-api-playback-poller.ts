@@ -10,14 +10,6 @@ const DEFAULT_PROFILE = {
   idleMs: 35_000,
 } as const;
 
-/** @deprecated UI poll; use reconcile + SDK events in hybrid. */
-const HYBRID_PROFILE = {
-  cacheMs: 1200,
-  playingMs: 3500,
-  pausedMs: 3500,
-  idleMs: 12_000,
-} as const;
-
 /** External device / visibility reconcile only (no UI hot path). */
 const RECONCILE_PROFILE = {
   cacheMs: 0,
@@ -26,9 +18,7 @@ const RECONCILE_PROFILE = {
   idleMs: 60_000,
 } as const;
 
-const FOLLOW_UP_AFTER_PLAY_STATE_MS = 1200;
-
-export type SpotifyApiPollProfile = "default" | "hybrid" | "reconcile";
+export type SpotifyApiPollProfile = "default" | "reconcile";
 
 export type SpotifyApiPlaybackPollerOptions = {
   profile?: SpotifyApiPollProfile;
@@ -47,8 +37,8 @@ function fingerprint(state: NormalizedSpotifyPlayerState): string {
 
 export class SpotifyApiPlaybackPoller {
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private followUpTimer: ReturnType<typeof setTimeout> | null = null;
   private running = false;
+  private tickInFlight = false;
   private options: SpotifyApiPlaybackPollerOptions | null = null;
   private profile: SpotifyApiPollProfile = "default";
   private lastFingerprint: string | null = null;
@@ -70,16 +60,37 @@ export class SpotifyApiPlaybackPoller {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    if (this.followUpTimer) {
-      clearTimeout(this.followUpTimer);
-      this.followUpTimer = null;
-    }
     this.options = null;
     this.profile = "default";
     this.lastFingerprint = null;
     this.lastState = null;
     this.cachedState = null;
     this.cacheExpiresAt = 0;
+  }
+
+  /**
+   * Single GET without starting the interval loop (hybrid reconcile / hydration).
+   */
+  async fetchOnce(
+    options: SpotifyApiPlaybackPollerOptions,
+    profile: SpotifyApiPollProfile = "reconcile",
+  ): Promise<NormalizedSpotifyPlayerState | null> {
+    const prevOptions = this.options;
+    const prevProfile = this.profile;
+    this.options = options;
+    this.profile = profile;
+    this.cacheExpiresAt = 0;
+    try {
+      return await this.fetchPlaybackState();
+    } catch (error) {
+      options.onError?.(
+        error instanceof Error ? error.message : "poll_error",
+      );
+      return null;
+    } finally {
+      this.options = prevOptions;
+      this.profile = prevProfile;
+    }
   }
 
   async refreshOnce(): Promise<void> {
@@ -103,12 +114,7 @@ export class SpotifyApiPlaybackPoller {
   }
 
   private resolveInterval(state: NormalizedSpotifyPlayerState | null): number {
-    const p =
-      this.profile === "reconcile"
-        ? RECONCILE_PROFILE
-        : this.profile === "hybrid"
-          ? HYBRID_PROFILE
-          : DEFAULT_PROFILE;
+    const p = this.profile === "reconcile" ? RECONCILE_PROFILE : DEFAULT_PROFILE;
     if (!state || state.status === "idle") {
       return p.idleMs;
     }
@@ -118,31 +124,12 @@ export class SpotifyApiPlaybackPoller {
     return p.playingMs;
   }
 
-  private scheduleFollowUp(): void {
-    if (this.profile !== "hybrid" || !this.running) {
-      return;
-    }
-    if (this.followUpTimer) {
-      clearTimeout(this.followUpTimer);
-    }
-    this.followUpTimer = setTimeout(() => {
-      this.followUpTimer = null;
-      if (this.timer) {
-        clearTimeout(this.timer);
-        this.timer = null;
-      }
-      void this.tick();
-    }, FOLLOW_UP_AFTER_PLAY_STATE_MS);
-  }
-
   private async fetchPlaybackState(): Promise<NormalizedSpotifyPlayerState> {
     const now = Date.now();
     const cacheMs =
       this.profile === "reconcile"
         ? RECONCILE_PROFILE.cacheMs
-        : this.profile === "hybrid"
-          ? HYBRID_PROFILE.cacheMs
-          : DEFAULT_PROFILE.cacheMs;
+        : DEFAULT_PROFILE.cacheMs;
     if (this.cachedState && now < this.cacheExpiresAt) {
       return this.cachedState;
     }
@@ -187,25 +174,22 @@ export class SpotifyApiPlaybackPoller {
 
   private async tick(): Promise<void> {
     const options = this.options;
-    if (!this.running || !options) {
+    if (!this.running || !options || this.tickInFlight) {
       return;
     }
 
+    this.tickInFlight = true;
     try {
       const state = await this.fetchPlaybackState();
       if (!this.running || this.options !== options) {
         return;
       }
 
-      const prevPaused = this.lastState?.paused;
       const fp = fingerprint(state);
       if (fp !== this.lastFingerprint) {
         this.lastFingerprint = fp;
         this.lastState = state;
         options.onState(state);
-        if (prevPaused !== undefined && prevPaused !== state.paused) {
-          this.scheduleFollowUp();
-        }
       }
     } catch (error) {
       if (this.running && this.options === options) {
@@ -213,6 +197,8 @@ export class SpotifyApiPlaybackPoller {
           error instanceof Error ? error.message : "poll_error",
         );
       }
+    } finally {
+      this.tickInFlight = false;
     }
 
     if (this.running && this.options === options) {

@@ -34,6 +34,8 @@ export class SdkPlaybackSource {
   private service: SpotifyServiceInstance | null = null;
   private options: SdkPlaybackSourceOptions | null = null;
   private listeners: ListenerEntry[] = [];
+  private emitPlayback: ((playbackState: Spotify.PlaybackState | null) => void) | null =
+    null;
 
   start(
     service: SpotifyServiceInstance,
@@ -76,27 +78,7 @@ export class SdkPlaybackSource {
       emitEvent({ kind: "playback", state: playbackState });
     };
 
-    const hydrateFromCurrentState = () => {
-      playbackDebug("sdk", "hydrate:getCurrentState");
-      void service.getCurrentState().then((playbackState) => {
-        if (!this.service || this.options !== options) return;
-        playbackDebug(
-          "sdk",
-          "hydrate:result",
-          playbackState
-            ? {
-                paused: playbackState.paused,
-                position: playbackState.position,
-                trackUri:
-                  playbackState.track_window.current_track?.uri ?? null,
-              }
-            : { empty: true },
-        );
-        if (playbackState?.track_window.current_track) {
-          emitPlayback(playbackState);
-        }
-      });
-    };
+    this.emitPlayback = emitPlayback;
 
     const onReady = ({ device_id }: Spotify.DeviceMessage) => {
       service.setDeviceId(device_id);
@@ -106,7 +88,7 @@ export class SdkPlaybackSource {
         phase: "ready",
         deviceId: device_id,
       });
-      hydrateFromCurrentState();
+      void this.refreshFromCurrentState();
     };
 
     const onNotReady = ({ device_id }: Spotify.DeviceMessage) => {
@@ -142,6 +124,37 @@ export class SdkPlaybackSource {
     this.addListener("playback_error", (p) => onError("playback", p.message));
   }
 
+  /** Pull latest playback + `track_window` after skip (SDK event may lag). */
+  async refreshFromCurrentState(): Promise<void> {
+    const service = this.service;
+    const emitPlayback = this.emitPlayback;
+    if (!service || !emitPlayback) {
+      return;
+    }
+
+    playbackDebug("sdk", "hydrate:getCurrentState");
+    const playbackState = await service.getCurrentState();
+    if (!this.service || !this.emitPlayback) {
+      return;
+    }
+
+    playbackDebug(
+      "sdk",
+      "hydrate:result",
+      playbackState
+        ? {
+            paused: playbackState.paused,
+            position: playbackState.position,
+            trackUri: playbackState.track_window.current_track?.uri ?? null,
+          }
+        : { empty: true },
+    );
+
+    if (playbackState?.track_window.current_track) {
+      emitPlayback(playbackState);
+    }
+  }
+
   stop(): void {
     playbackDebug("sdk", "source:stop");
     if (this.service) {
@@ -153,6 +166,7 @@ export class SdkPlaybackSource {
     this.listeners = [];
     this.service = null;
     this.options = null;
+    this.emitPlayback = null;
   }
 
   get player(): Spotify.Player | null {

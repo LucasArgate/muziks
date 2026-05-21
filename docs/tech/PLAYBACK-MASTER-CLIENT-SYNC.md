@@ -109,15 +109,15 @@ O SDK **não** recebe eventos do app Spotify no telefone. Pause/play no celular 
 |--------|-----|
 | `default` | `api_device` — now playing via API |
 | `reconcile` | Device externo ou gatilhos pontuais (~45 s) |
-| `hybrid` | **Legado** — não usado no hot path da UI |
+| `hybrid` | **Removido** — não usar; hybrid/sdk não faz poll de state |
 
-Gatilhos de `refreshApiOnce()` (um GET, sem tick contínuo no browser Master):
+Gatilhos de `refreshApiOnce()` (um GET via `fetchOnce`, sem loop nem `start`/`stop` do poller):
 
 - Hidratação ao `ready` do SDK
 - Aba `visibilitychange` → visible
-- SDK `not_ready`
-- `statesDiverge` entre último SDK e API (device/faixa)
-- Poll contínuo **só** enquanto `api.deviceId !== sdk.deviceId` (perfil `reconcile`)
+- SDK `not_ready` (debounce ~2,5 s)
+- `statesDiverge` **só** quando o SDK muda semântica (`trackUri`, `paused`, `deviceId`, `status`) — **não** a cada `positionMs` de `player_state_changed`
+- **Sem** poll contínuo de state em `hybrid`/`sdk` — device externo: reconcile **pontual** (`reconcileExternalPlaybackOnce`, ex. aba visível / `not_ready`)
 
 ### 3.2 Merge e autoridade da UI
 
@@ -169,7 +169,8 @@ Pacote: [`packages/playback-client`](../../packages/playback-client/).
 | # | Regra | Implementação |
 |---|--------|----------------|
 | 1 | UI só reflete a store | `PlayerBar`, `PlayerMasterLayout` → selectors `useMasterPlaybackStore` |
-| 2 | Clique → SDK/API → store → UI | `togglePlay` / `skipToNext` → optimistic `applyMasterPlayback` → SDK ou `POST .../control` |
+| 2 | Clique → SDK/API → store → UI | `togglePlay` / `skipToNext` → optimistic `applyMasterPlayback` → SDK ou `POST .../control` (sem `GET .../state`) |
+| 2b | Progresso / seek | Só UI (`usePlaybackProgress` + RAF); eventos SDK de posição **não** atualizam store nem POST |
 | 3 | Evento SDK/API → publisher → store | `PlaybackStatePublisher.onLocalState` → `applyMasterPlayback` |
 | 4 | Mudança semântica → Postgres + Broadcast | `PlaybackStatePublisher` (inalterado) |
 | 5 | Observadores (web, telão) | `usePublicPlaybackStore` + `subscribeSessionSnapshots`; master mantém `subscribeRealtime: false` |
@@ -200,7 +201,8 @@ sdkQueueAligned =
 | `sdkQueueAligned` | Lista exibida | Poll HTTP |
 |-------------------|---------------|-----------|
 | `true` | Fila do SDK | Desligado |
-| `false` | Fila da API | Ligado (ou refresh pontual) |
+| `false` (`hybrid`/`sdk`) | Fila da API | Sem intervalo; `refresh` ao mudar `trackUri` (§4.3) |
+| `false` (`api_device`) | Fila da API | Intervalo 8 s / 20 s |
 
 ### 4.3 Troca de faixa
 
