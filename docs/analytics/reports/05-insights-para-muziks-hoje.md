@@ -25,7 +25,7 @@ Relatórios de origem: [00](00-resumo-executivo.md) · [01](01-oferta-players.md
 ## 1. Infraestrutura — rajada
 
 - **1,088** pedidos num único dia (25/6/2017) e **588** num bar num dia (Toca do Boka) — tráfego **concentrado em horas**, não diluído ([03-ponte](03-ponte-pedidos-e-sazonalidade.md)).
-- **Decisão:** votação `POST` HTTP + rate-limit; fila assíncrona de votos; fila/telão por **polling** na Vercel Edge — **não** WebSocket Supabase por participante no *free tier* ([02-viabilidade-custos](../../mvp/02-viabilidade-custos-comparativo.md), [11-backend](../../specs/11-backend-and-integrations-open.md)).
+- **Decisão atualizada:** votação `POST` HTTP + rate-limit; fila assíncrona de votos; fila/telão por `GET` inicial + Supabase Realtime Broadcast `queue.snapshot`, com polling como fallback de quota ([02-viabilidade-custos](../../mvp/02-viabilidade-custos-comparativo.md), [11-backend](../../specs/11-backend-and-integrations-open.md)).
 
 ## 2. Produto — super usuários e democracia
 

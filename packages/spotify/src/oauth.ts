@@ -127,6 +127,11 @@ export type RefreshTokenParams = {
   clientSecret?: string;
 };
 
+export type ClientCredentialsParams = {
+  clientId: string;
+  clientSecret: string;
+};
+
 export async function refreshAccessToken(
   params: RefreshTokenParams,
 ): Promise<SpotifyTokenResponse> {
@@ -149,6 +154,32 @@ export async function refreshAccessToken(
   if (!response.ok) {
     const text = await response.text();
     throw oauthError("token refresh", response.status, text);
+  }
+
+  return response.json() as Promise<SpotifyTokenResponse>;
+}
+
+export async function getClientCredentialsAccessToken(
+  params: ClientCredentialsParams,
+): Promise<SpotifyTokenResponse> {
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+  });
+
+  const response = await fetch(`${SPOTIFY_ACCOUNTS_BASE}/api/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(
+        `${params.clientId}:${params.clientSecret}`,
+      ).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw oauthError("client credentials token", response.status, text);
   }
 
   return response.json() as Promise<SpotifyTokenResponse>;

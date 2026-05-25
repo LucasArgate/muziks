@@ -3,6 +3,7 @@ import {
   refreshAccessToken,
   type SpotifyTokenResponse,
 } from "@muziks/spotify";
+import { isValidPlayerSlug, normalizePlayerSlug } from "@muziks/types";
 import { eq } from "drizzle-orm";
 
 import { getDb } from "../client";
@@ -18,6 +19,26 @@ export type SpotifyTokenVaultDeps = {
   encrypt: (plain: string) => string;
   decrypt: (enc: string) => string;
 };
+
+export type PlayerSpotifyAccessTokenError =
+  | "invalid_slug"
+  | "player_not_found"
+  | "spotify_not_connected"
+  | "token_unreadable";
+
+export type PlayerSpotifyAccessTokenResult =
+  | { ok: true; accessToken: string; playerId: string }
+  | { ok: false; code: PlayerSpotifyAccessTokenError };
+
+function isTokenVaultReadError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return /Unsupported state|authenticate data|bad decrypt|invalid/i.test(
+    error.message,
+  );
+}
 
 async function loadConnection(userId: string) {
   const db = getDb();
@@ -35,12 +56,13 @@ export async function persistSpotifyTokens(
   deps: SpotifyTokenVaultDeps,
 ): Promise<void> {
   const refreshToken = tokens.refresh_token;
-  if (!refreshToken) {
-    return;
-  }
-
   const db = getDb();
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
+
+  if (!refreshToken) {
+    await persistSpotifyAccessToken(userId, tokens.access_token, expiresAt, deps);
+    return;
+  }
 
   await db
     .insert(spotifyConnections)
@@ -62,21 +84,39 @@ export async function persistSpotifyTokens(
     });
 }
 
+export async function persistSpotifyAccessToken(
+  userId: string,
+  accessToken: string,
+  expiresAt: Date,
+  deps: SpotifyTokenVaultDeps,
+): Promise<void> {
+  const db = getDb();
+
+  await db
+    .update(spotifyConnections)
+    .set({
+      accessTokenEnc: deps.encrypt(accessToken),
+      expiresAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(spotifyConnections.userId, userId));
+}
+
 async function resolveAccessTokenForUserInner(
   userId: string,
   deps: SpotifyTokenVaultDeps,
 ): Promise<string | null> {
   const connection = await loadConnection(userId);
-  if (!connection?.refreshTokenEnc) {
-    return null;
-  }
-
   if (
-    connection.accessTokenEnc &&
+    connection?.accessTokenEnc &&
     connection.expiresAt &&
     connection.expiresAt.getTime() > Date.now() + EXPIRY_SKEW_MS
   ) {
     return deps.decrypt(connection.accessTokenEnc);
+  }
+
+  if (!connection?.refreshTokenEnc) {
+    return null;
   }
 
   const refreshToken = deps.decrypt(connection.refreshTokenEnc);
@@ -156,4 +196,41 @@ export async function getAccessTokenForPlayer(
   }
 
   return getAccessTokenForUser(ownerId, deps);
+}
+
+export async function getAccessTokenForPlayerSlug(
+  slug: string,
+  deps: SpotifyTokenVaultDeps,
+): Promise<PlayerSpotifyAccessTokenResult> {
+  const normalized = normalizePlayerSlug(slug);
+  if (!isValidPlayerSlug(normalized)) {
+    return { ok: false, code: "invalid_slug" };
+  }
+
+  const db = getDb();
+  const rows = await db
+    .select({ id: players.id })
+    .from(players)
+    .where(eq(players.slug, normalized))
+    .limit(1);
+
+  const playerId = rows[0]?.id;
+  if (!playerId) {
+    return { ok: false, code: "player_not_found" };
+  }
+
+  try {
+    const accessToken = await getAccessTokenForPlayer(playerId, deps);
+    if (!accessToken) {
+      return { ok: false, code: "spotify_not_connected" };
+    }
+
+    return { ok: true, accessToken, playerId };
+  } catch (error) {
+    if (isTokenVaultReadError(error) || isSpotifyRefreshTokenRevoked(error)) {
+      return { ok: false, code: "token_unreadable" };
+    }
+
+    throw error;
+  }
 }

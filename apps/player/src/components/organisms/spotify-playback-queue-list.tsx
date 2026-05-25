@@ -46,6 +46,12 @@ export function SpotifyPlaybackQueueList({
     : polledQueue;
 
   const listCurrentUri = queue?.currentlyPlaying?.uri ?? null;
+  const queueOutOfSync = Boolean(
+    trackUri && listCurrentUri && trackUri !== listCurrentUri,
+  );
+  const showCurrentTrack = Boolean(
+    queue?.currentlyPlaying && !queueOutOfSync && trackUri,
+  );
 
   useEffect(() => {
     if (!enabled || !trackUri) {
@@ -57,7 +63,7 @@ export function SpotifyPlaybackQueueList({
   }, [enabled, trackUri, listCurrentUri, refresh]);
 
   const tracks = [
-    ...(queue?.currentlyPlaying
+    ...(showCurrentTrack && queue?.currentlyPlaying
       ? [{ ...queue.currentlyPlaying, isCurrent: true }]
       : []),
     ...(queue?.upcoming ?? []).map((track) => ({ ...track, isCurrent: false })),
@@ -69,13 +75,17 @@ export function SpotifyPlaybackQueueList({
       description={
         sdkQueueAligned
           ? "Próximas faixas a partir do player neste navegador (SDK)."
+          : queueOutOfSync
+            ? "Atualizando espelho da fila nativa para alinhar com a faixa atual."
           : "Espelho da fila nativa do dispositivo Connect (a API do Spotify mostra poucas faixas à frente)."
       }
-      loading={!sdkQueueAligned && loading && !queue}
+      loading={!sdkQueueAligned && loading && (!queue || queueOutOfSync)}
       isEmpty={!loading && tracks.length === 0}
       emptyMessage={
         error
           ? "Não foi possível carregar a fila do Spotify."
+          : queueOutOfSync
+            ? "Atualizando fila do Spotify..."
           : paused
             ? "Nada tocando — inicie o playback para ver a fila."
             : "Fila vazia no Spotify."

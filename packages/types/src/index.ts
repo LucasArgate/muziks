@@ -56,8 +56,12 @@ export {
 } from "./discovery/player-card";
 
 export {
+  catalogArtistSchema,
+  catalogArtistTracksSchema,
   catalogTrackSchema,
   catalogSearchResultSchema,
+  type CatalogArtist,
+  type CatalogArtistTracks,
   type CatalogTrack,
   type CatalogSearchResult,
 } from "./catalog/search-track";

@@ -8,6 +8,7 @@ import { CatalogSearchPanel } from "@/src/components/organisms/catalog-search-pa
 import { IdentityGateDialog } from "@/src/components/organisms/identity-gate-dialog";
 import { ParticipantQueueList } from "@/src/components/organisms/participant-queue-list";
 import { PlayerHeroNowPlaying } from "@/src/components/organisms/player-hero-now-playing";
+import { SpotifyUpcomingQueueList } from "@/src/components/organisms/spotify-upcoming-queue-list";
 import {
   clearPendingVote,
   readPendingVote,
@@ -19,12 +20,16 @@ import { useMuziksCustomerQueue } from "@/src/features/queue/hooks/useMuziksCust
 
 type ParticipantPlayerPageProps = {
   slug: string;
+  playerId: string;
   displayName: string;
+  queueTransport: "poll" | "realtime";
 };
 
 export function ParticipantPlayerPage({
   slug,
+  playerId,
   displayName,
+  queueTransport,
 }: ParticipantPlayerPageProps) {
   const searchParams = useSearchParams();
   const { session, isAuthenticated, refresh: refreshSession } =
@@ -32,7 +37,11 @@ export function ParticipantPlayerPage({
   const { session: playback, loading: playbackLoading } =
     usePublicPlaybackSession(slug);
   const { items, loading, error, refresh: refreshQueue } =
-    useMuziksCustomerQueue(slug);
+    useMuziksCustomerQueue({
+      slug,
+      playerId,
+      transport: queueTransport,
+    });
 
   const [gateOpen, setGateOpen] = useState(false);
   const [votingItemId, setVotingItemId] = useState<string | null>(null);
@@ -139,6 +148,8 @@ export function ParticipantPlayerPage({
         onVote={handleVoteRequest}
         votingItemId={votingItemId}
       />
+
+      <SpotifyUpcomingQueueList slug={slug} />
 
       <IdentityGateDialog
         open={gateOpen}

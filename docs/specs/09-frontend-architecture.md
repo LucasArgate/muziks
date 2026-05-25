@@ -50,7 +50,7 @@ Estas pastas **complementam** o Atomic Design dentro de `apps/web` (caminhos rel
 ## Integração com backend
 
 - PoC: Server Actions e API Routes em `apps/web` + Supabase — [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md).
-- Leitura da fila: polling HTTP 3–5 s (não WebSocket por participante no salão).
+- Leitura da fila: `GET /api/players/{slug}/queue` para snapshot inicial + Supabase Realtime Broadcast `queue.snapshot` no canal `player:{playerId}`; polling HTTP é fallback de degradação.
 - Playback (MVP-B): `features/playback/` — [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md).
 - Outras integrações abertas: [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md).
 

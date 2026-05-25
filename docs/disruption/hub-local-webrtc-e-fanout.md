@@ -1,6 +1,6 @@
 # Hub local: WebRTC e fan-out da fila (experimento)
 
-**Status:** hipótese de disrupção — **fora do MVP / PoC**. Não altera a decisão fechada de polling HTTP na Fase infra A ([STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3).
+**Status:** hipótese de disrupção — **fora do MVP / PoC**. Não altera a decisão fechada de `GET` inicial + Broadcast `queue.snapshot` na Fase infra A ([STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3).
 
 **Propósito:** avaliar se, quando muitas pessoas estão **fisicamente no mesmo player** (mesmo bar, mesma festa), dá para **distribuir o estado de leitura da fila** entre pontos locais (celulares + telão) via **WebRTC**, reduzindo tráfego repetido cliente↔servidor e melhorando latência percebida — **sem** descentralizar votos, política nem fonte de verdade.
 
@@ -10,21 +10,21 @@
 
 ### 1.1 O que acontece hoje (PoC)
 
-Cada participante e o telão fazem **GET** periódico da fila (polling **3–5 s**). Com **N** pessoas no salão, o mesmo **snapshot** de fila é buscado **N vezes** no origin (antes de cache na borda).
+Cada participante assina `queue.snapshot` e faz **GET** inicial/fallback da fila. Com **N** pessoas no salão, o mesmo snapshot é entregue a N conexões Realtime; em modo degradado, volta a existir GET periódico por participante.
 
 Ordem de grandeza (referência para experimento, não meta de produto):
 
 | Cenário | Cálculo | Leituras de fila/min ao origin (aprox.) |
 |---------|---------|------------------------------------------|
-| Sem Hub | 50 participantes × 1 GET / 4 s | ~750/min |
-| Com Hub (âncora) | 1 GET / 4 s + fan-out local | ~15/min (+ signaling marginal) |
+| Sem Hub | 50 participantes conectados ao Broadcast | 50 conexões Realtime + 1 mensagem por mutação |
+| Com Hub (âncora) | 1 conexão/GET da âncora + fan-out local | ~1 conexão upstream (+ signaling marginal) |
 
-O ganho real depende do **cache hit** em Cloudflare/Vercel — o spike E1 **deve** medir com e sem cache.
+O ganho real depende de quota Realtime, cache hit em fallback e estabilidade do Wi‑Fi local — o spike E1 **deve** medir os três cenários.
 
 ### 1.2 Por que importa
 
 - Rajadas históricas concentram tráfego em poucas horas ([03-ponte-pedidos-e-sazonalidade](../analytics/reports/03-ponte-pedidos-e-sazonalidade.md)).
-- Decisão PoC: evitar WebSocket/Realtime **por participante** no *free tier* ([02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md)).
+- Decisão PoC: usar `queue.snapshot` por participante, com kill switch para polling quando quota degradar ([02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md)).
 - ICP: dezenas de *concurrent* por player (≤50–80) — exatamente onde fan-out local teria maior ROI.
 
 **Escritas (voto, proposta, fichas) não economizam** com WebRTC: continuam **POST** no servidor.
@@ -65,12 +65,12 @@ O ganho real depende do **cache hit** em Cloudflare/Vercel — o spike E1 **deve
 - Peers **rejeitam** snapshots com `version` menor ou `sig` inválida.
 - Conteúdo = mesmo dado que `GET /queue` público (sem dados sensíveis além do já exibido no telão).
 
-### 3.2 Relação com decisão anti-WebSocket
+### 3.2 Relação com Realtime público
 
 O experimento é um **canal paralelo de leitura** na LAN, não:
 
 - substituto de POST de voto;
-- adoção de Supabase Realtime por participante;
+- substituto obrigatório de Supabase Realtime por participante;
 - streaming de áudio/vídeo WebRTC (fora de escopo do Muziks).
 
 ---
@@ -99,7 +99,7 @@ flowchart TB
 
 1. **Âncora** obtém snapshot do servidor (1× por intervalo ou push leve só para âncora).
 2. **Âncora** propaga via **WebRTC DataChannel** (unidirecional preferível) aos subscribers do room.
-3. **Participantes** atualizam UI local; em falha P2P → **fallback** para polling HTTP clássico (obrigatório).
+3. **Participantes** atualizam UI local; em falha P2P → **fallback** para Broadcast `queue.snapshot` ou polling HTTP degradado (obrigatório).
 
 ### 4.2 Fluxo de escrita (inalterado)
 
@@ -154,7 +154,7 @@ Participante → `POST /vote` (ou equivalente) → servidor valida política →
 | **Signaling** | Endpoint leve em `apps/web` ou Cloudflare Worker | Room por `player_id` + token curto TTL; **não elimina** servidor |
 | **TURN** | Cloudflare, Twilio, self-host | Necessário se P2P falhar (4G, NAT simétrico); **custo** em escala |
 | **Join ao room** | QR do telão com token rotativo | Evita participante remoto entrar no Hub sem proximidade |
-| **Fallback** | Polling HTTP 3–5 s | Automático se DataChannel não conectar em X s |
+| **Fallback** | Broadcast `queue.snapshot` ou polling HTTP degradado | Automático se DataChannel não conectar em X s |
 
 ---
 
@@ -162,7 +162,7 @@ Participante → `POST /vote` (ou equivalente) → servidor valida política →
 
 | Barreira | Impacto | Mitigação |
 |----------|---------|-----------|
-| **Client isolation** no Wi‑Fi do bar | P2P bloqueado | Fallback polling; testar em piloto real |
+| **Client isolation** no Wi‑Fi do bar | P2P bloqueado | Fallback Broadcast/polling; testar em piloto real |
 | **NAT / 4G** no mesmo espaço | Sem conexão direta | TURN (custo); ou só Hub quando em Wi‑Fi do venue |
 | **Signaling** obrigatório | Ainda há servidor | Aceitar como custo fixo baixo vs N×GET |
 | **Abuso** (entrar no room remoto) | Snapshot vazado | Token de join via scan QR / prova de proximidade |
@@ -181,7 +181,7 @@ Participante → `POST /vote` (ou equivalente) → servidor valida política →
 | **E2 — Spike mesh** | 8–10 peers | Latência e bateria aceitáveis; falhas de AP documentadas |
 | **E3 — Decisão** | ADR em `docs/tech/` ou “não perseguir” | Redução mensurável de egress **ou** UX **sem** TURN &gt; economia |
 
-**Gatilho para sair de E0:** PoC estável **ou** métricas de egress/polling no piloto; alinhar ao gatilho **5 players constantes** ([STACK](../tech/STACK-E-FASES-DE-MIGRACAO.md) §2.1).
+**Gatilho para sair de E0:** PoC estável **ou** métricas de Realtime/egress/fallback polling no piloto; alinhar ao gatilho **5 players constantes** ([STACK](../tech/STACK-E-FASES-DE-MIGRACAO.md) §2.1).
 
 **Tracking sugerido:** issue Linear `infra`, label `experiment`.
 
@@ -192,11 +192,11 @@ Participante → `POST /vote` (ou equivalente) → servidor valida política →
 ### E1 — Telão âncora
 
 - [ ] Room por `player_id` com token de join (QR telão).
-- [ ] Âncora: 1 poll / 4 s; propaga `QueueSnapshot` assinado.
+- [ ] Âncora: 1 assinatura Broadcast ou 1 poll degradado; propaga `QueueSnapshot` assinado.
 - [ ] ≥20 subscribers; medir latência âncora → peer.
-- [ ] Simular queda da âncora → fallback polling em &lt;2 s.
+- [ ] Simular queda da âncora → fallback Broadcast/polling em &lt;2 s.
 - [ ] Testar Wi‑Fi de bar real (client isolation).
-- [ ] Comparar req/min ao origin com e sem Hub; com e sem cache CDN.
+- [ ] Comparar conexões/mensagens/req ao origin com e sem Hub; com e sem cache CDN.
 
 ### E2 — Mesh parcial
 
@@ -219,7 +219,7 @@ Participante → `POST /vote` (ou equivalente) → servidor valida política →
 
 | Documento | Relação |
 |-----------|---------|
-| [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) | PoC polling; §7 experimentos |
+| [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) | PoC Broadcast + fallback; §7 experimentos |
 | [12-telao-display-publico.md](../specs/12-telao-display-publico.md) | Candidato natural à âncora |
 | [karaoke-era-ia-e-llms-de-borda.md](./karaoke-era-ia-e-llms-de-borda.md) | Outra trilha de compute/rede na borda |
 | [mapa-dores-e-solucoes.md](./mapa-dores-e-solucoes.md) | Entrada na tabela de dores |

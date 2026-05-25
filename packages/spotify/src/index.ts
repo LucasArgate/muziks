@@ -4,17 +4,23 @@ export {
   SPOTIFY_PARTICIPANT_SCOPES,
   SPOTIFY_PLAYBACK_SCOPES,
 } from "./constants";
-export { searchTracks, type SpotifySearchTrack } from "./search";
+export {
+  searchCatalog,
+  searchTracks,
+  type SpotifySearchTrack,
+} from "./search";
 export { createSpotifyApi, sdkForAccessToken, type SpotifyApi } from "./client";
 export type { CreateSpotifyApiOptions } from "./client";
 export { createCodeChallenge, generateCodeVerifier } from "./pkce";
 export {
   buildAuthorizeUrl,
   exchangeAuthorizationCode,
+  getClientCredentialsAccessToken,
   isSpotifyRefreshTokenRevoked,
   refreshAccessToken,
   SpotifyOAuthError,
   type BuildAuthorizeUrlParams,
+  type ClientCredentialsParams,
   type ExchangeCodeParams,
   type RefreshTokenParams,
   type SpotifyTokenResponse,

@@ -3,29 +3,23 @@
 import type { NormalizedSpotifyPlaybackQueue } from "@muziks/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export type UseSpotifyPlaybackQueueOptions = {
-  enabled: boolean;
-  /** When false, skips periodic GET /api/spotify/playback/queue (SDK supplies queue). */
-  pollEnabled?: boolean;
-  trackUri: string | null | undefined;
-  pollPlayingMs?: number;
-  pollPausedMs?: number;
+export type UsePublicSpotifyQueueOptions = {
+  slug: string;
+  enabled?: boolean;
+  pollMs?: number;
 };
 
-export function useSpotifyPlaybackQueue({
-  enabled,
-  pollEnabled = true,
-  trackUri,
-  pollPlayingMs = 8000,
-  pollPausedMs = 20000,
-}: UseSpotifyPlaybackQueueOptions) {
+export function usePublicSpotifyQueue({
+  slug,
+  enabled = true,
+  pollMs = 20000,
+}: UsePublicSpotifyQueueOptions) {
   const [queue, setQueue] = useState<NormalizedSpotifyPlaybackQueue | null>(
     null,
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const requestSeqRef = useRef(0);
-  const previousTrackUriRef = useRef<string | null | undefined>(trackUri);
 
   const refresh = useCallback(async () => {
     if (!enabled) {
@@ -34,13 +28,16 @@ export function useSpotifyPlaybackQueue({
 
     const requestSeq = ++requestSeqRef.current;
     setLoading(true);
+
     try {
-      const response = await fetch("/api/spotify/playback/queue", {
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `/api/players/${encodeURIComponent(slug)}/playback/spotify-queue`,
+        { cache: "no-store" },
+      );
       const body = (await response.json()) as {
         queue?: NormalizedSpotifyPlaybackQueue;
         error?: string;
+        message?: string;
       };
 
       if (requestSeq !== requestSeqRef.current) {
@@ -48,7 +45,8 @@ export function useSpotifyPlaybackQueue({
       }
 
       if (!response.ok) {
-        setError(body.error ?? "spotify_queue_fetch_failed");
+        setQueue(null);
+        setError(body.message ?? body.error ?? "spotify_queue_fetch_failed");
         return;
       }
 
@@ -56,6 +54,7 @@ export function useSpotifyPlaybackQueue({
       setError(null);
     } catch {
       if (requestSeq === requestSeqRef.current) {
+        setQueue(null);
         setError("spotify_queue_fetch_failed");
       }
     } finally {
@@ -63,40 +62,23 @@ export function useSpotifyPlaybackQueue({
         setLoading(false);
       }
     }
-  }, [enabled]);
+  }, [enabled, slug]);
 
   useEffect(() => {
-    if (previousTrackUriRef.current === trackUri) {
-      return;
-    }
-
-    previousTrackUriRef.current = trackUri;
-    requestSeqRef.current += 1;
-    setQueue(null);
-    setError(null);
-    setLoading(false);
-  }, [trackUri]);
-
-  useEffect(() => {
-    if (!enabled || !pollEnabled) {
-      return;
-    }
-
     void refresh();
-  }, [enabled, pollEnabled, refresh, trackUri]);
+  }, [refresh]);
 
   useEffect(() => {
-    if (!enabled || !pollEnabled) {
+    if (!enabled) {
       return;
     }
 
-    const intervalMs = trackUri ? pollPlayingMs : pollPausedMs;
     const timer = window.setInterval(() => {
       void refresh();
-    }, intervalMs);
+    }, pollMs);
 
     return () => window.clearInterval(timer);
-  }, [enabled, pollEnabled, pollPausedMs, pollPlayingMs, refresh, trackUri]);
+  }, [enabled, pollMs, refresh]);
 
   return { queue, loading, error, refresh };
 }

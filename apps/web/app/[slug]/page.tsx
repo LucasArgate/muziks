@@ -11,6 +11,11 @@ type PlayerPageProps = {
 export default async function PlayerSlugPage({ params }: PlayerPageProps) {
   const { slug } = await params;
   const player = await getPlayerSummaryBySlug(slug);
+  const queueTransport =
+    process.env.DISABLE_PUBLIC_REALTIME === "1" ||
+    process.env.DISABLE_PUBLIC_REALTIME === "true"
+      ? "poll"
+      : "realtime";
 
   if (!player || player.status === "archived") {
     notFound();
@@ -18,7 +23,12 @@ export default async function PlayerSlugPage({ params }: PlayerPageProps) {
 
   return (
     <Suspense fallback={<p className="p-6 text-center text-sm">Carregando...</p>}>
-      <ParticipantPlayerPage slug={player.slug} displayName={player.displayName} />
+      <ParticipantPlayerPage
+        slug={player.slug}
+        playerId={player.id}
+        displayName={player.displayName}
+        queueTransport={queueTransport}
+      />
     </Suspense>
   );
 }

@@ -18,8 +18,8 @@
 | **Blog** | Next.js em `apps/blog` | Deploy Vercel separado; `blog.muziks.com.br` |
 | **Banco** | PostgreSQL via **Supabase Free** | Auth, Storage; schema e ORM em `packages/db` (**Drizzle**) |
 | **API na PoC** | API Routes / Server Actions em `apps/web` | Sem `apps/api` até gatilho de extração |
-| **Tempo real (fila)** | HTTP + polling **3–5 s** | Sem WebSocket por participante no salão |
-| **Tempo real (playback MVP-B)** | **Supabase Realtime** (sessão + comandos) | Só dono/telão/Master — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
+| **Tempo real (fila)** | `GET` inicial + **Supabase Realtime Broadcast** `queue.snapshot` | Participantes públicos assinam `player:{playerId}`; polling fica como fallback |
+| **Tempo real (playback MVP-B)** | **Supabase Realtime** (sessão + comandos) | Dono/telão/Master — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
 | **Escritas (voto)** | HTTP `POST` + rate-limit + fila de eventos | Ver §4 |
 | **DNS + borda** | **Cloudflare** (já em uso) | DNS gerenciado; proxy/CDN/SSL na frente do origin; ver §1.4 |
 | **Artefato de release** | **Docker Hub** (`muziks/web`, …) | Imagem semver por tag Git; staging contínuo; prod pinada — [DOCKER-REGISTRY-E-RELEASES.md](DOCKER-REGISTRY-E-RELEASES.md) |
@@ -35,7 +35,7 @@
 ### 1.3 O que fica fora da PoC
 
 - `apps/api` dedicado, NestJS standalone, Redis, Kafka.
-- WebSocket por cliente no salão.
+- WebSocket próprio por cliente no salão; o contrato da PoC usa Supabase Realtime Broadcast.
 - Infra AWS gerenciada (RDS, API Gateway WS) — alvo da Fase infra C.
 - Adoção obrigatória de **D1**, **R2**, **Workers** ou **Cloudflare Pages** como host principal — permanecem **opcionais** (§1.4).
 
@@ -66,7 +66,7 @@ flowchart LR
 
 **Configuração mínima (prod):** SSL/TLS **Full (strict)** no Cloudflare; origin com certificado válido na Vercel; não duplicar cache agressivo em rotas dinâmicas de fila/voto (regras de cache por path quando necessário).
 
-**Dois origins dinâmicos (fila):** `muziks.app` (participante) e `player.muziks.app` (master) **devem** ter regras de cache separadas para paths de API/fila — conteúdo personalizado por slug e polling 3–5 s ([16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md), [09-frontend-architecture.md](../specs/09-frontend-architecture.md)). Estáticos (shell PWA, JS/CSS) podem cachear na borda com TTL longo.
+**Dois origins dinâmicos (fila):** `muziks.app` (participante) e `player.muziks.app` (master) **devem** ter regras de cache separadas para paths de API/fila — conteúdo personalizado por slug, `GET` inicial de snapshot e polling apenas em fallback ([16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md), [09-frontend-architecture.md](../specs/09-frontend-architecture.md)). Estáticos (shell PWA, JS/CSS) podem cachear na borda com TTL longo.
 
 #### 1.4.2 Matriz de recursos Cloudflare (opções por necessidade)
 
@@ -113,7 +113,7 @@ Referência de *free tier* (validar limites atuais na [documentação Cloudflare
 |---------|-------------------|
 | Egress Supabase Storage ou Vercel alto em **capas/imagens** | **R2** + CDN; cache longo em paths `/assets/*` |
 | Rate-limit e 429 no origin durante rajada | **Workers** na borda + fila no Postgres (lógica continua no Supabase) |
-| Leitura de fila/telão pressionando Vercel/Supabase | **Workers KV** com TTL 2–4 s (alinhar ao polling 3–5 s) |
+| Leitura de fila/telão pressionando Vercel/Supabase | **Workers KV** para snapshots de fallback; manter Broadcast como canal primário |
 | Custo ou termos Vercel Hobby/Pro | **Pages** como host alternativo do mesmo `apps/web` |
 | Extração de `apps/api` com jobs assíncronos | **Queues** + Workers consumidores |
 | Staging/admin exposto na internet | **Zero Trust** ou regras de acesso |
@@ -128,7 +128,7 @@ Alinhamento com fases de produto em [13-kpis-fases-e-loops.md](../specs/13-kpis-
 
 | Fase infra | Fase produto (ref.) | Infra típica | Gatilho / escala |
 |------------|---------------------|--------------|------------------|
-| **A — PoC free** | A — Validação | Vercel + Supabase Free + Cloudflare (DNS/proxy); polling | 3–5 pilotos ICP; custo R$ 0 |
+| **A — PoC free** | A — Validação | Vercel + Supabase Free + Cloudflare (DNS/proxy); Broadcast + fallback polling | 3–5 pilotos ICP controlados; custo R$ 0 |
 | **B — Preparação** | B — Tração | Supabase Pro; **staging** obrigatório; runbooks | **5 players constantes** (§2.1) |
 | **B+ — Pro estável** | B — Tração | Supabase Pro; backups PITR | 8–10 players reais ou exigência de SLA |
 | **C — Escala própria** | C — Escala | AWS RDS Postgres + WS onde métrica justificar | Centenas+ *concurrent* ou compliance |
@@ -178,8 +178,8 @@ Contexto histórico: picos de centenas de pedidos por bar por dia ([03-ponte-ped
 | **HTTP `POST` /vote** | Escrita com validação de política + identidade |
 | **Rate-limit** | Por `participant_id`, IP e opcionalmente dispositivo |
 | **Fila de votos** | Evento inserido; worker ou transação serializada aplica contagem |
-| **HTTP `GET` /queue** + **Cache-Control** | Leitura para clientes e telão; polling **3–5 s** |
-| **Supabase Realtime** | **Não** por participante no salão; reservar para dono/admin ou adiar |
+| **HTTP `GET` /queue** + **Cache-Control** | Snapshot inicial para clientes e fallback em degradação |
+| **Supabase Realtime Broadcast** | `queue.snapshot` público por player; um fan-out por mutação persistida |
 
 Dimensionar quotas pelo cenário **“50 pessoas votam em 2 minutos no mesmo player”**, não pela média diária.
 
@@ -219,7 +219,7 @@ Dimensionar quotas pelo cenário **“50 pessoas votam em 2 minutos no mesmo pla
 Derivado de [02-viabilidade-custos § POC](../mvp/02-viabilidade-custos-comparativo.md):
 
 - [ ] Rajada simulada: ≥30 votos em &lt;2 min no mesmo player — sem 429 indevido, sem timeout no DB.
-- [ ] Fila/telão estáveis com polling (sem WS por participante).
+- [ ] Fila/telão estáveis com `queue.snapshot`; fallback polling validado por `DISABLE_PUBLIC_REALTIME`.
 - [ ] Pico *concurrent* por player (≤50–80 no ICP) sem erro de leitura.
 - [ ] *Egress* controlado (cache de imagens no cliente/CDN; Cloudflare proxy ou R2 se ativado).
 - [ ] DNS Cloudflare: registros `player` / `blog` / `staging` apontando ao origin correto; SSL **Full (strict)**.
@@ -237,7 +237,7 @@ Trilhas documentadas em [`docs/disruption/`](../disruption/README.md) que **não
 |-------------|----------|--------|
 | [Hub local WebRTC](../disruption/hub-local-webrtc-e-fanout.md) | Reduzir polls redundantes da fila no mesmo espaço físico; fan-out local da **leitura**; votos permanecem HTTP POST | E0 documentado; E1+ pendente |
 
-A PoC **continua** com polling HTTP 3–5 s e sem WebSocket por participante (§3). WebSocket na Fase C (§2.2) é caminho distinto (painel/telão ↔ servidor), não substituto automático do Hub P2P.
+A PoC **continua** com HTTP POST para voto e fonte de verdade no Postgres, mas a leitura pública primária passa a ser Broadcast `queue.snapshot` (§3). WebSocket próprio na Fase C (§2.2) é caminho distinto (painel/telão ↔ servidor), não substituto automático do Hub P2P.
 
 ---
 

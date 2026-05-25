@@ -1,7 +1,7 @@
 # Limites de uso e contingência do player
 
-**Status:** referência operacional  
-**Data da pesquisa:** 2026-05-25  
+**Status:** referência operacional
+**Data da pesquisa:** 2026-05-25
 **Escopo:** crescimento do player Muziks em cima de Supabase, Vercel, Trigger.dev, Cloudflare e Spotify.
 
 Este documento consolida limites públicos dos planos gratuitos/freemium e define uma política conservadora para operar o player antes de escalar infraestrutura. Os números abaixo devem ser revisados antes de cada piloto grande, porque os provedores mudam planos e quotas sem acoplamento ao ciclo de release do Muziks.
@@ -10,6 +10,7 @@ Documentos relacionados:
 
 - [Arquitetura de playback Spotify](../mvp/06-arquitetura-playback-spotify.md)
 - [Playback near-end e espelho da fila Spotify](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md)
+- [Trigger.dev PoC — orquestração de playback](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md)
 - [Ambientes e URLs públicas](./AMBIENTES-E-URLS-PUBLICAS.md)
 - [Stack e fases de migração](./STACK-E-FASES-DE-MIGRACAO.md)
 
@@ -18,7 +19,7 @@ Documentos relacionados:
 ## 1. Princípios de capacidade
 
 1. O plano gratuito serve para desenvolvimento, PoC e pilotos pequenos. Produção comercial do player deve migrar para planos pagos antes de depender de disponibilidade contínua.
-2. A fila pública não deve usar Realtime para todos os celulares no salão. A regra vigente continua: HTTP + polling de 3-5 s para fila/votos; Realtime fica restrito a baixa cardinalidade, como Player Master, telão e painel do dono.
+2. A fila pública usa `GET` inicial + Supabase Realtime Broadcast (`queue.snapshot`) para participantes. HTTP polling fica como fallback de degradação ou quando `DISABLE_PUBLIC_REALTIME` estiver ativo.
 3. Spotify é o gargalo de maior risco funcional. O player deve tratar `429` como sinal operacional normal, respeitar `Retry-After` e reduzir chamadas antes de tentar recuperar estado por força bruta.
 4. Todo consumo não essencial deve ser desligável por feature flag ou configuração remota: analytics, dashboards, previews, jobs de enriquecimento, polling agressivo, imagens pesadas e eventos de presença.
 5. Em incidente de quota, preservar primeiro a sessão ativa: áudio no Player Master, leitura mínima da fila, voto/dequeue essencial, token refresh e comandos do dono.
@@ -39,9 +40,9 @@ Fonte principal: [Supabase billing](https://supabase.com/docs/guides/platform/bi
 | Egress | Docs de billing citam 5 GB; docs de Storage citam 10 GB total, com 5 GB cached + 5 GB uncached | Tratar 5 GB como orçamento conservador até validar no dashboard. |
 | MAU Auth | 50.000 MAU | Não é o gargalo inicial do player, pois participante pode ser anônimo/sessão curta. |
 | Edge Function invocations | 500.000/mês | Evitar mover hot path do player para Edge Functions sem orçamento. |
-| Realtime messages | 2 milhões/mês | Realtime não deve carregar fila pública com muitos participantes. |
-| Realtime peak connections | 200 | Limita telões/masters/controles; público em massa via polling HTTP. |
-| Realtime throughput | 100 mensagens/s, 100 joins/s, 20 presence msg/s | Presence e broadcast do público devem ser evitados no MVP. |
+| Realtime messages | 2 milhões/mês | Cada mutação de fila gera `queue.snapshot`; sessões com muitos participantes precisam orçamento por pico de votos. |
+| Realtime peak connections | 200 | Limita participantes simultâneos por projeto no Free; piloto público real deve prever Pro ou kill switch para polling. |
+| Realtime throughput | 100 mensagens/s, 100 joins/s, 20 presence msg/s | Broadcast público é permitido, mas presence pública e eventos por participante continuam fora do MVP. |
 | Pausa por inatividade | Projetos Free com atividade muito baixa por 7 dias podem ser pausados | Não usar Free para ambiente que precisa disponibilidade sem intervenção. |
 | Backups | Free não tem download de backups no dashboard | Antes de piloto real, criar rotina própria de export ou subir de plano. |
 
@@ -73,16 +74,21 @@ Fonte principal: [Trigger.dev pricing](https://trigger.dev/pricing), [Trigger.de
 | Recurso | Free publicado | Risco para o player |
 | --- | --- | --- |
 | Crédito mensal | US$ 5 de uso grátis/mês | Jobs de enriquecimento podem consumir orçamento silenciosamente. |
-| Concorrência | Pricing atual cita 20 concurrent runs; docs de limites podem variar por dashboard | Usar dashboard `Limits` como fonte final antes de piloto. |
-| API rate limit | 60 API requests/min no Free; pagos 1.500/min | Não usar Trigger para ações por voto/participante. |
+| Concorrência | Docs de limites citam 10 concurrent runs no Free | Usar locks por `playerId`; não disparar um job por participante. |
+| API rate limit | Docs de limites citam 1.500 requests/min | Chamadas `trigger()` em loop podem consumir limite; usar batch apenas para workloads controlados. |
+| Queue size | Cloud Free: 500 runs por fila em development; 10.000 em staging/production | Jobs atrasados podem acumular e executar fora de contexto se não houver TTL/dedup. |
+| Maximum run TTL | Cloud força TTL máximo de 14 dias; self-host permite configurar `RUN_ENGINE_DEFAULT_MAX_TTL` | Nunca deixar runs de player pendurados indefinidamente. |
 | Schedules | 10 schedules | Suficiente para limpeza e reconciliação pequena. |
 | Realtime Trigger | 10 conexões concorrentes | Não é canal de UX do player. |
 | Log retention | 1 dia | Incidentes precisam ser investigados rápido ou enviados para outro log. |
 | Query period | 1 dia | Métricas históricas não ficam disponíveis no Free. |
 | Team members | 5 | Ok para fase inicial. |
-| Batch trigger | Docs citam token bucket por plano; Free historicamente 1.200 runs de bucket e refill limitado | Usar batch para picos controlados, não para hot path. |
+| Batch trigger | Free: bucket de 1.200 runs, refill de 100 runs a cada 10 s | Usar batch para picos controlados, não para hot path de playback. |
+| Batch size | Até 1.000 itens por batch em SDK 4.3.1+ | Backfills devem ser paginados e pausáveis. |
 
-Diretriz: Trigger.dev deve executar apenas tarefas assíncronas não críticas para continuidade do áudio: limpeza, reconciliação tardia, relatórios, backfills e enriquecimento de metadados. Nunca colocar `track-ended`, `mirror-next` ou comando de dono dependendo de job externo.
+Diretriz: Trigger.dev pode validar a PoC de `playback-tick`, reconciliação e `enqueue-next-music-in-spotify-queue`, desde que o Worker use vault server-side, lock por player, idempotência e backoff. Nunca colocar voto, comando do dono, UX Realtime ou transição crítica dependendo exclusivamente de job externo.
+
+Self-hosting Trigger.dev é opção futura, não requisito da PoC. Docker Compose é aceitável para teste; Kubernetes/Helm exige operação própria de secrets, registry, object storage, logs, backups e escala dos workers. Ver [Trigger.dev PoC — orquestração de playback](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md).
 
 ### 2.4 Cloudflare Free
 
@@ -127,6 +133,17 @@ Orçamento interno recomendado para MVP-B antes de extended quota:
 - `Search`: cache por termo normalizado e debounce mínimo de 400-800 ms no cliente; limitar resultados e paginação.
 - Ao receber `429`: respeitar `Retry-After`, suspender chamadas não essenciais por sessão e reduzir polling Spotify para 15-30 s até estabilizar.
 
+Orçamento específico para a PoC Trigger.dev:
+
+| Operação | Uso permitido | Contenção |
+| --- | --- | --- |
+| `GET /me/player` | Tick adaptativo de players ativos | 3-5 s só perto do fim; 15-30 s longe do fim; suspender em `idle`. |
+| `GET /me/player/queue` | Antes de enfileirar próxima faixa e em refresh pontual | Não usar como polling contínuo de UI. |
+| `POST /me/player/queue` | `enqueue-next-music-in-spotify-queue` | 1 tentativa por `playerId + currentTrackUri + nextTrackUri`; retry único com backoff. |
+| `next` / `play` | Comando do dono ou transição autoritativa | Nunca por participante; nunca em loop de recovery. |
+| Refresh token | Resolver access token expirado | Cachear access token com skew; tratar refresh revogado como reconexão necessária. |
+| Search | Catálogo público | Preferir Client Credentials, debounce/cache e kill switch. |
+
 ---
 
 ## 3. Limites internos do Muziks por fase
@@ -138,11 +155,11 @@ Uso indicado: desenvolvimento compartilhado, demo interna e piloto pequeno contr
 | Dimensão | Limite interno | Motivo |
 | --- | --- | --- |
 | Sessões ativas simultâneas | 1-3 players | Evita multiplicar polling Spotify, Realtime e Postgres. |
-| Participantes por sessão | Até 30-50 celulares | Compatível com polling 3-5 s sem fan-out WS. |
-| Polling fila pública | 5 s normal; 10-30 s em degradação | Reduz Vercel/Supabase/Cloudflare requests. |
-| Realtime por sessão | Master, telão e painel dono; evitar público | Preserva quota de 200 conexões Free Supabase. |
+| Participantes por sessão | Até 30-50 celulares | Cabe no Free apenas em piloto controlado; cada celular mantém conexão Realtime. |
+| Fila pública | `GET` inicial + `queue.snapshot`; polling 10-30 s em degradação | Reduz polling constante, mas consome conexões/mensagens Realtime. |
+| Realtime por sessão | Participantes, Master, telão e painel dono; sem presence pública | Preserva o contrato ao limitar canais e eventos por mutação. |
 | Histórico de eventos | Retenção curta, agregação diária quando possível | Protege 500 MB do Postgres. |
-| Jobs Trigger.dev | Apenas limpeza/reconciliação não crítica | Protege crédito Free e evita dependência operacional. |
+| Jobs Trigger.dev | `playback-tick` e reconciliação em baixa escala; limpeza/backfills não críticos | Protege crédito Free e valida orçamento Spotify sem virar hot path obrigatório. |
 | Imagens/capas | Usar URLs Spotify/externas com cache de metadata leve | Evita Storage/egress. |
 
 ### 3.2 Pilot pago mínimo
@@ -175,7 +192,7 @@ Requisitos antes do evento:
 
 1. Analytics não essencial, funis, dashboards de produto e eventos detalhados.
 2. Jobs de enriquecimento de metadados, relatórios, backfills e notificações.
-3. Presence/realtime do público, indicadores "online agora" e animações ao vivo.
+3. Presence pública, indicadores "online agora" e animações ao vivo; se necessário, `DISABLE_PUBLIC_REALTIME` troca fila pública para polling.
 4. Search/autocomplete agressivo; manter busca manual com debounce/cache.
 5. Imagens grandes, transformações, previews e assets não essenciais.
 6. Staging/previews públicos e ambientes de demonstração.
@@ -187,12 +204,13 @@ Requisitos antes do evento:
 | Sintoma | Ação imediata | Recovery |
 | --- | --- | --- |
 | Spotify `429` | Respeitar `Retry-After`; congelar search/polling não essencial; permitir só comandos do dono e transições necessárias | Reativar por sessão quando 5 min sem `429`; revisar cache e orçamento de chamadas. |
-| Supabase Realtime `too_many_connections` ou `tenant_events` | Desconectar público do Realtime; manter só Master/telão/dono; trocar estado visual por polling | Reativar Realtime apenas para baixa cardinalidade; revisar canais vazando. |
+| Supabase Realtime `too_many_connections` ou `tenant_events` | Ativar `DISABLE_PUBLIC_REALTIME`; manter Master/telão/dono; trocar fila pública para polling | Reativar Broadcast público por sessão quando o consumo estabilizar; revisar canais vazando. |
 | Supabase database perto de 500 MB | Pausar gravação de analytics/eventos; compactar/agregar histórico; apagar dados descartáveis | Vacuum quando aplicável; considerar upgrade antes de reabrir gravação completa. |
 | Supabase egress alto | Reduzir payloads da fila; remover campos pesados; cachear respostas públicas; cortar imagens via Supabase Storage | Medir endpoints mais caros e ajustar DTOs. |
 | Vercel Edge Requests/Functions alto | Aumentar polling para 10-30 s; cachear GETs públicos; bloquear bots; pausar previews | Reabrir polling normal por sessão e manter proteção de cache/rate limit. |
 | Vercel Function duration/CPU alto | Remover fan-out síncrono; jogar trabalho não crítico para fila/job; retornar resposta mínima | Revisar handlers lentos e queries. |
-| Trigger.dev crédito/concorrência esgotado | Pausar jobs não críticos; cancelar backfills; manter limpeza essencial manual ou adiada | Reprocessar backlog em lotes pequenos fora do horário de pico. |
+| Trigger.dev crédito/concorrência esgotado | Pausar jobs não críticos; cancelar backfills; reduzir tick a players perto do fim; manter Master como fonte viva | Reprocessar backlog em lotes pequenos fora do horário de pico. |
+| Trigger.dev backlog crescendo | Bloquear novos runs por `playerId`; descartar runs vencidos por TTL curto; manter apenas último estado relevante | Ajustar schedules, deduplication key e orçamento por fila. |
 | Cloudflare Worker Error 1027 | Desviar rota crítica para Vercel/Supabase direto; desativar Worker não essencial | Reativar após reset diário ou migrar Worker crítico para plano pago. |
 | Cloudflare KV write limit | Congelar escrita de métricas/flags voláteis; usar config estática ou Edge Config | Redesenhar contador quente fora de KV. |
 
@@ -226,7 +244,7 @@ Ações:
 
 - Ativar debounce mais agressivo em busca e votos.
 - Reduzir polling público para 8-10 s em sessões grandes.
-- Pausar jobs Trigger.dev não urgentes.
+- Pausar jobs Trigger.dev não urgentes e reduzir `playback-tick` a players `playing`.
 - Validar se bots/previews/staging estão consumindo quota.
 
 ### Nível 2 — Degradação
@@ -243,6 +261,7 @@ Ações:
 - Manter apenas operações críticas da sessão ativa.
 - Fila pública passa para polling lento e payload mínimo.
 - Desligar analytics detalhado, presence pública, enriquecimento e dashboards.
+- Trigger.dev passa a executar apenas runs deduplicados por `playerId`, com backoff Spotify obrigatório.
 - Congelar criação de novas sessões se necessário.
 
 ### Nível 3 — Proteção de sobrevivência
@@ -258,6 +277,7 @@ Ações:
 - Permitir somente sessões já ativas.
 - Remover writes não essenciais.
 - Preservar áudio, comandos do dono e dequeue mínimo.
+- Pausar Trigger.dev para backfills, relatórios, enriquecimento e qualquer tick não relacionado a faixa próxima do fim.
 - Se Spotify estiver limitando, não tentar reconciliar em loop; aguardar `Retry-After` e mostrar estado degradado.
 - Comunicar operação manual: dono pode pausar/encerrar sessão pelo painel.
 
@@ -284,8 +304,10 @@ Os nomes abaixo são sugestão de contrato para configuração remota, Edge Conf
 | `DISABLE_PUBLIC_REALTIME` | Remove público de canais Realtime. |
 | `DISABLE_DETAILED_ANALYTICS` | Mantém só contadores agregados e erros. |
 | `DISABLE_METADATA_ENRICHMENT` | Pausa jobs de capa, artista, popularidade e relatórios. |
+| `DISABLE_TRIGGER_PLAYBACK_JOBS` | Pausa ticks/reconciliações via Trigger.dev; Master e rotas diretas seguem operando. |
 | `DISABLE_AUTOCOMPLETE` | Troca autocomplete por busca manual/debounce maior. |
 | `SPOTIFY_BACKOFF_GLOBAL_UNTIL` | Suspende chamadas Spotify não críticas até timestamp definido. |
+| `SPOTIFY_PLAYER_REQUEST_BUDGET` | Define teto operacional de chamadas por player/janela. |
 | `QUEUE_POLL_INTERVAL_SECONDS` | Controla intervalo de polling público por ambiente/sessão. |
 | `MAX_ACTIVE_SESSIONS` | Limita novas sessões em crise. |
 | `MAX_PARTICIPANTS_PER_SESSION` | Fecha entrada pública quando a sessão passa do teto operacional. |

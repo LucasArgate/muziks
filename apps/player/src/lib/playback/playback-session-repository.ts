@@ -32,6 +32,23 @@ function rowToPlaybackSession(
   };
 }
 
+function resolvePersistedProgressMs(
+  input: PublishPlaybackSessionInput,
+  persistedAt: Date,
+): number {
+  const durationMs = Math.max(0, input.durationMs);
+  const basePositionMs = durationMs > 0
+    ? Math.min(input.positionMs, durationMs)
+    : Math.max(0, input.positionMs);
+
+  if (input.paused || !input.positionUpdatedAt || durationMs <= 0) {
+    return basePositionMs;
+  }
+
+  const elapsedMs = Math.max(0, persistedAt.getTime() - input.positionUpdatedAt);
+  return Math.min(basePositionMs + elapsedMs, durationMs);
+}
+
 export function playbackSessionToNormalized(
   session: PlaybackSession,
 ): NormalizedSpotifyPlayerState {
@@ -115,6 +132,7 @@ export async function upsertPlaybackSession(
 
   const now = new Date();
   const nextVersion = (existing?.stateVersion ?? 0) + 1;
+  const progressMs = resolvePersistedProgressMs(input, now);
 
   const values = {
     playerId,
@@ -124,7 +142,7 @@ export async function upsertPlaybackSession(
     trackName: input.trackName,
     artistName: input.artistName,
     albumImageUrl: input.albumImageUrl ?? null,
-    progressMs: input.positionMs,
+    progressMs,
     durationMs: input.durationMs,
     paused: input.paused,
     status: input.status,

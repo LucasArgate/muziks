@@ -12,6 +12,7 @@ import {
 import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
 import {
   hasValidConnectionForUser,
+  persistSpotifyAccessToken,
   persistSpotifyTokens,
 } from "@/src/lib/spotify/spotify-token-vault";
 
@@ -23,6 +24,8 @@ const OAUTH_STATE_COOKIE = "muziks_spotify_oauth_state";
 const RETURN_SLUG_COOKIE = "muziks_spotify_return_slug";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const ACCESS_VAULT_SYNC_MIN_MS = 60_000;
+const lastAccessVaultSync = new Map<string, number>();
 
 const transientCookieOptions = {
   httpOnly: true,
@@ -45,6 +48,17 @@ export const spotifySessionCookies = {
   oauthState: OAUTH_STATE_COOKIE,
   returnSlug: RETURN_SLUG_COOKIE,
 } as const;
+
+function shouldSyncAccessTokenToVault(userId: string, expiresAt: number) {
+  const key = `${userId}:${expiresAt}`;
+  const lastSyncedAt = lastAccessVaultSync.get(key) ?? 0;
+  if (Date.now() - lastSyncedAt < ACCESS_VAULT_SYNC_MIN_MS) {
+    return false;
+  }
+
+  lastAccessVaultSync.set(key, Date.now());
+  return true;
+}
 
 /** Attach OAuth PKCE/state cookies to a redirect response (required for Next.js). */
 export function applyOAuthTransientCookies(
@@ -182,6 +196,13 @@ export async function getValidAccessToken(): Promise<string | null> {
   const expiresAt = expiresRaw ? Number(expiresRaw) : 0;
 
   if (access && expiresAt > Date.now() + 60_000) {
+    const muziks = await getMuziksSession();
+    if (
+      muziks.status !== "anonymous" &&
+      shouldSyncAccessTokenToVault(muziks.userId, expiresAt)
+    ) {
+      await persistSpotifyAccessToken(muziks.userId, access, new Date(expiresAt));
+    }
     return access;
   }
 

@@ -1,6 +1,6 @@
 # ADR: Playback híbrido SDK + API e Realtime Broadcast
 
-**Status:** aceito (implementação Fase 1–2)  
+**Status:** aceito (implementação Fase 1–2)
 **Data:** 2026-05-17
 
 ## Contexto
@@ -34,23 +34,26 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 | Fonte de verdade | Postgres (`queue_items`, votos) |
 | Leitura inicial | `GET /api/players/{slug}/queue` → `MuziksQueueSnapshot` |
 | Atualizações | **Realtime Broadcast** `queue.snapshot` no mesmo canal `player:{playerId}` |
+| Clientes | Participantes públicos (`apps/web`), Player Master, telão e painel do dono |
 
 - Cliente: `@supabase/supabase-js` via `createBrowserClient` (`@supabase/ssr`) — `channel().on('broadcast', { event: 'queue.snapshot' }, …)`.
+- Participantes públicos assinam o mesmo `queue.snapshot`; o servidor envia snapshot completo já ordenado para evitar reconstrução de regra no browser.
 - **Não** usar `postgres_changes` por voto ou reorder; um broadcast por mutação mantém ordem/regras no servidor (`@muziks/queue`).
-- Mutadores (vote, dequeue, …) devem chamar `broadcastQueueSnapshotFromServer` após persistir (hoje parcial — ver implementação).
+- Mutadores (vote, dequeue, enqueue, reorder, …) devem chamar `broadcastQueueSnapshotFromServer` após persistir.
 - Sensor de fim de faixa (sidecar librespot): [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md).
 
 ## Consequências
 
 - Menos invocações Vercel no hot path de leitura de playback.
-- Conexões Realtime por player (telão + observadores); monitorar cotas Supabase.
+- Conexões Realtime por player (participantes, telão e observadores); monitorar cotas Supabase.
 - Token Spotify no browser limitado ao dono autenticado; refresh permanece no servidor.
 
 ## Fallback
 
-1. Supabase Pro + alertas de conexão  
-2. Pusher/Ably com mesmo contrato de eventos  
-3. Poll HTTP só para snapshot de sessão (último recurso)
+1. Supabase Pro + alertas de conexão
+2. Pusher/Ably com mesmo contrato de eventos
+3. Poll HTTP para fila pública quando `DISABLE_PUBLIC_REALTIME` ou modo degradado estiver ativo
+4. Poll HTTP só para snapshot de sessão (último recurso)
 
 ## Referências
 

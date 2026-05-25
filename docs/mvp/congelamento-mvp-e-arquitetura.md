@@ -41,9 +41,9 @@ Demonstrar o núcleo do manifesto — **“Público participa; o espaço manda n
 
 Um dono consegue:
 
-1. **Criar** um player  
-2. **Definir** política  
-3. **Compartilhar** link/QR  
+1. **Criar** um player
+2. **Definir** política
+3. **Compartilhar** link/QR
 4. Participantes **votam** e **veem a fila atualizada** com latência aceitável no salão (polling na borda, não WebSocket por cliente no pico)
 
 Isso valida a hipótese principal com **baixo risco** antes de investir em economia de fichas, GPS rígido ou playback integrado.
@@ -77,7 +77,7 @@ Evidência do arquivo 2016–2017 ([05-insights](../analytics/reports/05-insight
 | **App master** | **Next.js** em `apps/player` (placeholder) | `player.muziks.app/{slug}`; Spotify — [06-arquitetura-playback-spotify.md](06-arquitetura-playback-spotify.md) |
 | **Blog** | **Next.js** em `apps/blog` | `blog.muziks.com.br`; deploy Vercel separado |
 | **Banco** | **PostgreSQL** (Supabase Free) + **Drizzle** em `packages/db` | Migrations versionadas; client compartilhado |
-| **Fila (leitura)** | Polling HTTP 3–5 s + cache Vercel | Sem WS por participante — [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
+| **Fila (leitura)** | `GET` inicial + Supabase Realtime Broadcast `queue.snapshot` | Polling HTTP como fallback — [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
 | **Votos** | HTTP POST + rate-limit + fila de eventos | Rajada de fim de semana |
 | **Auth** | Supabase Auth (OAuth Google/Apple) | LGPD; ver [05-identidade-fosso-participante-voto.md](05-identidade-fosso-participante-voto.md) |
 | **Deploy** | **Vercel** (Hobby PoC interna; Pro piloto comercial) + Supabase | **100% free tier** na validação inicial |

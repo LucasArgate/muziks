@@ -1,12 +1,23 @@
 import {
   castVoteOnQueueItem,
   getPlayerIdBySlug,
+  listQueueItemsForPlayer,
 } from "@muziks/db";
+import type { MuziksQueueSnapshot } from "@muziks/types";
+
+import { buildMuziksQueueSnapshot } from "../../domain/build-snapshot";
 
 export type VoteOnQueueItemHandlerResult =
   | { status: 404; body: { error: "player_not_found" | "queue_item_not_found" } }
   | { status: 409; body: { error: "already_voted" } }
-  | { status: 200; body: { votes: number } };
+  | {
+      status: 200;
+      body: {
+        votes: number;
+        playerId: string;
+        snapshot: MuziksQueueSnapshot;
+      };
+    };
 
 export async function voteOnQueueItemHandler(input: {
   slug: string;
@@ -31,5 +42,11 @@ export async function voteOnQueueItemHandler(input: {
     return { status: 409, body: { error: "already_voted" } };
   }
 
-  return { status: 200, body: { votes: result.votes } };
+  const rows = await listQueueItemsForPlayer(playerId);
+  const snapshot = buildMuziksQueueSnapshot(playerId, rows);
+
+  return {
+    status: 200,
+    body: { votes: result.votes, playerId, snapshot },
+  };
 }

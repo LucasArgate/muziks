@@ -1,6 +1,6 @@
 # ADR: Sidecar librespot para fim de faixa e orquestração da fila
 
-**Status:** proposto (não implementado)  
+**Status:** proposto (não implementado)
 **Data:** 2026-05-18
 
 ## Elegibilidade (tier)
@@ -19,7 +19,7 @@ Hoje:
 
 - O **Web Playback SDK** no Master emite `player_state_changed`, mas **não** dispara dequeue nem `startPlayback` automático.
 - O **orchestrator** server (`POST /api/internal/playback-tick`) usa `GET /me/player` e pode emitir `track_ended` no lifecycle — com latência de poll e sem ligar à fila.
-- A fila usa **Postgres** como fonte de verdade e **Broadcast** `queue.snapshot` após dequeue (ainda incompleto em votos/enqueue).
+- A fila usa **Postgres** como fonte de verdade e **Broadcast** `queue.snapshot` após vote/dequeue; enqueue deve seguir o mesmo contrato quando existir.
 
 A [librespot](https://github.com/librespot-org/librespot) implementa o protocolo **Spotify Connect** e expõe eventos de playback com granularidade útil para timing. Partes do ecossistema dependem de engenharia reversa do web player (tokens TOTP, secrets voláteis) — ver [Reverse engineering · librespot Wiki](https://github.com/librespot-org/librespot/wiki/Reverse-engineering). Isso é **frágil** e **não** deve ser o único caminho de produção; o sidecar é um **sensor** opcional, não substituto da Web API oficial para controle de fila em produto licenciado.
 

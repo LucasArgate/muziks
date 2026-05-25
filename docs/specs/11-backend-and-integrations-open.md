@@ -10,7 +10,7 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 |---------|---------|
 | Persistência | Supabase (Postgres); **Drizzle** em `packages/db` (schema + migrations) |
 | API na PoC | Dentro de `apps/web` — sem `apps/api` até gatilho de extração |
-| Fila (leitura) | HTTP + polling 3–5 s; cache na borda |
+| Fila (leitura) | `GET` inicial + Supabase Realtime Broadcast `queue.snapshot`; polling HTTP como fallback |
 | Votos (escrita) | HTTP POST + rate-limit + fila de eventos serializada |
 | Migração futura | AWS RDS + WS sob demanda; estratégia strangler — ver [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
 
@@ -59,10 +59,11 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 | Motor de áudio | Spotify Web Playback SDK no cliente Master |
 | Controle remoto / fila nativa | Spotify Web API (Player) com token do **dono** |
 | Transição automática | `NearEndScheduler` + slice `mirror-next` no Master ([PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md)) |
+| Worker/reconciliação | Trigger.dev como PoC delimitada para `playback-tick`, backoff e `enqueue-next` — sem substituir Master/bridge ([TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](../tech/TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md)) |
 | Sync telão / dono / comandos | Realtime `player_sessions` + `playback_commands` |
-| Leitura da fila (massa) | Polling HTTP 3–5 s (inalterado na PoC) |
+| Leitura da fila (massa) | Broadcast `queue.snapshot` para participantes; polling apenas em modo degradado |
 
-Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) · near-end / fila dupla: [../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md). Viabilidade e EDA: [../mvp/03-viabilidade-integracao-spotify-eda.md](../mvp/03-viabilidade-integracao-spotify-eda.md). Compliance: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
+Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) · near-end / fila dupla: [../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) · PoC Trigger.dev: [../tech/TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](../tech/TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md). Viabilidade e EDA: [../mvp/03-viabilidade-integracao-spotify-eda.md](../mvp/03-viabilidade-integracao-spotify-eda.md). Compliance: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 
 **Escopo:** reprodução integrada entra no **MVP-B** (piloto com som), não no MVP-A (só fila/votos) — [../mvp/congelamento-mvp-e-arquitetura.md](../mvp/congelamento-mvp-e-arquitetura.md).
 
@@ -104,9 +105,23 @@ Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitet
 
 ## 10. Rajada, tempo real e custo — **fechado (PoC)**
 
-Decisão registrada em [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3 (HTTP vote, polling fila, sem Realtime por participante). Custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
+Decisão registrada em [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3 (HTTP vote, Broadcast `queue.snapshot` para leitura da fila e fallback polling). Custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
 
-## 10.1 Sincronização local da fila (experimento — fora do MVP)
+## 10.1 Trigger.dev para playback worker (PoC delimitada)
+
+**Decisão:** Trigger.dev pode ser validado como camada de worker/reconciliação para players, com escopo limitado a `playback-tick`, backoff Spotify, `enqueue-next-music-in-spotify-queue` e reconciliação tardia de transições. Não altera a stack principal da PoC: API/slices continuam em Next.js, persistência em Supabase Postgres e fan-out via Supabase Realtime Broadcast.
+
+**Invariantes:**
+
+- Playback/queue usa token do dono via vault + refresh server-side; Client Credentials fica restrito a catálogo/busca.
+- Trigger.dev não executa voto por participante, comando do dono ou UX Realtime.
+- Near-end prepara Spotify; dequeue da fila Muziks só ocorre após transição confirmada.
+- Jobs devem ter lock por `playerId`, idempotência e backoff obrigatório para `429`.
+- Self-hosted é opção futura de custo/controle operacional, não requisito do MVP.
+
+Detalhe: [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](../tech/TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md) e [LIMITES-DE-USO-E-CONTINGENCIA.md](../tech/LIMITES-DE-USO-E-CONTINGENCIA.md).
+
+## 10.2 Sincronização local da fila (experimento — fora do MVP)
 
 **Hipótese:** no mesmo espaço físico (mesmo player), propagar **snapshots de leitura** da fila via **WebRTC DataChannel** entre telão e celulares, reduzindo GET repetidos — **sem** alterar POST de voto nem fonte de verdade no Postgres.
 

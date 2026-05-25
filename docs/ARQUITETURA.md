@@ -43,7 +43,7 @@ Base normativa: [MANIFESTO.md](MANIFESTO.md), [specs/01-vision-and-scope.md](spe
 | **Fonte de verdade no Muziks** | Fila, votos e regras vivem no **nosso** banco; Spotify/Deezer são **adaptadores** de catálogo e (MVP-B) execução |
 | **ISRC como língua comum** | Política, fila e votos ancorados em ISRC quando disponível; IDs de provedor como fallback |
 | **Rajada > média** | Dimensionar por pico (“50 votos em 2 min”), não por média diária — [analytics/reports/03-ponte-pedidos-e-sazonalidade.md](analytics/reports/03-ponte-pedidos-e-sazonalidade.md) |
-| **Cardinalidade baixa = Realtime; massa = polling** | Fila pública: HTTP 3–5 s; sessão de playback: Supabase Realtime só no Master/telão |
+| **Snapshot pronto, regra no servidor** | Fila pública: `GET` inicial + Broadcast `queue.snapshot`; fallback polling só em degradação |
 | **Fosso proporcional** | Ver fila/explorar sem login; OAuth só ao **comprometer** voto ou pedido vinculante — [mvp/05-identidade-fosso-participante-voto.md](mvp/05-identidade-fosso-participante-voto.md) |
 | **Portabilidade desde a PoC** | Schema em migrations Drizzle; contratos HTTP estáveis; extração futura para `apps/api` / AWS sem reescrever domínio |
 | **Open source e BR** | Stack comum (Next.js, Supabase, pnpm, Turborepo) para atrair contribuidores |
@@ -76,7 +76,7 @@ Fichas/economia de chips, GPS completo, push avançado, anti-fraude enterprise, 
 
 ### 3.4 Critério de saída e piloto
 
-**Saída técnica:** dono cria player → define política → compartilha link/QR → participantes votam e veem fila atualizada com latência aceitável (polling na borda).
+**Saída técnica:** dono cria player → define política → compartilha link/QR → participantes votam e veem fila atualizada por `queue.snapshot`, com polling como fallback de contingência.
 
 **Piloto de negócio (PoC):** 3–5 estabelecimentos ICP; métrica **≥50 participantes distintos numa noite** com votação válida; backend blindado (rate-limit + fila de escritas); painel firewall obrigatório. Evidência: [analytics/reports/05-insights-para-muziks-hoje.md](analytics/reports/05-insights-para-muziks-hoje.md).
 
@@ -190,11 +190,11 @@ Decisão central para custo e escala na rajada:
 
 | Dado / fluxo | Mecanismo | Assinantes típicos |
 |--------------|-----------|-------------------|
-| **Fila + ranking** | `GET` HTTP + polling **3–5 s** + cache curto | N participantes no salão |
+| **Fila + ranking** | `GET` inicial + Broadcast `queue.snapshot`; polling em degradação | N participantes no salão |
 | **Voto / proposta** | `POST` HTTP + rate-limit + fila de eventos | Um por ação |
-| **Estado playback** (MVP-B) | **Supabase Realtime** canal `player:{id}:session` | Master, telão display, painel dono |
+| **Estado playback** (MVP-B) | **Supabase Realtime** canal `player:{id}` / `session.snapshot` | Master, telão display, painel dono |
 | **Comandos play/pause/skip** | Realtime ou poll curto no Master | Master consome e executa no SDK |
-| **WebSocket por participante** | **Não** na PoC | Adiar até Fase infra C se métrica justificar |
+| **WebSocket próprio por participante** | **Não** na PoC | Supabase Broadcast cobre fila; WS dedicado fica para Fase infra C se métrica justificar |
 
 ```mermaid
 sequenceDiagram
@@ -205,11 +205,9 @@ sequenceDiagram
 
   P->>API: POST /vote rate-limited
   API->>DB: vote_events + apply
-  loop a cada 3-5s
-    P->>API: GET /queue
-    API->>DB: read + cache
-    API-->>P: fila ordenada
-  end
+  API->>DB: read snapshot ordenado
+  API-->>P: Broadcast queue.snapshot
+  P->>API: GET /queue snapshot inicial ou fallback
   Note over M,DB: MVP-B apenas
   M->>DB: upsert player_sessions
   M->>M: Spotify SDK player_state_changed
@@ -238,7 +236,7 @@ Rajada e custos: [mvp/02-viabilidade-custos-comparativo.md](mvp/02-viabilidade-c
 |------------------|------|
 | Áudio, gapless, preload | **Spotify Web Playback SDK** no browser Master (Chrome/kiosk) |
 | Fila lógica, votos, política | **Postgres** (fonte de verdade) |
-| Sync estado sessão | **Supabase Realtime** (baixa cardinalidade) |
+| Sync estado sessão | **Supabase Realtime** `session.snapshot` |
 | Próxima faixa automática | **Cliente** `PlaybackManager` (~5 s antes do fim) |
 | Premium | Só conta do **dono** / estabelecimento |
 
@@ -429,9 +427,9 @@ Essas trilhas **não alteram** a Fase infra A até spike + ADR.
 
 ### 13.4 Negócio, analytics, disrupção
 
-- [business/README.md](business/README.md) — receita, go-to-market  
-- [analytics/reports/00-resumo-executivo.md](analytics/reports/00-resumo-executivo.md) — dados históricos  
-- [disruption/README.md](disruption/README.md) — experimentos  
+- [business/README.md](business/README.md) — receita, go-to-market
+- [analytics/reports/00-resumo-executivo.md](analytics/reports/00-resumo-executivo.md) — dados históricos
+- [disruption/README.md](disruption/README.md) — experimentos
 
 ---
 
@@ -441,7 +439,7 @@ Antes de implementar um incremento grande, validar:
 
 - [ ] Comportamento está em **spec** ou neste doc / `mvp/`?
 - [ ] Escrita de voto passa por **rate-limit + fila**?
-- [ ] Leitura pública da fila usa **polling**, não Realtime em massa?
+- [ ] Leitura pública da fila usa `queue.snapshot` e fallback polling controlado?
 - [ ] MVP-B: áudio só no **Master** com SDK; fila lógica no **Postgres**?
 - [ ] Schema alterado via **`packages/db` migrations**?
 - [ ] Participante autentica com **OAuth Muziks**, não Spotify, para votar?

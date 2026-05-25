@@ -107,7 +107,7 @@ Ordem horizontal **obrigatória** em cada item da fila:
 
 **Separadores:** linha sutil entre itens (equivalente a `Separator` shadcn).
 
-**Atualização:** polling 3–5 s ([09-frontend-architecture.md](09-frontend-architecture.md)); evitar flicker agressivo ([07-ux-copy-and-states.md](07-ux-copy-and-states.md)).
+**Atualização:** snapshot inicial por HTTP + `queue.snapshot` via Supabase Realtime Broadcast ([09-frontend-architecture.md](09-frontend-architecture.md)); em fallback degradado, polling HTTP deve evitar flicker agressivo ([07-ux-copy-and-states.md](07-ux-copy-and-states.md)).
 
 ---
 
@@ -223,7 +223,7 @@ Detalhe de pastas Atomic: [tech/ATOMIC-DESIGN.md](../tech/ATOMIC-DESIGN.md).
 
 | Documento | Uso |
 |-----------|-----|
-| [09-frontend-architecture.md](09-frontend-architecture.md) | Rotas, monorepo, polling |
+| [09-frontend-architecture.md](09-frontend-architecture.md) | Rotas, monorepo, realtime da fila |
 | [tech/PROCESSO-DESENVOLVIMENTO.md](../tech/PROCESSO-DESENVOLVIMENTO.md) | Ambientes e deploy por host |
 | [tech/MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md) | `apps/web` vs `apps/player` |
 | [ARQUITETURA.md](../ARQUITETURA.md) | Visão consolidada |
