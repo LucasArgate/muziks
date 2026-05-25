@@ -2,6 +2,10 @@
 
 Síntese do arquivo **2016–2017** para decisões de PoC/MVP — validar em pilotos antes de meta numérica.
 
+## Conclusão executiva
+
+O arquivo legado indica que o Muziks deve validar o MVP em poucos espaços ICP com alta densidade de uso, não em volume amplo de cadastros. A PoC precisa priorizar firewall do dono, limites/cooldown de voto e métricas de noite qualificada, porque a tração histórica foi concentrada em picos, bares específicos e participantes muito ativos.
+
 ## Snapshot
 
 | indicador | valor |
@@ -21,14 +25,14 @@ Relatórios de origem: [00](00-resumo-executivo.md) · [01](01-oferta-players.md
 ## 1. Infraestrutura — rajada
 
 - **1,088** pedidos num único dia (25/6/2017) e **588** num bar num dia (Toca do Boka) — tráfego **concentrado em horas**, não diluído ([03-ponte](03-ponte-pedidos-e-sazonalidade.md)).
-- **Decisão:** votação `POST` HTTP + rate-limit; fila assíncrona de votos; fila/telão por **polling** na Vercel Edge — **não** WebSocket Supabase por participante no *free tier* ([02-viabilidade-custos](../mvp/02-viabilidade-custos-comparativo.md), [11-backend](../../specs/11-backend-and-integrations-open.md)).
+- **Decisão:** votação `POST` HTTP + rate-limit; fila assíncrona de votos; fila/telão por **polling** na Vercel Edge — **não** WebSocket Supabase por participante no *free tier* ([02-viabilidade-custos](../../mvp/02-viabilidade-custos-comparativo.md), [11-backend](../../specs/11-backend-and-integrations-open.md)).
 
 ## 2. Produto — super usuários e democracia
 
 - Top **10%** dos **1,129** participantes (ficheiro repeat) → **60.1%** dos **20,242** pedidos ([02-demanda](02-demanda-participantes.md)).
 - **3** pessoas na faixa **500+** pedidos — sem teto, um participante muito ativo domina a fila percebida.
 - **64** participantes usaram **>1** bar; **26** usaram **≥3** — identidade OAuth + contexto de player são obrigatórios para limites justos.
-- **Decisão:** cooldown, teto de votos/janela, gamificação no telão **sem** peso ilimitado ([06-queue-voting](../../specs/06-queue-voting-and-chips.md), [05-identidade-fosso](../mvp/05-identidade-fosso-participante-voto.md)).
+- **Decisão:** cooldown, teto de votos/janela, gamificação no telão **sem** peso ilimitado ([06-queue-voting](../../specs/06-queue-voting-and-chips.md), [05-identidade-fosso](../../mvp/05-identidade-fosso-participante-voto.md)).
 
 ## 3. Negócio — ICP, cadastro vs tração
 
@@ -66,7 +70,7 @@ Relatórios de origem: [00](00-resumo-executivo.md) · [01](01-oferta-players.md
 | 2 | Painel dono + firewall | Bloqueio gênero/artista; política por dia da semana |
 | 3 | Piloto 3–5 bares ICP | ≥1 «noite qualificada» (≥50 participantes distintos com voto válido) |
 
-Ver [congelamento-mvp-e-arquitetura.md](../mvp/congelamento-mvp-e-arquitetura.md).
+Ver [congelamento-mvp-e-arquitetura.md](../../mvp/congelamento-mvp-e-arquitetura.md).
 
 ## O que não fazer
 

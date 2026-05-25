@@ -46,8 +46,8 @@ Métricas modernas (oferta, demanda, ponte, loop): [specs/13-kpis-fases-e-loops.
 ## Limitações metodológicas
 
 - Dados de **2016–2017**; mercado, stack e produto mudaram.
-- Pesquisa de empatia / design thinking **não** tinha registos quantitativos preservados — ver [design-thinking-evidence-and-inferences.md](../disruption/design-thinking-evidence-and-inferences.md).
-- Estes exports são **operação do app antigo**, recuperados depois; use como evidência histórica, não como meta de escala atual.
+- A pesquisa de empatia / design thinking **não** tinha registos quantitativos preservados — ver [design-thinking-evidence-and-inferences.md](../disruption/design-thinking-evidence-and-inferences.md).
+- Estes exports são **telemetria operacional quantitativa do app antigo**, recuperada depois; use como evidência histórica, não como meta de escala atual.
 - Cadastro de bares é CRM interno: [LGPD](../specs/08-nfr-privacy-accessibility.md) — agregados apenas.
 
 ## Conteúdo desta pasta
