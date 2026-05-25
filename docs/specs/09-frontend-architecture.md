@@ -6,7 +6,7 @@
 - **App participante:** Next.js (App Router) em `apps/web` — host `muziks.app/{slug}`.
 - **App master (Spotify):** Next.js em `apps/player` (placeholder) — host `player.muziks.app/{slug}`.
 - **Blog:** Next.js em `apps/blog` — host `blog.muziks.com.br` (deploy Vercel separado).
-- **Legado:** `player.muziks.app/{slug}` era host único; substituído pelo split acima — ver [16-ui-player-e-fila.md](16-ui-player-e-fila.md).
+- **Legado:** `player.muziks.app/{slug}` concentrava a experiência antiga; o split atual mantém `muziks.app` para participante e reserva `player.muziks.app` para o master — ver [16-ui-player-e-fila.md](16-ui-player-e-fila.md).
 - **UI:** React 18 + TypeScript.
 - **Estilo:** Tailwind CSS.
 - **Componentes:** shadcn/ui em `packages/ui` (primitivos) e composição em `apps/web` — [ATOMIC-DESIGN.md](../tech/ATOMIC-DESIGN.md).

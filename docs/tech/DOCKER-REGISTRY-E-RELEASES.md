@@ -240,7 +240,7 @@ Registrar no Linear issue `infra` ao cruzar cada gatilho.
 
 - [ ] Issues Linear da release fechadas ou movidas
 - [ ] `staging` verde (lint, build, migrate)
-- [ ] Smoke em `staging.player.muziks.app` documentado
+- [ ] Smoke em `staging-player.muziks.app` documentado
 - [ ] Changelog / Release notes redigidos
 - [ ] Sem secrets no Dockerfile nem na imagem
 - [ ] Migrations idempotentes e testadas

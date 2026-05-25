@@ -46,7 +46,7 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 
 - O **slug universal** do player identifica o contexto na URL pública — alinhar a [05-discovery-and-access.md](../specs/05-discovery-and-access.md).
 - UI do participante (hero, fila, avatares): [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
-- **Legado:** `player.muziks.app` era host único; substituído pelo split acima.
+- **Legado:** `player.muziks.app` concentrava a experiência antiga; no split atual, `muziks.app` atende participante e `player.muziks.app` fica para o master.
 - Apex `muziks.com.br` pode redirecionar para o blog (registros na **Cloudflare** → origin Vercel).
 - **Dois projetos Vercel** — políticas de branch e CI distintas ([PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md)).
 - **DNS** já na Cloudflare; proxy laranja na frente da Vercel. Recursos CF adicionais (R2, Pages, Workers): [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) §1.4.

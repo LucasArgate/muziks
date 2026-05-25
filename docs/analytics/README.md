@@ -66,16 +66,16 @@ Métricas modernas (oferta, demanda, ponte, loop): [specs/13-kpis-fases-e-loops.
 1. Coloque os 12 CSV em [`data/`](data/README.md) (lista de nomes no README de `data/`).
 2. Na pasta `scripts/`:
 
-```bash
-cd docs/analytics/scripts
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Linux/macOS: source .venv/bin/activate
-pip install -r requirements.txt
-python run_all.py
-```
+   ```bash
+   cd docs/analytics/scripts
+   python -m venv .venv
+   # Windows: .venv\Scripts\activate
+   # Linux/macOS: source .venv/bin/activate
+   pip install -r requirements.txt
+   python run_all.py
+   ```
 
-No Windows, se `python` não estiver no PATH: `py -3 run_all.py`.
+   No Windows, se `python` não estiver no PATH: `py -3 run_all.py`.
 
 3. Revise os ficheiros em [`reports/`](reports/) e as amostras em [`data/sample/`](data/sample/).
 
