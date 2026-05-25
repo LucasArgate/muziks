@@ -2,6 +2,7 @@ import {
   getAccessTokenForPlayer as getAccessTokenForPlayerCore,
   getAccessTokenForUser as getAccessTokenForUserCore,
   hasValidConnectionForUser as hasValidConnectionForUserCore,
+  persistSpotifyAccessToken as persistSpotifyAccessTokenCore,
   persistSpotifyTokens as persistSpotifyTokensCore,
 } from "@muziks/db";
 import type { SpotifyTokenResponse } from "@muziks/spotify";
@@ -13,6 +14,19 @@ export async function persistSpotifyTokens(
   tokens: SpotifyTokenResponse,
 ): Promise<void> {
   return persistSpotifyTokensCore(userId, tokens, getSpotifyTokenVaultDeps());
+}
+
+export async function persistSpotifyAccessToken(
+  userId: string,
+  accessToken: string,
+  expiresAt: Date,
+): Promise<void> {
+  return persistSpotifyAccessTokenCore(
+    userId,
+    accessToken,
+    expiresAt,
+    getSpotifyTokenVaultDeps(),
+  );
 }
 
 export async function getAccessTokenForUser(

@@ -25,6 +25,8 @@ function deriveStatus(
 export function normalizeApiPlaybackState(
   state: SpotifyApiPlaybackState | null,
 ): NormalizedSpotifyPlayerState {
+  const positionUpdatedAt = Date.now();
+
   if (!state) {
     return {
       trackUri: null,
@@ -50,7 +52,7 @@ export function normalizeApiPlaybackState(
       : null,
     albumImageUrl: pickAlbumImageUrl(track),
     positionMs: state.progress_ms ?? 0,
-    positionUpdatedAt: state.timestamp,
+    positionUpdatedAt,
     durationMs: track?.duration_ms ?? 0,
     paused: !state.is_playing,
     deviceId,

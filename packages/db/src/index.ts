@@ -23,9 +23,13 @@ export {
 export { castVoteOnQueueItem, type CastVoteResult } from "./repositories/vote-events";
 export {
   getAccessTokenForPlayer,
+  getAccessTokenForPlayerSlug,
   getAccessTokenForUser,
   hasValidConnectionForUser,
+  persistSpotifyAccessToken,
   persistSpotifyTokens,
+  type PlayerSpotifyAccessTokenError,
+  type PlayerSpotifyAccessTokenResult,
   type SpotifyTokenVaultDeps,
 } from "./repositories/spotify-token-vault";
 export {

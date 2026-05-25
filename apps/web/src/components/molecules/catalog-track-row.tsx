@@ -1,40 +1,39 @@
 import type { CatalogTrack } from "@muziks/types";
+import { QueueTrackRow } from "@muziks/ui";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/src/components/ui/button";
+import { cn } from "@/src/lib/utils";
 
 type CatalogTrackRowProps = {
   track: CatalogTrack;
   onSelect: () => void;
+  className?: string;
 };
 
-export function CatalogTrackRow({ track, onSelect }: CatalogTrackRowProps) {
+export function CatalogTrackRow({
+  track,
+  onSelect,
+  className,
+}: CatalogTrackRowProps) {
   return (
-    <li className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-outline/10">
-      {track.albumImageUrl ? (
-        <img
-          src={track.albumImageUrl}
-          alt=""
-          className="h-10 w-10 shrink-0 rounded-md object-cover"
-        />
-      ) : (
-        <span
-          aria-hidden
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-outline/20 text-xs text-on-surface-variant"
+    <QueueTrackRow
+      title={track.title}
+      artist={track.artist}
+      albumImageUrl={track.albumImageUrl}
+      className={cn("transition hover:bg-white/[0.06]", className)}
+      trailing={
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          className="h-9 w-9 rounded-full border-primary/40 text-primary hover:bg-primary/10"
+          onClick={onSelect}
+          aria-label={`Escolher ${track.title}`}
         >
-          ♪
-        </span>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-on-surface">
-          {track.title}
-        </p>
-        <p className="truncate text-xs text-on-surface-variant">
-          {track.artist}
-        </p>
-      </div>
-      <Button type="button" size="sm" variant="secondary" onClick={onSelect}>
-        Escolher
-      </Button>
-    </li>
+          <Plus className="h-4 w-4" />
+        </Button>
+      }
+    />
   );
 }

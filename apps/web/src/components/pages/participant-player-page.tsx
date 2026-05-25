@@ -8,6 +8,7 @@ import { CatalogSearchPanel } from "@/src/components/organisms/catalog-search-pa
 import { IdentityGateDialog } from "@/src/components/organisms/identity-gate-dialog";
 import { ParticipantQueueList } from "@/src/components/organisms/participant-queue-list";
 import { PlayerHeroNowPlaying } from "@/src/components/organisms/player-hero-now-playing";
+import { SpotifyUpcomingQueueList } from "@/src/components/organisms/spotify-upcoming-queue-list";
 import {
   clearPendingVote,
   readPendingVote,
@@ -147,6 +148,8 @@ export function ParticipantPlayerPage({
         onVote={handleVoteRequest}
         votingItemId={votingItemId}
       />
+
+      <SpotifyUpcomingQueueList slug={slug} />
 
       <IdentityGateDialog
         open={gateOpen}
