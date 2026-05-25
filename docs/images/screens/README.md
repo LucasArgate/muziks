@@ -2,7 +2,7 @@
 
 Catálogo das capturas de tela do **produto histórico** (PWA Android, ~2017–2018). Servem como **referência visual** para a spec normativa [16-ui-player-e-fila.md](../../specs/16-ui-player-e-fila.md).
 
-**Host legado:** `app.muziks.com.br` (não confundir com hosts atuais `muziks.app` e `player.muziks.com`).
+**Host legado:** `app.muziks.com.br` (não confundir com hosts atuais `muziks.app` e `player.muziks.app`).
 
 ---
 
@@ -22,7 +22,7 @@ O layout alvo está descrito em texto na spec 16:
 - Capa da **música** à esquerda da linha da fila (não avatar de usuário).
 - Pilha de até **4** avatares + **`+N`** entre texto e botão **+**.
 - Toque na pilha → lista completa de selecionadores.
-- Participante em **`muziks.app/{slug}`**; master Spotify em **`player.muziks.com/{slug}`**.
+- Participante em **`muziks.app/{slug}`**; master Spotify em **`player.muziks.app/{slug}`**.
 
 ---
 

@@ -14,7 +14,7 @@ Documentos irmãos: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md)
 muziks/                          ← raiz do monorepo
 ├── apps/
 │   ├── web/                     ← muziks.app/{slug} — PWA, fila, participante, telão
-│   ├── player/                  ← player.muziks.com/{slug} — master Spotify (placeholder)
+│   ├── player/                  ← player.muziks.app/{slug} — master Spotify (placeholder)
 │   ├── spotify-bridge/          ← VM/Docker: librespot + WS → API interna (ver ADR-spotify-state-sync)
 │   ├── blog/                    ← blog.muziks.com.br
 │   ├── admin/                   ← futuro painel admin (placeholder)
@@ -42,11 +42,11 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 |---------|-----|-------------|-----------|----------------|
 | **muziks.com.br** | `apps/blog` | **blog.muziks.com.br** | dev + prod | Separado |
 | **muziks.app** | `apps/web` | **muziks.app/{universal-slug-player-name}** | dev + staging + prod | Separado |
-| **player.muziks.com** | `apps/player` | **player.muziks.com/{universal-slug-player-name}** | dev + staging + prod | Separado (ou multi-host em `web` até `player` existir) |
+| **player.muziks.app** | `apps/player` | **player.muziks.app/{universal-slug-player-name}** | dev + staging + prod | Separado (ou multi-host em `web` até `player` existir) |
 
 - O **slug universal** do player identifica o contexto na URL pública — alinhar a [05-discovery-and-access.md](../specs/05-discovery-and-access.md).
 - UI do participante (hero, fila, avatares): [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
-- **Legado:** `player.muziks.app` era host único; substituído pelo split acima.
+- **Legado:** `player.muziks.app` concentrava a experiência antiga; no split atual, `muziks.app` atende participante e `player.muziks.app` fica para o master.
 - Apex `muziks.com.br` pode redirecionar para o blog (registros na **Cloudflare** → origin Vercel).
 - **Dois projetos Vercel** — políticas de branch e CI distintas ([PROCESSO-DESENVOLVIMENTO.md](PROCESSO-DESENVOLVIMENTO.md)).
 - **DNS** já na Cloudflare; proxy laranja na frente da Vercel. Recursos CF adicionais (R2, Pages, Workers): [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) §1.4.
@@ -63,7 +63,7 @@ Opcional na Fase A: `packages/config` (`eslint-config`, `tsconfig` base) quando 
 
 ### 3.1b `apps/player` (placeholder — master Spotify)
 
-- Host `player.muziks.com/[slug]/...`; login Spotify e playback ([06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)).
+- Host `player.muziks.app/[slug]/...`; login Spotify e playback ([06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)).
 - Até o app existir: rotas master podem viver em `apps/web` com middleware por host ou subdomínio.
 
 ### 3.2 `apps/blog` (PoC ou logo após `web`)

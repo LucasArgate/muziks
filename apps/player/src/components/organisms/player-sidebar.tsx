@@ -4,10 +4,9 @@ import type { NormalizedSpotifyPlayerState, PlaybackSyncMode, ProfileSummary } f
 import { cn } from "@muziks/utils";
 import Link from "next/link";
 
-import { MuziksLogo } from "@muziks/ui";
+import { GlassNavItem, MuziksLogo } from "@muziks/ui";
 
 import { OwnerProfileBlock } from "@/src/components/molecules/owner-profile-block";
-import { Button } from "@/src/components/ui/button";
 
 import { PlayerBar } from "@/src/components/molecules/player-bar";
 import {
@@ -20,7 +19,10 @@ type PlayerSidebarProps = {
   profile: ProfileSummary | null;
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
-  onTogglePlay: () => void;
+  playPauseLoading?: boolean;
+  skipLoading?: boolean;
+  onTogglePlay: () => void | Promise<void>;
+  onSkipNext: () => void | Promise<void>;
   syncMode?: PlaybackSyncMode;
   deviceName?: string | null;
   showConnectBadge?: boolean;
@@ -34,7 +36,10 @@ export function PlayerSidebar({
   profile,
   playback,
   ready,
+  playPauseLoading,
+  skipLoading,
   onTogglePlay,
+  onSkipNext,
   syncMode,
   deviceName,
   showConnectBadge,
@@ -47,7 +52,7 @@ export function PlayerSidebar({
   return (
     <aside
       className={cn(
-        "hidden h-dvh w-60 shrink-0 flex-col border-r border-outline/40 bg-surface/80 md:flex",
+        "hidden h-dvh w-60 shrink-0 flex-col border-r border-outline/40 bg-surface/40 md:flex",
         className,
       )}
     >
@@ -59,18 +64,12 @@ export function PlayerSidebar({
         </p>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-1 overflow-hidden px-3 py-4">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {navItems.map((item) => (
-          <Button
+          <GlassNavItem
             key={item.label}
-            variant="ghost"
+            active={item.active}
             disabled={item.disabled}
-            className={cn(
-              "h-auto w-full justify-start rounded-lg px-3 py-2 text-sm font-medium",
-              item.active
-                ? "bg-surface-container-high text-on-surface hover:bg-surface-container-high"
-                : "text-on-surface-variant",
-            )}
             asChild={!item.disabled}
           >
             {item.disabled ? (
@@ -81,7 +80,7 @@ export function PlayerSidebar({
             ) : (
               <Link href={item.href}>{item.label}</Link>
             )}
-          </Button>
+          </GlassNavItem>
         ))}
       </nav>
 
@@ -89,7 +88,10 @@ export function PlayerSidebar({
         <PlayerBar
           playback={playback}
           ready={ready}
+          playPauseLoading={playPauseLoading}
+          skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}
+          onSkipNext={onSkipNext}
           syncMode={syncMode}
           deviceName={deviceName}
           showConnectBadge={showConnectBadge}

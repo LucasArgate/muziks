@@ -4,7 +4,7 @@ O Web Playback SDK é frágil (aba fechada, background throttling, OS matando o 
 
 ### Arquitetura Recomendada (híbrida e resiliente)
 
-#### 1. **Player Master** (`player.muziks.com`)
+#### 1. **Player Master** (`player.muziks.app`)
 - **Principal fonte de verdade de controle** → roda no navegador ou Electron do dono.
 - **Não depende exclusivamente do SDK** para observar o estado.
 - Usa **Spotify Web API** para polling + comandos.
@@ -56,7 +56,7 @@ async function syncPlaybackState() {
 
 #### 3. Fluxo ideal de operação
 
-1. Dono abre `player.muziks.com/{slug}` e faz login Spotify (Premium).
+1. Dono abre `player.muziks.app/{slug}` e faz login Spotify (Premium).
 2. O Master **lista dispositivos** (`/me/player/devices`).
 3. Dono seleciona o dispositivo principal (ex: "Soundbar da Sala" ou "Celular do DJ").
 4. **Transfer Playback** para esse device quando necessário.

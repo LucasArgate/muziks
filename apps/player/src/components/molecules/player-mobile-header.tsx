@@ -1,6 +1,7 @@
 "use client";
 
-import { MuziksLogo } from "@muziks/ui";
+import { MuziksLogo, glassSurfaceClass } from "@muziks/ui";
+import { cn } from "@muziks/utils";
 import { Menu } from "lucide-react";
 
 import { ShareParticipantLinkButton } from "@/src/components/molecules/share-participant-link-button";
@@ -24,7 +25,10 @@ export function PlayerMobileHeader({
         variant="ghost"
         size="icon"
         onClick={onOpenNav}
-        className="shrink-0"
+        className={cn(
+          "shrink-0",
+          glassSurfaceClass({ variant: "functional", radius: "pill" }),
+        )}
         aria-label="Abrir menu"
         aria-expanded={navOpen}
       >

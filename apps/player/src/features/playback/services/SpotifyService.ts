@@ -48,6 +48,8 @@ async function fetchAccessToken(): Promise<string> {
 export type SpotifyServiceInstance = {
   player: Spotify.Player;
   getDeviceId: () => string | null;
+  setDeviceId: (deviceId: string | null) => void;
+  getCurrentState: () => Promise<Spotify.PlaybackState | null>;
   connect: () => Promise<void>;
   disconnect: () => void;
 };
@@ -71,17 +73,13 @@ export async function initializeSpotifyPlayer(
     volume: 0.8,
   });
 
-  player.addListener("ready", ({ device_id }) => {
-    deviceId = device_id;
-  });
-
-  player.addListener("not_ready", () => {
-    deviceId = null;
-  });
-
   return {
     player,
     getDeviceId: () => deviceId,
+    setDeviceId: (id) => {
+      deviceId = id;
+    },
+    getCurrentState: () => player.getCurrentState(),
     connect: async () => {
       const connected = await player.connect();
       if (!connected) {

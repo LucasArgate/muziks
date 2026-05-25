@@ -32,6 +32,14 @@ Player colaborativo com **democracia na fila** e **firewall de som**: quem está
 
 **Tech (implementação futura):** [Especificação do cliente (PWA)](docs/tech/ESPECIFICACAO-FRONTEND.md) · [Atomic Design](docs/tech/ATOMIC-DESIGN.md) · [Comunicação e operação (Discord, notificações, MCP admin)](docs/tech/MEIOS-DE-COMUNICACAO-E-OPERACAO.md)
 
+## Agradecimentos
+
+Muziks também existe pelo corre de quem acreditou, ajudou e deu o sangue para tirar a ideia do campo da vontade.
+
+| [![Alcides Silva](https://images.weserv.nl/?url=github.com/alcidessillva.png&h=72&w=72&fit=cover&mask=circle)](https://github.com/alcidessillva) | [![Matheus Borba](https://images.weserv.nl/?url=github.com/mathborba94.png&h=72&w=72&fit=cover&mask=circle)](https://github.com/mathborba94) | ![Lucas Servidoni](https://ui-avatars.com/api/?name=Lucas+Servidoni&background=0D1117&color=FFFFFF&size=72&rounded=true) | ![Nestor Girardi](https://ui-avatars.com/api/?name=Nestor+Girardi&background=0D1117&color=FFFFFF&size=72&rounded=true) |
+| :----------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------: |
+| [Alcides Silva](https://github.com/alcidessillva)                                                                                                | [Matheus Borba](https://github.com/mathborba94)                                                                                              | Lucas Servidoni                                                                                                          | Nestor Girardi                                                                                                         |
+
 ## Agentes e contribuição
 
 Orientação para quem edita o repositório com IA ou manualmente: [AGENTS.md](AGENTS.md) (escopo em documentação, `pnpm` quando houver app, convenções de front).
@@ -42,4 +50,4 @@ O conteúdo deste repositório está sob [**Apache License 2.0**](LICENSE). Essa
 
 ## Estado do projeto
 
-Conceito com raízes em **2013–2015**; hoje o foco deste repo é **fundamento e clareza** (incluindo licença e marca) para evoluir com open source, MVP e parceiros sem ambiguidade na origem do software nem na identidade do produto.
+Conceito com raízes em **2013–2019**; hoje o foco deste repo é **fundamento e clareza** (incluindo licença e marca) para evoluir com open source, MVP e parceiros sem ambiguidade na origem do software nem na identidade do produto.

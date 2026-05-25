@@ -270,7 +270,7 @@ Fluxo **valor → por quê → dados** antes do OAuth. IdPs: Google, Apple, Meta
 |--------|------------|
 | Monorepo | **Turborepo** + `pnpm` |
 | App participante | **Next.js** App Router — `apps/web` → `muziks.app/{slug}` |
-| App master (Spotify) | **Next.js** — `apps/player` → `player.muziks.com/{slug}` |
+| App master (Spotify) | **Next.js** — `apps/player` → `player.muziks.app/{slug}` |
 | Blog | **Next.js** — `apps/blog` → `blog.muziks.com.br` |
 | Banco / Auth / Storage | **Supabase** (Free) + **Drizzle** em `packages/db` |
 | API (PoC) | API Routes / Server Actions em `apps/web` |
@@ -313,7 +313,7 @@ Extração: `apps/api` ou NestJS mantendo `packages/db` e contratos HTTP (strang
 ```
 muziks/
 ├── apps/web/          ← muziks.app — PWA, fila, telão, participante
-├── apps/player/       ← player.muziks.com — master Spotify (placeholder)
+├── apps/player/       ← player.muziks.app — master Spotify (placeholder)
 ├── apps/blog/
 ├── apps/admin/        ← placeholder
 ├── apps/api/          ← placeholder (pós-gatilho 5 players)
@@ -328,7 +328,7 @@ muziks/
 
 ### 9.2 Frontend — Atomic Design
 
-Componentes por camada (átomo → página); features em `apps/web/src/features/`. Layout do player participante (hero, fila, avatares) e split **muziks.app** / **player.muziks.com**: [specs/16-ui-player-e-fila.md](specs/16-ui-player-e-fila.md). Convenções: [tech/ATOMIC-DESIGN.md](tech/ATOMIC-DESIGN.md), [specs/09-frontend-architecture.md](specs/09-frontend-architecture.md).
+Componentes por camada (átomo → página); features em `apps/web/src/features/`. Layout do player participante (hero, fila, avatares) e split **muziks.app** / **player.muziks.app**: [specs/16-ui-player-e-fila.md](specs/16-ui-player-e-fila.md). Convenções: [tech/ATOMIC-DESIGN.md](tech/ATOMIC-DESIGN.md), [specs/09-frontend-architecture.md](specs/09-frontend-architecture.md).
 
 ### 9.3 Backend — Vertical Slice Architecture
 

@@ -70,8 +70,10 @@ export function usePlaybackProgress(
     setLiveNow(Date.now());
   }, [snapshot, hydrated]);
 
+  const paused = snapshot?.paused ?? true;
+
   useEffect(() => {
-    if (!hydrated || !snapshot || snapshot.paused || snapshot.durationMs <= 0) {
+    if (!hydrated || !snapshot || paused || snapshot.durationMs <= 0) {
       return;
     }
 
@@ -82,7 +84,7 @@ export function usePlaybackProgress(
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [snapshot, hydrated]);
+  }, [paused, snapshot, hydrated]);
 
   if (!snapshot || snapshot.durationMs <= 0) {
     return EMPTY;

@@ -7,6 +7,15 @@
 - **Honesto em erros:** falha técnica ≠ “você errou”.
 - **Sem jargon:** evitar códigos internos na superfície primária.
 
+## Posicionamento de superfície (agência, não curadoria)
+
+Contexto de mercado: [agencia-pertencimento-e-aderencia-comportamental.md](../disruption/agencia-pertencimento-e-aderencia-comportamental.md).
+
+- **Preferir** linguagem de **pertencimento no ambiente** (“influenciar o rolê”, “deixar sua marca na noite”, “quem está escolhendo agora”) em vez de “escolher a música” ou “ser DJ”.
+- **Não** pressupor que o usuário é apaixonado por música; convites devem soar como **opcional e rápido**, não como obrigação cultural.
+- **Espectador** é estado válido — copy de entrada não deve humilhar quem só observa a fila.
+- Mensagens de **bloqueio** e **portão de identidade** mantêm o tom cortês acima; o gancho de participação é agência no espaço, não culpa por “não entender música”.
+
 ## Estados de interface (catálogo mínimo)
 
 | Estado | Descrição | Comportamento esperado |

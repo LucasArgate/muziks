@@ -28,6 +28,11 @@ export function normalizeSpotifyPlaybackState(
   deviceId: string | null,
 ): NormalizedSpotifyPlayerState {
   const track = state?.track_window.current_track;
+  const durationMs = state?.duration ?? 0;
+  // Web Playback SDK: `position` is already ms at event time (Spotify reference).
+  const positionMs =
+    state && Number.isFinite(state.position) ? Math.max(0, state.position) : 0;
+  const positionUpdatedAt = Date.now();
 
   return {
     trackUri: track?.uri ?? null,
@@ -36,9 +41,9 @@ export function normalizeSpotifyPlaybackState(
       ? track.artists.map((artist) => artist.name).join(", ")
       : null,
     albumImageUrl: pickAlbumImageUrl(track),
-    positionMs: state?.position ?? 0,
-    positionUpdatedAt: Date.now(),
-    durationMs: state?.duration ?? 0,
+    positionMs,
+    positionUpdatedAt,
+    durationMs,
     paused: state?.paused ?? true,
     deviceId,
     status: deriveStatus(state, deviceId),

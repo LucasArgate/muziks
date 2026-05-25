@@ -88,7 +88,7 @@ flowchart TB
 - Barra de **busca** e campos sobre o hero.
 - **Sheet** de selecionadores, portões OAuth, toasts e banners de estado.
 - Linhas da **fila** em hover/foco; chips de política; barras fixas inferiores/superiores.
-- Painéis do **master** (`player.muziks.com`) e cards de configuração.
+- Painéis do **master** (`player.muziks.app`) e cards de configuração.
 - **Telão:** legendas, QR, rodapé de informação — nunca o artwork central da faixa.
 
 **Onde não deve aparecer:**
@@ -372,7 +372,7 @@ Podem aparecer em telão, onboarding ou marketing — **não** competir com capa
 | Superfície | Identidade | Material |
 |------------|------------|----------|
 | **muziks.app** (participante) | Dark-first; hero + fila; azul só em ações | Hero: **Liquid Glass**; fila/sheets: **Glassmorphism** |
-| **player.muziks.com** (master) | Mesma base; status de sessão e Spotify | Predominante **Glassmorphism** |
+| **player.muziks.app** (master) | Mesma base; status de sessão e Spotify | Predominante **Glassmorphism** |
 | **Telão** | Tipografia **maior**; rostos só com consentimento ([12-telao-display-publico.md](specs/12-telao-display-publico.md)) | Faixa em destaque: **Liquid Glass**; legendas: **Glassmorphism** |
 | **blog.muziks.com.br** | Fundo claro + `muziks-dark` | Glass invertido (§3.4); hero marketing pode usar Liquid Glass |
 

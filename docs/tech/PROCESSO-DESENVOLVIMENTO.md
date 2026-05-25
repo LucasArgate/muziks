@@ -111,7 +111,7 @@ Filtros Turborepo: `turbo run build --filter=@muziks/web` (ou equivalente).
 |------------|-----|---------|------------------|-----------|-------|
 | **Blog** | `apps/blog` | **blog.muziks.com.br** | GitFlow: `main`, `develop`, `feature/*` | **dev** + **prod** | Lint + deploy preview (PR) / prod (`main`) |
 | **Participante (fila / PWA)** | `apps/web` | **muziks.app/{slug}** | `main` protegida; `staging` long-lived; `feature/*` | **dev** + **staging** + **prod** | Lint, `db:migrate` staging, deploy; **release** tag → prod |
-| **Player master (Spotify)** | `apps/player` (placeholder) | **player.muziks.com/{slug}** | Igual `web` quando existir | **dev** + **staging** + **prod** | Lint + deploy; pode compartilhar pipeline com `web` |
+| **Player master (Spotify)** | `apps/player` (placeholder) | **player.muziks.app/{slug}** | Igual `web` quando existir | **dev** + **staging** + **prod** | Lint + deploy; pode compartilhar pipeline com `web` |
 | **Admin** (futuro) | `apps/admin` | TBD | Igual `web` quando existir | staging + prod | `--filter=admin` |
 | **API** (futuro) | `apps/api` | TBD | Igual `web` quando extraído | staging + prod | Deploy Railway/Fly/AWS |
 | **Docs** | `docs/` na raiz | — | PR → `main` (GitFlow leve) | só git | Opcional: link check markdown |
@@ -141,11 +141,11 @@ Sem ambiente **staging** dedicado — preview Vercel por PR cobre revisão.
 
 ## 4. Matriz de ambientes
 
-| Ambiente | Blog (`muziks.com.br`) | Participante (`muziks.app`) | Master (`player.muziks.com`) | Banco | URL típica |
+| Ambiente | Blog (`muziks.com.br`) | Participante (`muziks.app`) | Master (`player.muziks.app`) | Banco | URL típica |
 |----------|------------------------|----------------------------|------------------------------|-------|------------|
 | **dev** | Vercel Preview / `pnpm dev` local | Local + **Cloudflare Tunnel** (OAuth, teste em celular) | Local ou preview | Supabase projeto **dev** | `*.vercel.app`, URL do tunnel |
-| **staging** | — | `staging.muziks.app` (ou preview dedicado) | `staging.player.muziks.com` | Supabase projeto **staging** | subdomínios staging |
-| **prod** | **blog.muziks.com.br** | **muziks.app/{slug}** | **player.muziks.com/{slug}** | Supabase **prod** → futuro RDS | domínios finais |
+| **staging** | — | `staging.muziks.app` (ou preview dedicado) | `staging-player.muziks.app` | Supabase projeto **staging** | subdomínios staging |
+| **prod** | **blog.muziks.com.br** | **muziks.app/{slug}** | **player.muziks.app/{slug}** | Supabase **prod** → futuro RDS | domínios finais |
 
 **DNS (todos os ambientes):** zonas **muziks.app** e **muziks.com.br** na **Cloudflare** (já configurado). Produção e staging usam registros na CF apontando para o origin (**Vercel** na PoC); proxy laranja ativo para CDN/SSL/DDoS. Detalhe de recursos CF opcionais: [STACK-E-FASES-DE-MIGRACAO.md](STACK-E-FASES-DE-MIGRACAO.md) §1.4.
 
@@ -153,12 +153,12 @@ Sem ambiente **staging** dedicado — preview Vercel por PR cobre revisão.
 |------------|----------|---------------------|
 | `muziks.app` | prod | Projeto Vercel `apps/web` |
 | `staging.muziks.app` | staging | Preview ou projeto Vercel staging (`web`) |
-| `player.muziks.com` | prod | Projeto Vercel `apps/player` (ou zona em `web` até app existir) |
-| `staging.player.muziks.com` | staging | Preview staging do master |
+| `player.muziks.app` | prod | Projeto Vercel `apps/player` (ou zona em `web` até app existir) |
+| `staging-player.muziks.app` | staging | Preview staging do master |
 | `blog.muziks.com.br` | prod | Projeto Vercel `apps/blog` |
 | `*.vercel.app` | dev/preview | Deploy automático PR (pode ficar só na Vercel ou espelhar CNAME na CF) |
 
-**Legado:** `player.muziks.app` e `app.muziks.com.br` foram hosts únicos do produto antigo; o split **muziks.app** (visualização) + **player.muziks.com** (Spotify) está em [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
+**Legado:** `app.muziks.com.br` foi host do produto antigo; o split **muziks.app** (visualização) + **player.muziks.app** (Spotify) está em [16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md).
 
 ### 4.1 Cloudflare Tunnel (dev local do player)
 
