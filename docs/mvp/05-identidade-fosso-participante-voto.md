@@ -127,7 +127,7 @@ Quando fechar lista exata de IdPs, política de retenção de IP/device e **copy
 |---------|-----------|
 | **Objetivo** | Identificar quem vota com `spotify_user_id` estável via OAuth; **sem** playback nem menção a Premium no web participante. |
 | **Escopos** | Mínimos (ex.: `user-read-email`); **não** gravar `spotify_connections` de playback no fluxo participante. |
-| **Separação** | Login Spotify do **dono** permanece em `player.muziks.com` com scopes de execução; cookies/state PKCE distintos do participante. |
+| **Separação** | Login Spotify do **dono** permanece em `player.muziks.app` com scopes de execução; cookies/state PKCE distintos do participante. |
 | **Copy** | Portão **valor → por quê → dados** inalterado; o botão pode ser “Continuar com Spotify” em vez de Google/Apple. |
 | **Futuro** | Muziks OAuth como IdP principal; Spotify opcional para vincular gostos; **links de afiliados** para criação de conta Spotify fora do escopo desta PoC (produto/compliance). |
 

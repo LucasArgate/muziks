@@ -1,6 +1,6 @@
 # Orientação para agentes — `apps/player`
 
-App **master Spotify** em `player.muziks.com/{slug}`. Playback, login Spotify, fila do dono e sessão.
+App **master Spotify** em `player.muziks.app/{slug}`. Playback, login Spotify, fila do dono e sessão.
 
 Leitura obrigatória do monorepo: [`AGENTS.md`](../../AGENTS.md). Specs: [09-frontend-architecture.md](../../docs/specs/09-frontend-architecture.md), [ATOMIC-DESIGN.md](../../docs/tech/ATOMIC-DESIGN.md), [06-arquitetura-playback-spotify.md](../../docs/mvp/06-arquitetura-playback-spotify.md).
 

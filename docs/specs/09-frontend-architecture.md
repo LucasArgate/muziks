@@ -4,7 +4,7 @@
 
 - **Monorepo:** Turborepo + `pnpm` — ver [MONOREPO-TURBOREPO.md](../tech/MONOREPO-TURBOREPO.md).
 - **App participante:** Next.js (App Router) em `apps/web` — host `muziks.app/{slug}`.
-- **App master (Spotify):** Next.js em `apps/player` (placeholder) — host `player.muziks.com/{slug}`.
+- **App master (Spotify):** Next.js em `apps/player` (placeholder) — host `player.muziks.app/{slug}`.
 - **Blog:** Next.js em `apps/blog` — host `blog.muziks.com.br` (deploy Vercel separado).
 - **Legado:** `player.muziks.app/{slug}` era host único; substituído pelo split acima — ver [16-ui-player-e-fila.md](16-ui-player-e-fila.md).
 - **UI:** React 18 + TypeScript.
@@ -25,7 +25,7 @@ No monorepo, a árvore Atomic Design vive principalmente em **`packages/ui`** (�
 | Host | App | Rota típica | Responsabilidade |
 |------|-----|-------------|------------------|
 | `muziks.app` | `apps/web` | `/[slug]` | Hero, fila, votos, busca, pilha de avatares — [16-ui-player-e-fila.md](16-ui-player-e-fila.md) |
-| `player.muziks.com` | `apps/player` | `/[slug]` | Login Spotify, playback, sessão do dono — [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
+| `player.muziks.app` | `apps/player` | `/[slug]` | Login Spotify, playback, sessão do dono — [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
 | `blog.muziks.com.br` | `apps/blog` | `/` | Conteúdo institucional |
 
 QR e deep links de descoberta **devem** apontar para `muziks.app/{slug}` ([05-discovery-and-access.md](05-discovery-and-access.md)).

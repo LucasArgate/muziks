@@ -15,10 +15,10 @@
 | Superfície | Host | Público | O que esta spec cobre |
 |------------|------|---------|------------------------|
 | **Visualização / participante** | `muziks.app/{slug-player}` | Espectador e participante | Hero, fila, busca, pilha de avatares, tela expandida de selecionadores |
-| **Player master** | `player.muziks.com/{slug-player}` | Dono / operador do espaço | Apenas **referência** de host; layout e fluxo de login Spotify em [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
+| **Player master** | `player.muziks.app/{slug-player}` | Dono / operador do espaço | Apenas **referência** de host; layout e fluxo de login Spotify em [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) |
 | **Telão** | Rota ou flag de display (ver spec 12) | Sala / evento | Fora do escopo de layout mobile aqui; mesma fonte de dados de “quem escolheu” |
 
-**Legado de deploy:** documentos anteriores citavam `player.muziks.app/{slug}` como host único. O modelo vigente **separa** apresentação (`muziks.app`) de operação com Spotify (`player.muziks.com`).
+**Split vigente:** `muziks.app/{slug}` é a superfície pública do participante; `player.muziks.app/{slug}` é a superfície master do dono/Spotify.
 
 **Implementação (quando houver código):** o monorepo pode usar `apps/web` (participante) + `apps/player` (master) ou multi-host no mesmo app — a spec fixa **hosts e responsabilidades**, não a árvore de pastas.
 
@@ -33,7 +33,7 @@ flowchart TB
     Queue[QueueList + AvatarStack]
     Gate[OAuth Muziks portão]
   end
-  subgraph master [player.muziks.com]
+  subgraph master [player.muziks.app]
     Spotify[Login Spotify]
     Playback[PlaybackManager SDK]
   end
@@ -46,7 +46,7 @@ flowchart TB
 | Host | Deve conter | Não deve conter |
 |------|-------------|-----------------|
 | `muziks.app/{slug}` | Fila pública, hero now-playing, votos/propostas (após portão OAuth Muziks), busca, pilha de avatares | Login Spotify do estabelecimento; SDK de playback no navegador do participante |
-| `player.muziks.com/{slug}` | Autenticação Spotify do dono, controles de sessão, orquestração de playback (MVP-B) | Fluxo massivo de espectadores anônimos (redirecionar para `muziks.app`) |
+| `player.muziks.app/{slug}` | Autenticação Spotify do dono, controles de sessão, orquestração de playback (MVP-B) | Fluxo massivo de espectadores anônimos (redirecionar para `muziks.app`) |
 
 O **QR e deep links** de descoberta ([05-discovery-and-access.md](05-discovery-and-access.md)) **devem** apontar para `muziks.app/{slug}`, não para o host master.
 

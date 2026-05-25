@@ -9,7 +9,7 @@
 | App | Host / papel | AGENTS |
 |-----|----------------|--------|
 | `apps/web` | `muziks.app` — participante, fila, votos | [`apps/web/AGENTS.md`](apps/web/AGENTS.md) |
-| `apps/player` | `player.muziks.com` — master Spotify, playback | [`apps/player/AGENTS.md`](apps/player/AGENTS.md) |
+| `apps/player` | `player.muziks.app` — master Spotify, playback | [`apps/player/AGENTS.md`](apps/player/AGENTS.md) |
 | `apps/landing` | Landing institucional | [`apps/landing/AGENTS.md`](apps/landing/AGENTS.md) |
 | `apps/spotify-bridge` | Bridge librespot + WS (VM/Docker) | [`apps/spotify-bridge/AGENTS.md`](apps/spotify-bridge/AGENTS.md) |
 
