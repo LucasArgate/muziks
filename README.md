@@ -42,4 +42,4 @@ O conteúdo deste repositório está sob [**Apache License 2.0**](LICENSE). Essa
 
 ## Estado do projeto
 
-Conceito com raízes em **2013–2015**; hoje o foco deste repo é **fundamento e clareza** (incluindo licença e marca) para evoluir com open source, MVP e parceiros sem ambiguidade na origem do software nem na identidade do produto.
+Conceito com raízes em **2013–2019**; hoje o foco deste repo é **fundamento e clareza** (incluindo licença e marca) para evoluir com open source, MVP e parceiros sem ambiguidade na origem do software nem na identidade do produto.

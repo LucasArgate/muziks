@@ -19,7 +19,7 @@ Esta pasta agrupa o **mapa de desrupções** que o Muziks pretende endereçar: s
 
 - **Campo:** comportamentos e tecnologias à volta do som partilhado (Bluetooth, Cast, filas colaborativas, conflitos no espaço).
 - **Produto:** falhas de confiança, tração, privacidade ou abuso quando o player é público ou geolocalizado.
-- **Conhecimento:** pesquisa antiga sem dados quantitativos preservados; telemetria operacional 2016–2017 em [analytics/README.md](../analytics/README.md) — honestidade sobre limitações e decisões derivadas de memória qualitativa.
+- **Conhecimento:** pesquisa de empatia sem dados quantitativos preservados; telemetria operacional quantitativa 2016–2017 recuperada depois em [analytics/README.md](../analytics/README.md) — honestidade sobre limitações e decisões derivadas de memória qualitativa.
 - **Docs:** misturar intenção (manifesto) com comportamento detalhado (specs); o mapa regista a mitigação (separação de camadas).
 
 ## Fonte de evidências

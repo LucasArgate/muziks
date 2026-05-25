@@ -14,7 +14,7 @@
 |--------|------------|--------|
 | **Monorepo** | Turborepo + `pnpm` | Ver [MONOREPO-TURBOREPO.md](MONOREPO-TURBOREPO.md) |
 | **App participante** | Next.js (App Router) em `apps/web` | Deploy Vercel; domínio `muziks.app/{slug}` |
-| **App master** | Next.js em `apps/player` (placeholder) | Deploy Vercel; domínio `player.muziks.com/{slug}` |
+| **App master** | Next.js em `apps/player` (placeholder) | Deploy Vercel; domínio `player.muziks.app/{slug}` |
 | **Blog** | Next.js em `apps/blog` | Deploy Vercel separado; `blog.muziks.com.br` |
 | **Banco** | PostgreSQL via **Supabase Free** | Auth, Storage; schema e ORM em `packages/db` (**Drizzle**) |
 | **API na PoC** | API Routes / Server Actions em `apps/web` | Sem `apps/api` até gatilho de extração |
@@ -66,7 +66,7 @@ flowchart LR
 
 **Configuração mínima (prod):** SSL/TLS **Full (strict)** no Cloudflare; origin com certificado válido na Vercel; não duplicar cache agressivo em rotas dinâmicas de fila/voto (regras de cache por path quando necessário).
 
-**Dois origins dinâmicos (fila):** `muziks.app` (participante) e `player.muziks.com` (master) **devem** ter regras de cache separadas para paths de API/fila — conteúdo personalizado por slug e polling 3–5 s ([16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md), [09-frontend-architecture.md](../specs/09-frontend-architecture.md)). Estáticos (shell PWA, JS/CSS) podem cachear na borda com TTL longo.
+**Dois origins dinâmicos (fila):** `muziks.app` (participante) e `player.muziks.app` (master) **devem** ter regras de cache separadas para paths de API/fila — conteúdo personalizado por slug e polling 3–5 s ([16-ui-player-e-fila.md](../specs/16-ui-player-e-fila.md), [09-frontend-architecture.md](../specs/09-frontend-architecture.md)). Estáticos (shell PWA, JS/CSS) podem cachear na borda com TTL longo.
 
 #### 1.4.2 Matriz de recursos Cloudflare (opções por necessidade)
 
@@ -142,7 +142,7 @@ Alinhamento com fases de produto em [13-kpis-fases-e-loops.md](../specs/13-kpis-
 **Gatilho Fase infra B (preparação):** ao atingir **5 players constantes**, o time **deve** iniciar a trilha de preparação (não exige migração imediata para AWS):
 
 1. Inventário de quotas Vercel, Supabase e Cloudflare (egress, MAU, conexões, Workers/R2 se em uso).
-2. Ambiente **staging** estável (`staging.muziks.app` + `staging.player.muziks.com` + projeto Supabase staging).
+2. Ambiente **staging** estável (`staging.muziks.app` + `staging-player.muziks.app` + projeto Supabase staging).
 3. Runbook de backup/restore testado em staging.
 4. ADR curto: alvo AWS (RDS + serviço WebSocket ou equivalente).
 5. Revisão de [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md) com números reais.

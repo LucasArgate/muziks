@@ -1,6 +1,6 @@
 # apps/player
 
-App **master Spotify** — host `player.muziks.com/{slug}`.
+App **master Spotify** — host `player.muziks.app/{slug}`.
 
 ## Desenvolvimento
 
