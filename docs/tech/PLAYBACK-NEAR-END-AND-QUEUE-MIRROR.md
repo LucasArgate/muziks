@@ -11,6 +11,7 @@ Documentos irmãos:
 - Estado e bridge: [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md)
 - Sync cliente Master (SDK + API + fila Spotify UI): [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md)
 - Fim de faixa / dequeue autoritativo: [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)
+- PoC worker/reconciliação: [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md)
 - Integrações: [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md) §4
 
 ---
@@ -24,12 +25,16 @@ O **Web Playback SDK** não expõe `preloadNextTrack()`. A forma **oficial** de 
 
 O Muziks **não** reimplementa áudio nem buffer próprio; orquestra a **fila lógica** (Postgres) e espelha URIs no Spotify.
 
+Limitação operacional importante: a Web API do Spotify permite adicionar item ao fim da fila nativa, mas não garante inserir em posição exata, remover item, limpar fila ou reordenar. Por isso o Muziks trabalha com **lookahead pequeno (2–3 faixas)** e idempotência, não com tentativa de manter duas filas perfeitamente iguais.
+
 | Momento | Ação |
 |---------|------|
 | **Near-end** (~8–12 s antes do fim) | Garantir que a **próxima** faixa Muziks está na queue Spotify (preload) |
 | **Track ended / troca de `trackUri`** | **Dequeue** na fila Muziks + opcional `next` / `play` (autoridade no servidor) |
 
 **Regra de ouro:** preload **≠** dequeue.
+
+**Regra de worker:** Trigger.dev pode observar/reconciliar e disparar contrato interno, mas não deve transformar near-end em dequeue. A transição da fila Muziks só acontece depois de troca confirmada de `trackUri`, `track_ended` confiável ou amostra server-side idempotente.
 
 ---
 
@@ -194,6 +199,14 @@ Opcional: `mirrorAhead(slug, n)` no **início** de cada faixa (espelho de N iten
 
 **Não** chamar `dequeueNextQueueItem` neste handler.
 
+Contrato Spotify explícito:
+
+```text
+POST /v1/me/player/queue?uri={spotifyUri}&device_id={deviceId}
+```
+
+`uri` e `device_id` ficam em query string. Essa operação é o "Enqueue Next Music In Spotify Queue" do Muziks: preparar a próxima faixa na fila nativa, sem mexer na fila lógica até a transição ser confirmada.
+
 ### 4.4 Alternativa: estender `control-spotify-playback`
 
 Adicionar `action: "queue"` ao schema existente é aceitável para MVP rápido; slice dedicada **`mirror-next`** é preferível para contrato claro e testes.
@@ -247,6 +260,8 @@ Limitação documentada em `packages/types` — Spotify devolve lookahead **curt
 | 3 | Fim da faixa sem item na queue Spotify | `startPlayback` com URI da cabeça Muziks (servidor) |
 | 4 | Último recurso | `skipToNext` — perde preload, evita silêncio |
 
+Trigger.dev pode executar esse fluxo como fallback ou reconciliação, desde que use o mesmo endpoint/slice, token do dono via vault, lock por player e idempotência por `playerId + currentTrackUri + nextTrackUri`.
+
 ---
 
 ## 8. Modos de sync
@@ -283,6 +298,7 @@ Quando `apps/spotify-bridge` estiver ativo **e** o espaço tiver tier elegível:
 | Lógica inteira em `useSpotifyPlayer` / página | Dificulta teste e modos `api_device` |
 | Rota `/api/player/queue-next` fora de `players/{slug}/` | Quebra VSA e auth por slug |
 | Várias chamadas `addToQueue` sem checar queue | Rate limit + duplicatas |
+| Worker com cookie do `player` ou Client Credentials para playback | Playback/queue exige token do dono via vault |
 
 ---
 
@@ -315,5 +331,6 @@ Quando `apps/spotify-bridge` estiver ativo **e** o espaço tiver tier elegível:
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) §7.1, §8
 - [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md)
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)
+- [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md)
 - [VERTICAL-SLICE-ARCHITECTURE.md](./VERTICAL-SLICE-ARCHITECTURE.md)
 - Código: `apps/player/src/features/playback/services/playback-sync-coordinator.ts`, `packages/spotify/src/playback/control.ts`

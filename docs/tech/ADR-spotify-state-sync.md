@@ -15,7 +15,7 @@ Não existe **webhook oficial** do Spotify para o servidor reagir a cada mudanç
 | **Web API** (`GET /me/player`) | Qualquer device Connect ativo | Poll com rate limit; latência |
 | **Bridge librespot** (container dedicado) | Espaço com bridge ativo | Operação extra; reverse engineering (sensor) |
 
-Este ADR consolida **dois níveis** de solução que se complementam. Detalhes de fila e dequeue continuam em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md); modo híbrido SDK+API em [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md). **Fluxo cliente Master (diagramas + arquivos):** [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md). **Preload near-end e espelho da fila Spotify (Next.js):** [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md).
+Este ADR consolida **dois níveis** de solução que se complementam. Detalhes de fila e dequeue continuam em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md); modo híbrido SDK+API em [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md). **Fluxo cliente Master (diagramas + arquivos):** [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md). **Preload near-end e espelho da fila Spotify (Next.js):** [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md). **PoC de worker/reconciliação:** [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md).
 
 ---
 
@@ -163,6 +163,37 @@ Com **somente** a camada 1:
 
 ---
 
+## Camada operacional — Trigger.dev worker (PoC)
+
+**Status:** proposto para validação, sem substituir a camada Master nem o bridge.
+
+Trigger.dev pode complementar a arquitetura como scheduler/worker server-side para `playback-tick`, backoff Spotify e reconciliação tardia. O worker deve chamar APIs internas do `apps/player` e preservar as mesmas regras de domínio, idempotência e Broadcast explícito.
+
+| Regra | Decisão |
+| ----- | ------- |
+| Token | Playback usa token do dono via vault + refresh server-side; nunca cookie do `player` nem SDK. |
+| Catálogo | Busca pública pode usar Client Credentials; não serve para playback/queue. |
+| Enqueue Spotify | `POST /v1/me/player/queue?uri=...&device_id=...`, com lookahead pequeno e idempotente. |
+| Dequeue Muziks | Só após troca confirmada de `trackUri`, `track_ended` confiável ou amostra server-side idempotente. |
+| Backoff | `429` suspende chamadas não essenciais e respeita `Retry-After`. |
+
+Fluxo de referência:
+
+```mermaid
+flowchart TD
+  TriggerTask["Trigger.dev task"] --> TickApi["POST /api/internal/playback-tick"]
+  Vault["Owner token vault"] --> TickApi
+  TickApi --> Spotify["Spotify Web API"]
+  Spotify --> TickApi
+  TickApi --> DB[(player_sessions)]
+  TickApi --> RT["Broadcast session.snapshot / queue.snapshot"]
+  RT --> UI["Clientes React"]
+```
+
+Detalhes e critérios de validação ficam em [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md).
+
+---
+
 ## Camada 2 — Spotify State Service (`muziks-spotify-bridge`)
 
 **Status:** proposto (não implementado). Evolução operacional do sidecar descrito em [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md).
@@ -303,7 +334,7 @@ flowchart TD
 |---------|----------------|
 | Master aberto, hybrid | Camada 1; UI em tempo real no Master |
 | Master fechado, bridge ativo | Camada 2 persiste sessão + track-ended |
-| Bridge offline | `POST /api/internal/playback-tick` (backup) |
+| Bridge offline | `POST /api/internal/playback-tick` (backup), agendável por Trigger.dev na PoC |
 | Sidecar + tick simultâneos | `idempotencyKey` no dequeue evita avanço duplo |
 
 ---
@@ -364,6 +395,7 @@ Participantes e telão: `GET` inicial + `subscribeSessionSnapshots` / `subscribe
 - [04-playback-bridge-e-tiering.md](../business/04-playback-bridge-e-tiering.md) — bridge só pagantes; freemium = SDK
 - [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) — preload, fila dupla, slices `mirror-next`
 - [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md) — decisão Broadcast vs `postgres_changes`
+- [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md) — PoC de worker/reconciliação e self-hosting futuro
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md) — `track-ended`, dequeue, contrato interno
 - [ADR-spotify-web-api-sdk.md](./ADR-spotify-web-api-sdk.md)
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)

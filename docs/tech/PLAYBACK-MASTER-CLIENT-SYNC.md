@@ -10,6 +10,7 @@ Documentos irmãos:
 - [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md) — decisão híbrido + Broadcast
 - [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) — duas camadas (Master + bridge)
 - [PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](./PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md) — preload / mirror na fila nativa
+- [TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md](./TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md) — PoC de worker/reconciliação e backoff Spotify
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) — produto e responsabilidades
 
 ---
@@ -192,6 +193,17 @@ Após mudança semântica relevante, `PlaybackStatePublisher`:
 Consumidores: `usePlaybackSession({ subscribeRealtime: true })` (telão). O Master usa `subscribeRealtime: false` e alimenta a UI pelo SDK/API local.
 
 Ver [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md).
+
+### 5.1 Worker/reconciliação (PoC Trigger.dev)
+
+Trigger.dev pode agendar `playback-tick` server-side para reconciliar estado, respeitar backoff Spotify e publicar snapshots quando o Master não for suficiente. Esse worker **não** substitui este fluxo: o Master continua responsável pela sincronização viva da UI via SDK/API + `PlaybackStatePublisher`.
+
+Regras resumidas:
+
+- worker usa token do dono via vault + refresh server-side, não cookie do browser;
+- catálogo pode usar Client Credentials, mas playback/queue não;
+- near-end prepara a fila Spotify; dequeue só após transição confirmada;
+- Broadcast continua explícito após persistência aceita.
 
 ---
 
