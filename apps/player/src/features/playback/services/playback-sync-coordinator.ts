@@ -5,6 +5,7 @@ import type {
   PlayerMasterSessionMeta,
 } from "@muziks/types";
 
+import { playbackDebug } from "../lib/playback-debug";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
 import {
   PlaybackStatePublisher,
@@ -50,6 +51,11 @@ export class PlaybackSyncCoordinator {
       this.activeDeviceName = options.sessionMeta.activeDeviceName;
       this.publisher.setStateVersion(options.sessionMeta.stateVersion);
     }
+    playbackDebug("coordinator", "configure", {
+      syncMode: this.syncMode,
+      preferredDeviceId: this.preferredDeviceId,
+      hasSdkService: Boolean(this.sdkService),
+    });
     this.refreshPublisherConfig();
     this.reconcileSources();
   }
@@ -68,6 +74,7 @@ export class PlaybackSyncCoordinator {
 
   setSyncMode(mode: PlaybackSyncMode): void {
     this.syncMode = mode;
+    playbackDebug("coordinator", "sync-mode:set", { syncMode: mode });
     this.refreshPublisherConfig();
     this.reconcileSources();
   }
@@ -75,6 +82,10 @@ export class PlaybackSyncCoordinator {
   setPreferredDevice(deviceId: string, deviceName: string): void {
     this.preferredDeviceId = deviceId;
     this.activeDeviceName = deviceName;
+    playbackDebug("coordinator", "preferred-device:set", {
+      deviceId,
+      deviceName,
+    });
     this.refreshPublisherConfig();
     this.reconcileSources();
   }
@@ -105,6 +116,11 @@ export class PlaybackSyncCoordinator {
     const profile =
       this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
 
+    playbackDebug("coordinator", "api-poll:start", {
+      syncMode: this.syncMode,
+      profile,
+      preferredDeviceId: this.preferredDeviceId,
+    });
     this.apiPoller.start({
       profile,
       onState: (state) => this.applyApiState(state),
@@ -113,12 +129,16 @@ export class PlaybackSyncCoordinator {
   }
 
   stopApiPolling(): void {
+    if (this.apiPoller.active) {
+      playbackDebug("coordinator", "api-poll:stop");
+    }
     this.apiPoller.stop();
   }
 
   startSdk(service: SpotifyServiceInstance): void {
     this.sdkService = service;
     this.syncMode = "sdk";
+    playbackDebug("coordinator", "sdk:start", { syncMode: this.syncMode });
     this.refreshPublisherConfig();
     this.stopApiPolling();
 
@@ -128,6 +148,9 @@ export class PlaybackSyncCoordinator {
   startHybrid(service: SpotifyServiceInstance): void {
     this.sdkService = service;
     this.syncMode = "hybrid";
+    playbackDebug("coordinator", "hybrid:start", {
+      hasSdkService: true,
+    });
     this.refreshPublisherConfig();
 
     this.sdkSource.start(service, this.sdkSourceOptions());
@@ -136,6 +159,9 @@ export class PlaybackSyncCoordinator {
   }
 
   stopSdk(): void {
+    if (this.sdkService) {
+      playbackDebug("coordinator", "sdk:stop");
+    }
     this.sdkSource.stop();
     this.sdkService?.disconnect();
     this.sdkService = null;
@@ -153,6 +179,9 @@ export class PlaybackSyncCoordinator {
     if (!this.options) return;
 
     if (this.syncMode === "api_device") {
+      playbackDebug("coordinator", "reconcile:api-device", {
+        preferredDeviceId: this.preferredDeviceId,
+      });
       this.stopSdk();
       if (this.preferredDeviceId) {
         this.startApiPolling();
@@ -162,13 +191,19 @@ export class PlaybackSyncCoordinator {
       return;
     }
 
-    if (this.syncMode === "hybrid" && this.sdkService) {
-      this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
+    if (this.syncMode === "hybrid") {
+      playbackDebug("coordinator", "reconcile:hybrid", {
+        sdkActive: Boolean(this.sdkService),
+      });
+      if (this.sdkService) {
+        this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
+      }
       this.startApiPolling();
       return;
     }
 
     if (this.syncMode === "sdk" && this.sdkService) {
+      playbackDebug("coordinator", "reconcile:sdk");
       this.stopApiPolling();
       this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
     }

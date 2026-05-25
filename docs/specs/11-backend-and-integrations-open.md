@@ -10,7 +10,7 @@ Este documento lista **o que ainda não está fechado** para o Muziks existir de
 |---------|---------|
 | Persistência | Supabase (Postgres); **Drizzle** em `packages/db` (schema + migrations) |
 | API na PoC | Dentro de `apps/web` — sem `apps/api` até gatilho de extração |
-| Fila (leitura) | HTTP + polling 3–5 s; cache na borda |
+| Fila (leitura) | `GET` inicial + Supabase Realtime Broadcast `queue.snapshot`; polling HTTP como fallback |
 | Votos (escrita) | HTTP POST + rate-limit + fila de eventos serializada |
 | Migração futura | AWS RDS + WS sob demanda; estratégia strangler — ver [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) |
 
@@ -60,7 +60,7 @@ O **ISRC** (*International Standard Recording Code*) é o identificador **global
 | Controle remoto / fila nativa | Spotify Web API (Player) com token do **dono** |
 | Transição automática | `NearEndScheduler` + slice `mirror-next` no Master ([PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md)) |
 | Sync telão / dono / comandos | Realtime `player_sessions` + `playback_commands` |
-| Leitura da fila (massa) | Polling HTTP 3–5 s (inalterado na PoC) |
+| Leitura da fila (massa) | Broadcast `queue.snapshot` para participantes; polling apenas em modo degradado |
 
 Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) · near-end / fila dupla: [../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md](../tech/PLAYBACK-NEAR-END-AND-QUEUE-MIRROR.md). Viabilidade e EDA: [../mvp/03-viabilidade-integracao-spotify-eda.md](../mvp/03-viabilidade-integracao-spotify-eda.md). Compliance: [14-fronteiras-legais-direitos-autorais.md](14-fronteiras-legais-direitos-autorais.md).
 
@@ -104,7 +104,7 @@ Detalhe completo: [../mvp/06-arquitetura-playback-spotify.md](../mvp/06-arquitet
 
 ## 10. Rajada, tempo real e custo — **fechado (PoC)**
 
-Decisão registrada em [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3 (HTTP vote, polling fila, sem Realtime por participante). Custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
+Decisão registrada em [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §3 (HTTP vote, Broadcast `queue.snapshot` para leitura da fila e fallback polling). Custo: [02-viabilidade-custos-comparativo.md](../mvp/02-viabilidade-custos-comparativo.md).
 
 ## 10.1 Sincronização local da fila (experimento — fora do MVP)
 

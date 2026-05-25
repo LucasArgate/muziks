@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getParticipantSession } from "@/src/lib/auth/get-participant-session";
+import { broadcastQueueSnapshotFromServer } from "@/src/lib/realtime/muziks-queue-broadcast-server";
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
@@ -33,6 +34,13 @@ export async function POST(request: Request, context: RouteContext) {
       queueItemId: body.queueItemId,
       profileId: session.userId,
     });
+
+    if (result.status === 200) {
+      await broadcastQueueSnapshotFromServer(result.body.playerId, {
+        ...result.body.snapshot,
+        source: "vote",
+      });
+    }
 
     return NextResponse.json(result.body, { status: result.status });
   } catch (error) {

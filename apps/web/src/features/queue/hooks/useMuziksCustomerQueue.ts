@@ -3,10 +3,25 @@
 import type { MuziksQueueSnapshot } from "@muziks/types";
 import { useCallback, useEffect, useState } from "react";
 
-export function useMuziksCustomerQueue(slug: string, pollMs = 4000) {
+import { subscribeQueueSnapshots } from "@/src/lib/realtime/muziks-queue-channel";
+
+export type UseMuziksCustomerQueueOptions = {
+  slug: string;
+  playerId: string | null;
+  transport?: "poll" | "realtime";
+  pollMs?: number;
+};
+
+export function useMuziksCustomerQueue({
+  slug,
+  playerId,
+  transport = "realtime",
+  pollMs = 10000,
+}: UseMuziksCustomerQueueOptions) {
   const [snapshot, setSnapshot] = useState<MuziksQueueSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [realtimeFailed, setRealtimeFailed] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -34,11 +49,43 @@ export function useMuziksCustomerQueue(slug: string, pollMs = 4000) {
 
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    setRealtimeFailed(false);
+  }, [playerId, transport]);
+
+  useEffect(() => {
+    const shouldPoll =
+      transport === "poll" || !playerId || realtimeFailed;
+    if (!shouldPoll) {
+      return;
+    }
+
     const timer = window.setInterval(() => {
       void refresh();
     }, pollMs);
+
     return () => window.clearInterval(timer);
-  }, [pollMs, refresh]);
+  }, [playerId, pollMs, realtimeFailed, refresh, transport]);
+
+  useEffect(() => {
+    if (transport !== "realtime" || !playerId || realtimeFailed) {
+      return;
+    }
+
+    return subscribeQueueSnapshots(
+      playerId,
+      (next) => {
+        setSnapshot(next);
+        setError(null);
+      },
+      () => {
+        setRealtimeFailed(true);
+        setError("muziks_queue_realtime_failed");
+      },
+    );
+  }, [playerId, realtimeFailed, transport]);
 
   return {
     snapshot,

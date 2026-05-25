@@ -1,7 +1,7 @@
 # Limites de uso e contingência do player
 
-**Status:** referência operacional  
-**Data da pesquisa:** 2026-05-25  
+**Status:** referência operacional
+**Data da pesquisa:** 2026-05-25
 **Escopo:** crescimento do player Muziks em cima de Supabase, Vercel, Trigger.dev, Cloudflare e Spotify.
 
 Este documento consolida limites públicos dos planos gratuitos/freemium e define uma política conservadora para operar o player antes de escalar infraestrutura. Os números abaixo devem ser revisados antes de cada piloto grande, porque os provedores mudam planos e quotas sem acoplamento ao ciclo de release do Muziks.
@@ -18,7 +18,7 @@ Documentos relacionados:
 ## 1. Princípios de capacidade
 
 1. O plano gratuito serve para desenvolvimento, PoC e pilotos pequenos. Produção comercial do player deve migrar para planos pagos antes de depender de disponibilidade contínua.
-2. A fila pública não deve usar Realtime para todos os celulares no salão. A regra vigente continua: HTTP + polling de 3-5 s para fila/votos; Realtime fica restrito a baixa cardinalidade, como Player Master, telão e painel do dono.
+2. A fila pública usa `GET` inicial + Supabase Realtime Broadcast (`queue.snapshot`) para participantes. HTTP polling fica como fallback de degradação ou quando `DISABLE_PUBLIC_REALTIME` estiver ativo.
 3. Spotify é o gargalo de maior risco funcional. O player deve tratar `429` como sinal operacional normal, respeitar `Retry-After` e reduzir chamadas antes de tentar recuperar estado por força bruta.
 4. Todo consumo não essencial deve ser desligável por feature flag ou configuração remota: analytics, dashboards, previews, jobs de enriquecimento, polling agressivo, imagens pesadas e eventos de presença.
 5. Em incidente de quota, preservar primeiro a sessão ativa: áudio no Player Master, leitura mínima da fila, voto/dequeue essencial, token refresh e comandos do dono.
@@ -39,9 +39,9 @@ Fonte principal: [Supabase billing](https://supabase.com/docs/guides/platform/bi
 | Egress | Docs de billing citam 5 GB; docs de Storage citam 10 GB total, com 5 GB cached + 5 GB uncached | Tratar 5 GB como orçamento conservador até validar no dashboard. |
 | MAU Auth | 50.000 MAU | Não é o gargalo inicial do player, pois participante pode ser anônimo/sessão curta. |
 | Edge Function invocations | 500.000/mês | Evitar mover hot path do player para Edge Functions sem orçamento. |
-| Realtime messages | 2 milhões/mês | Realtime não deve carregar fila pública com muitos participantes. |
-| Realtime peak connections | 200 | Limita telões/masters/controles; público em massa via polling HTTP. |
-| Realtime throughput | 100 mensagens/s, 100 joins/s, 20 presence msg/s | Presence e broadcast do público devem ser evitados no MVP. |
+| Realtime messages | 2 milhões/mês | Cada mutação de fila gera `queue.snapshot`; sessões com muitos participantes precisam orçamento por pico de votos. |
+| Realtime peak connections | 200 | Limita participantes simultâneos por projeto no Free; piloto público real deve prever Pro ou kill switch para polling. |
+| Realtime throughput | 100 mensagens/s, 100 joins/s, 20 presence msg/s | Broadcast público é permitido, mas presence pública e eventos por participante continuam fora do MVP. |
 | Pausa por inatividade | Projetos Free com atividade muito baixa por 7 dias podem ser pausados | Não usar Free para ambiente que precisa disponibilidade sem intervenção. |
 | Backups | Free não tem download de backups no dashboard | Antes de piloto real, criar rotina própria de export ou subir de plano. |
 
@@ -138,9 +138,9 @@ Uso indicado: desenvolvimento compartilhado, demo interna e piloto pequeno contr
 | Dimensão | Limite interno | Motivo |
 | --- | --- | --- |
 | Sessões ativas simultâneas | 1-3 players | Evita multiplicar polling Spotify, Realtime e Postgres. |
-| Participantes por sessão | Até 30-50 celulares | Compatível com polling 3-5 s sem fan-out WS. |
-| Polling fila pública | 5 s normal; 10-30 s em degradação | Reduz Vercel/Supabase/Cloudflare requests. |
-| Realtime por sessão | Master, telão e painel dono; evitar público | Preserva quota de 200 conexões Free Supabase. |
+| Participantes por sessão | Até 30-50 celulares | Cabe no Free apenas em piloto controlado; cada celular mantém conexão Realtime. |
+| Fila pública | `GET` inicial + `queue.snapshot`; polling 10-30 s em degradação | Reduz polling constante, mas consome conexões/mensagens Realtime. |
+| Realtime por sessão | Participantes, Master, telão e painel dono; sem presence pública | Preserva o contrato ao limitar canais e eventos por mutação. |
 | Histórico de eventos | Retenção curta, agregação diária quando possível | Protege 500 MB do Postgres. |
 | Jobs Trigger.dev | Apenas limpeza/reconciliação não crítica | Protege crédito Free e evita dependência operacional. |
 | Imagens/capas | Usar URLs Spotify/externas com cache de metadata leve | Evita Storage/egress. |
@@ -175,7 +175,7 @@ Requisitos antes do evento:
 
 1. Analytics não essencial, funis, dashboards de produto e eventos detalhados.
 2. Jobs de enriquecimento de metadados, relatórios, backfills e notificações.
-3. Presence/realtime do público, indicadores "online agora" e animações ao vivo.
+3. Presence pública, indicadores "online agora" e animações ao vivo; se necessário, `DISABLE_PUBLIC_REALTIME` troca fila pública para polling.
 4. Search/autocomplete agressivo; manter busca manual com debounce/cache.
 5. Imagens grandes, transformações, previews e assets não essenciais.
 6. Staging/previews públicos e ambientes de demonstração.
@@ -187,7 +187,7 @@ Requisitos antes do evento:
 | Sintoma | Ação imediata | Recovery |
 | --- | --- | --- |
 | Spotify `429` | Respeitar `Retry-After`; congelar search/polling não essencial; permitir só comandos do dono e transições necessárias | Reativar por sessão quando 5 min sem `429`; revisar cache e orçamento de chamadas. |
-| Supabase Realtime `too_many_connections` ou `tenant_events` | Desconectar público do Realtime; manter só Master/telão/dono; trocar estado visual por polling | Reativar Realtime apenas para baixa cardinalidade; revisar canais vazando. |
+| Supabase Realtime `too_many_connections` ou `tenant_events` | Ativar `DISABLE_PUBLIC_REALTIME`; manter Master/telão/dono; trocar fila pública para polling | Reativar Broadcast público por sessão quando o consumo estabilizar; revisar canais vazando. |
 | Supabase database perto de 500 MB | Pausar gravação de analytics/eventos; compactar/agregar histórico; apagar dados descartáveis | Vacuum quando aplicável; considerar upgrade antes de reabrir gravação completa. |
 | Supabase egress alto | Reduzir payloads da fila; remover campos pesados; cachear respostas públicas; cortar imagens via Supabase Storage | Medir endpoints mais caros e ajustar DTOs. |
 | Vercel Edge Requests/Functions alto | Aumentar polling para 10-30 s; cachear GETs públicos; bloquear bots; pausar previews | Reabrir polling normal por sessão e manter proteção de cache/rate limit. |

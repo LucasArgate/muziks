@@ -29,16 +29,16 @@ Esse volume é **baixo** na média mensal, mas o arquivo legado mostra **rajadas
 
 | Fenómeno | Implicação de custo |
 |----------|---------------------|
-| Tráfego concentrado em poucas horas (fim de semana, eventos) | Cotas de **conexões Realtime** e **egress** estouram se cada telemóvel mantiver WebSocket aberto |
+| Tráfego concentrado em poucas horas (fim de semana, eventos) | Cotas de **conexões Realtime**, mensagens e egress precisam ser monitoradas porque cada participante assina `queue.snapshot` |
 | Muitos votos simultâneos na mesma faixa | Postgres sob **contenção** sem fila de processamento + rate-limit |
-| Telão + dezenas de clientes no salão | Uma fonte de verdade em cache (Edge) + **polling** (ex.: 3–5 s) custa menos que N subscrições Realtime |
+| Telão + dezenas de clientes no salão | Broadcast reduz GETs repetidos, mas desloca o custo para conexões/mensagens Supabase |
 
 **Decisão recomendada para PoC/V1 em tier gratuito:**
 
 1. **Votação:** `POST` HTTP (API Route / Edge) com **rate-limit** por participante e IP.
-2. **Leitura da fila (cliente + telão):** `GET` com **Cache-Control** curto na borda; polling, não Supabase Realtime por utilizador.
+2. **Leitura da fila (cliente + telão):** `GET` inicial + Supabase Realtime Broadcast `queue.snapshot`; polling HTTP fica como fallback.
 3. **Processamento:** fila assíncrona (tabela `vote_events` + worker leve ou `pg` advisory lock) para serializar picos de escrita — ver [11-backend-and-integrations-open.md](../specs/11-backend-and-integrations-open.md).
-4. **Realtime Supabase:** reservar só para **painel do dono** (baixa cardinalidade) ou adiar até Pro.
+4. **Realtime Supabase:** monitorar conexões/mensagens por sessão; manter `DISABLE_PUBLIC_REALTIME` para voltar a polling se o Free degradar.
 
 Dimensionar quotas Supabase/Vercel pelo cenário **“50 pessoas votam em 2 minutos”**, não pelo cenário “10 sessões/dia espalhadas”.
 
@@ -82,8 +82,8 @@ Dimensionar quotas Supabase/Vercel pelo cenário **“50 pessoas votam em 2 minu
 
 - **Custo de lista** pode parecer competitivo; o **custo oculto** é tempo: provisionamento, monitoramento, patches, segurança, *scaling* de realtime.
 - Ordem de grandeza de custos (referência maio/2026):
-  - RDS **db.t4g.micro**: ~R$ 70–90/mês  
-  - EC2 pequeno para API: ~R$ 60–100/mês  
+  - RDS **db.t4g.micro**: ~R$ 70–90/mês
+  - EC2 pequeno para API: ~R$ 60–100/mês
   - mais S3, ElastiCache (Redis), CloudWatch, backups, etc.
 
 Para **~20 players**, AWS **não compensa** como primeira escolha. Faz mais sentido quando houver **milhares** de usuários *concurrent*, necessidade forte de **controle total** (ex.: multi-tenant enterprise) ou **compliance** específico.
@@ -95,8 +95,8 @@ Para **~20 players**, AWS **não compensa** como primeira escolha. Faz mais sent
 1. **Hoje:** **Supabase Free** — melhor custo-benefício para validar hipótese com baixo risco financeiro.
 2. **Após validação de tração** (ou exigência de backups mais confiáveis): **Supabase Pro** (~R$ 125–150/mês na referência acima).
 3. **AWS (ou stack “bare metal + gerenciado”)** em **2027+** só se surgir, por exemplo:
-   - **> 500–1.000** usuários *concurrent*; ou  
-   - pressão forte para **reduzir custo unitário** em escala grande; ou  
+   - **> 500–1.000** usuários *concurrent*; ou
+   - pressão forte para **reduzir custo unitário** em escala grande; ou
    - **compliance** / residência de dados / integrações que o BaaS não atende na mesma forma.
 
 Alinhar com a escolha de stack em [congelamento-mvp-e-arquitetura.md](congelamento-mvp-e-arquitetura.md) (**Next.js + Supabase** no MVP).
@@ -144,12 +144,12 @@ Alinhar com a escolha de stack em [congelamento-mvp-e-arquitetura.md](congelamen
 
 ### O que validar na POC (checklist curto)
 
-- [ ] Simular **rajada**: ≥30 votos em menos de 2 min no mesmo player — sem 429 indevido para quem é legítimo, sem timeout no DB.  
-- [ ] Fila/telão estáveis com **polling** (sem WebSocket por participante).  
-- [ ] Pico *concurrent* por player (≤ 50–80 no ICP) sem erro de leitura.  
-- [ ] *Egress* do Supabase ao carregar capas/imagens (cache no cliente/CDN).  
-- [ ] Termos do host do **front** permitem o **tipo** de piloto (interno vs comercial).  
-- [ ] Se usar **Firebase + Supabase**: fluxo de *logout*, expiração de token e *mapping* estável `firebase_uid` → `participant_id` interno.  
+- [ ] Simular **rajada**: ≥30 votos em menos de 2 min no mesmo player — sem 429 indevido para quem é legítimo, sem timeout no DB.
+- [ ] Fila/telão estáveis com `queue.snapshot` e fallback polling validado.
+- [ ] Pico *concurrent* por player (≤ 50–80 no ICP) sem erro de leitura.
+- [ ] *Egress* do Supabase ao carregar capas/imagens (cache no cliente/CDN).
+- [ ] Termos do host do **front** permitem o **tipo** de piloto (interno vs comercial).
+- [ ] Se usar **Firebase + Supabase**: fluxo de *logout*, expiração de token e *mapping* estável `firebase_uid` → `participant_id` interno.
 - [ ] Rotina de **backup** manual (dump ou *branch*) no *free* do Supabase, já que PITR é limitado.
 
 ---

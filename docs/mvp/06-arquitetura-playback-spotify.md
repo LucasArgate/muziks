@@ -44,8 +44,8 @@ A dor histórica (seek, next, pause, preload ~5 s antes do fim, transição suav
 | Responsabilidade | Tecnologia | Motivo |
 |------------------|------------|--------|
 | **Fila + votação + regras (fonte de verdade)** | **Supabase** (Postgres + migrations em `packages/db`) | Domínio Muziks; portável para AWS |
-| **Sync de estado da sessão** (faixa atual, progresso, device) | **Supabase Realtime** (canal da sessão) | Baixa cardinalidade (dono, telão, poucos controladores); não substitui polling da fila para **N** participantes no salão |
-| **Leitura da fila pelo público** | HTTP + polling **3–5 s** (PoC) | Alinhado a [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) §1.1 — evita WS por celular no pico |
+| **Sync de estado da sessão** (faixa atual, progresso, device) | **Supabase Realtime** (canal da sessão) | Dono, telão e poucos controladores; não expõe token Spotify ao público |
+| **Leitura da fila pelo público** | `GET` inicial + Broadcast `queue.snapshot` | Alinhado à [ADR de Realtime](../tech/ADR-playback-hybrid-realtime.md); polling HTTP fica como fallback operacional |
 | **Controle de playback (áudio)** | **Spotify Web Playback SDK** + **Web API (Player)** | Gapless/preload nativos; eventos `player_state_changed` |
 | **Transição automática (próxima faixa)** | **Cliente Dono/Telão** (Player Master) | Confiável: quem tem o SDK detecta fim e executa `next` |
 | **Comandos remotos** (play/pause/skip do público) | Supabase (fila de comandos) → Dono executa na Web API / SDK | Público **não** precisa Premium |
@@ -53,15 +53,15 @@ A dor histórica (seek, next, pause, preload ~5 s antes do fim, transição suav
 
 ### 2.1 Ajuste fino vs. “Realtime em tudo”
 
-Em rascunhos iniciais da arquitetura híbrida aparecia **Realtime também para a fila pública**. No Muziks isso foi **refinado** para não conflitar com a PoC:
+Realtime público no Muziks é restrito a **snapshot de fila**, não a eventos brutos por linha ou presença de participante:
 
 | Dado | Canal | Motivo |
 |------|--------|--------|
-| **Fila + votos** (lista ordenada, ranking) | HTTP + polling **3–5 s** | Muitos participantes no salão; ver STACK |
+| **Fila + votos** (lista ordenada, ranking) | Broadcast `queue.snapshot` + `GET` inicial | Snapshot completo calculado no servidor; ver STACK |
 | **Estado de playback** (faixa atual, progresso, `device_id`) | **Supabase Realtime** | Poucos assinantes (Master, telão display, painel dono) |
 | **Comandos remotos** (play/pause/skip) | **Realtime** ou poll curto no Master | Master **consome** e executa no SDK |
 
-Ou seja: **fila e regras** no Postgres (fonte de verdade); **Realtime** só onde a cardinalidade é baixa e a latência importa para sync telão/dono.
+Ou seja: **fila e regras** continuam no Postgres (fonte de verdade); o público recebe apenas o estado pronto via `queue.snapshot`. `postgres_changes` direto em `queue_items` não é o contrato da PoC.
 
 ---
 
@@ -138,8 +138,8 @@ flowchart TB
     SA --> PG
   end
 
-  PWA -->|POST voto / GET fila poll| SA
-  PWA -->|subscribe comandos opcional| RT
+  PWA -->|POST voto / GET snapshot inicial| SA
+  PWA -->|subscribe queue.snapshot| RT
   Telao -->|publica estado / device_id| RT
   Telao -->|le comandos| RT
   SA --> API
@@ -184,9 +184,10 @@ Migrations em `packages/db/migrations` — nunca só no Dashboard.
 | Canal | Publicadores | Assinantes | Payload |
 |-------|--------------|------------|---------|
 | `player:{id}:session` | Player Master | Telão (se separado), painel dono | Estado playback + `device_id` |
+| `player:{id}` / `queue.snapshot` | API após voto/dequeue/reorder | Participantes, Player Master, telão, painel dono | `MuziksQueueSnapshot` completo + `source` |
 | `player:{id}:commands` | Público autorizado, dono | Player Master | Comandos pendentes |
 
-**Regra:** participantes em massa **não** assinam Realtime só para ver a fila — usam polling HTTP (STACK).
+**Regra:** participantes públicos assinam apenas `queue.snapshot`; presence e `postgres_changes` de fila ficam fora da PoC. Se quota degradar, `DISABLE_PUBLIC_REALTIME` força polling HTTP.
 
 ---
 
@@ -218,7 +219,7 @@ sequenceDiagram
   end
 
   Master->>SB: atualiza current_track + queue_items
-  SB-->>Pub: Realtime + poll fila na proxima rodada
+  SB-->>Pub: Broadcast queue.snapshot
 ```
 
 ### 7.1 Regras do PlaybackManager (cliente Master)
@@ -253,7 +254,7 @@ Eventos de domínio (EDA) alinhados a [03-viabilidade-integracao-spotify-eda.md]
 | Papel | Responsabilidades |
 |-------|-------------------|
 | **Player Master** (dono/telão) | Init SDK, OAuth Spotify dono, `PlaybackManager`, transição automática, executa comandos, publica `player_sessions` |
-| **Público** | Vota; visualiza fila (poll); opcionalmente envia comandos → `playback_commands` |
+| **Público** | Vota; visualiza fila via `queue.snapshot`; opcionalmente envia comandos → `playback_commands` |
 | **Telão (somente display)** | Se **não** for o Master: só Realtime + UI; se **for** o Master: mesmo binário/rota com flag `isPlaybackMaster` |
 
 Requisito telão: [12-telao-display-publico.md](../specs/12-telao-display-publico.md) **T2** — estado coerente com o player.
@@ -386,7 +387,7 @@ Tokens: **refresh token** do dono armazenado cifrado (Supabase vault / env serve
 |-----------|---------|
 | [congelamento-mvp-e-arquitetura.md](congelamento-mvp-e-arquitetura.md) | Fases MVP-A / MVP-B |
 | [03-viabilidade-integracao-spotify-eda.md](03-viabilidade-integracao-spotify-eda.md) | Catálogo, EDA, Caminho A vs B |
-| [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) | Polling fila; Realtime exceção playback |
+| [STACK-E-FASES-DE-MIGRACAO.md](../tech/STACK-E-FASES-DE-MIGRACAO.md) | Broadcast da fila; fallback polling; fases de infraestrutura |
 | [12-telao-display-publico.md](../specs/12-telao-display-publico.md) | Telão como Master opcional |
 | [09-frontend-architecture.md](../specs/09-frontend-architecture.md) | `features/playback/` |
 | [15-backend-architecture.md](../specs/15-backend-architecture.md) | Slices server |

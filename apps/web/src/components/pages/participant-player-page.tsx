@@ -19,12 +19,16 @@ import { useMuziksCustomerQueue } from "@/src/features/queue/hooks/useMuziksCust
 
 type ParticipantPlayerPageProps = {
   slug: string;
+  playerId: string;
   displayName: string;
+  queueTransport: "poll" | "realtime";
 };
 
 export function ParticipantPlayerPage({
   slug,
+  playerId,
   displayName,
+  queueTransport,
 }: ParticipantPlayerPageProps) {
   const searchParams = useSearchParams();
   const { session, isAuthenticated, refresh: refreshSession } =
@@ -32,7 +36,11 @@ export function ParticipantPlayerPage({
   const { session: playback, loading: playbackLoading } =
     usePublicPlaybackSession(slug);
   const { items, loading, error, refresh: refreshQueue } =
-    useMuziksCustomerQueue(slug);
+    useMuziksCustomerQueue({
+      slug,
+      playerId,
+      transport: queueTransport,
+    });
 
   const [gateOpen, setGateOpen] = useState(false);
   const [votingItemId, setVotingItemId] = useState<string | null>(null);

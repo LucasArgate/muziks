@@ -1,7 +1,7 @@
 "use client";
 
 import type { NormalizedSpotifyPlaybackQueue } from "@muziks/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type UseSpotifyPlaybackQueueOptions = {
   enabled: boolean;
@@ -24,19 +24,28 @@ export function useSpotifyPlaybackQueue({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestSeqRef = useRef(0);
+  const previousTrackUriRef = useRef<string | null | undefined>(trackUri);
 
   const refresh = useCallback(async () => {
     if (!enabled) {
       return;
     }
 
+    const requestSeq = ++requestSeqRef.current;
     setLoading(true);
     try {
-      const response = await fetch("/api/spotify/playback/queue");
+      const response = await fetch("/api/spotify/playback/queue", {
+        cache: "no-store",
+      });
       const body = (await response.json()) as {
         queue?: NormalizedSpotifyPlaybackQueue;
         error?: string;
       };
+
+      if (requestSeq !== requestSeqRef.current) {
+        return;
+      }
 
       if (!response.ok) {
         setError(body.error ?? "spotify_queue_fetch_failed");
@@ -46,11 +55,27 @@ export function useSpotifyPlaybackQueue({
       setQueue(body.queue ?? null);
       setError(null);
     } catch {
-      setError("spotify_queue_fetch_failed");
+      if (requestSeq === requestSeqRef.current) {
+        setError("spotify_queue_fetch_failed");
+      }
     } finally {
-      setLoading(false);
+      if (requestSeq === requestSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [enabled]);
+
+  useEffect(() => {
+    if (previousTrackUriRef.current === trackUri) {
+      return;
+    }
+
+    previousTrackUriRef.current = trackUri;
+    requestSeqRef.current += 1;
+    setQueue(null);
+    setError(null);
+    setLoading(false);
+  }, [trackUri]);
 
   useEffect(() => {
     if (!enabled || !pollEnabled) {

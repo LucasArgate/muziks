@@ -1,6 +1,6 @@
 # Playback Master — sincronização no cliente (`apps/player`)
 
-**Status:** implementado (MVP-B)  
+**Status:** implementado (MVP-B)
 **Data:** 2026-05-20
 
 **Propósito:** descrever o fluxo **no browser do Player Master** entre Web Playback SDK, poll da Web API, merge de estado, barra de progresso, lista **Próximas no Spotify** e publicação remota (Postgres + Realtime). Complementa os ADRs de decisão e o espelho near-end.
@@ -216,7 +216,7 @@ Logs no console com prefixo `[muziks:playback]`:
 | Fila votada Muziks | **Realtime** `queue.snapshot` (`useMuziksCustomerQueue` `transport: "realtime"`) |
 | Fila nativa Spotify | SDK + API conforme §4 (sem Realtime) |
 
-Público em `apps/web` continua com poll HTTP na fila Muziks (cardinalidade alta) — ver [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md) §2.1.
+Público em `apps/web` usa o mesmo contrato da fila votada: `GET` inicial + `queue.snapshot`; polling HTTP fica apenas como fallback operacional — ver [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md).
 
 ---
 
