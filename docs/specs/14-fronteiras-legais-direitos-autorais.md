@@ -17,6 +17,16 @@ Este texto é a **fonte de verdade de produto** sobre **o que o Muziks não faz*
 - O Muziks **orquestra fila e política**: curadoria em tempo real, regras do dono do player, votação e ordenação do que é **elegível** a entrar na fila, com base em **identificadores de faixa e metadados** compatíveis com a arquitetura acordada nas specs de domínio e integrações.
 - A **reprodução sonora** (fluxo de áudio ouvido no espaço) é **autorizada e executada** pelo **usuário no seu contexto** — em geral o **dono do player / estabelecimento** — através do **aplicativo, integração ou SDK do provedor de streaming** que ele utilizar. O Muziks **não se posiciona como provedor de catálogo nem como fonte proprietária do stream de áudio**; atua como **camada de participação e de regras** sobre o que se pretende enfileirar, alinhado ao [Manifesto](../MANIFESTO.md) (princípio 7: fichas pagam **mecanismo de participação**, não a obra).
 
+### Participação pública vs execução musical
+
+A proposta de valor deve ser descrita como **participação controlada**: sugerir, votar, priorizar ou influenciar faixas dentro da política definida pelo dono do player. Isso é diferente de vender acesso à obra, licenciar execução pública, prometer catálogo próprio ou transferir ao participante o controle irrestrito do som.
+
+Esta distinção é parte da confiança do produto:
+
+- Para o **participante**, a ação é uma influência na fila, não compra da música nem direito garantido de reprodução.
+- Para o **dono do player / estabelecimento**, o Muziks organiza regras e UX, mas não elimina a obrigação de manter contas, contratos, licenças e obrigações de conformidade aplicáveis ao uso real do ambiente.
+- Para a **copy e os termos**, evitar linguagem que diga ou sugira “toque qualquer música legalmente pelo Muziks”; preferir “participe da fila”, “vote dentro das regras do lugar” e “o áudio toca pelo provedor/conta do dono”.
+
 ### Provedores de streaming (lista exemplificativa)
 
 Exemplos de serviços onde o usuário pode reproduzir música mediante **conta e termos próprios** (a lista **não é exaustiva** nem implica parceria com o Muziks):

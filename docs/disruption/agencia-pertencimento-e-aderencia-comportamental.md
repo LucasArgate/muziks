@@ -44,18 +44,25 @@ Isso **alinha** com participação emocional opcional ([conexao-emocao-economia-
 
 ---
 
-## Contexto que mudou (2016–2017 → 2026)
+## Contexto que mudou (2015–2017 → 2026)
 
 O que era **fricção** na primeira geração do produto tende a ser **fluido** hoje — não garante tração universal, mas **reduz barreira** onde já existe fit de espaço.
 
-| Aspecto | 2016–2017 | 2026 | Impacto esperado |
+| Aspecto | 2015–2017 | 2026 | Impacto esperado |
 |---------|-----------|------|------------------|
-| QR Code | Barreira cognitiva | Comportamento normalizado | + aderência na entrada |
+| QR Code | Barreira cognitiva, leitura nem sempre nativa, desconfiança e necessidade ocasional de app externo | Comportamento normalizado por cardápios, pagamentos, check-ins e links físicos | + aderência na entrada, desde que haja copy clara e fallback por link/slug |
 | Celular em grupo | Menos habitual | Totalmente normalizado | + facilidade de voto |
 | Participação digital | Emergente | Consolidada (redes, apps) | + expectativa de interatividade |
 | Interação digital no físico | Cardápio/pagamento ainda em adoção | Pós-pandemia: cardápio, check-in | + fluidez do fluxo Muziks |
+| Fronteira legal do produto | Mais difícil explicar “o que o Muziks entrega” sem parecer player/licença de música | Papel documentado como camada de fila, política e participação sobre reprodução do dono/provedor | + confiança para pilotos, termos e abordagem comercial |
 
 **Honestidade:** esta tabela é **hipótese de contexto**, não A/B test documentado. Validar em pilotos ([13-kpis-fases-e-loops.md](../specs/13-kpis-fases-e-loops.md), [05-insights](../analytics/reports/05-insights-para-muziks-hoje.md)).
+
+### Necessidade não declarada vs valor experimentado
+
+O diagnóstico “ninguém liga tanto para música” continua útil como antídoto contra bolha founder. A leitura imparcial é mais específica: muitas pessoas não sentem falta de uma ferramenta para influenciar a música **antes** de existir uma oportunidade simples, segura e socialmente aceita de fazê-lo.
+
+Produtos de mudança comportamental raramente começam como necessidade explícita para todos. O Muziks deve validar se, em espaços com fit, a experiência de **interferir dentro de limites** cria agência e pertencimento suficientes para virar hábito leve — sem presumir que o público queira virar curador, DJ ou dono do som.
 
 ---
 
