@@ -205,35 +205,6 @@ export async function upsertPlaybackSession(
     return { session: existing, accepted: false };
   }
 
-  if (allowStaleVersionForNewerSemanticState) {
-    // #region agent log
-    fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "78c1c7",
-      },
-      body: JSON.stringify({
-        sessionId: "78c1c7",
-        runId: "post-fix",
-        hypothesisId: "H3",
-        location: "apps/player/src/lib/playback/playback-session-repository.ts",
-        message: "playback stale version allowed for newer semantic state",
-        data: {
-          playerId,
-          inputStateVersion: input.stateVersion ?? null,
-          existingStateVersion: existing?.stateVersion ?? null,
-          inputTrackUri: input.trackUri,
-          existingTrackUri: existing?.currentTrackUri ?? null,
-          inputSourceUpdatedAt: input.sourceUpdatedAt ?? null,
-          existingSourceUpdatedAt: existing?.sourceUpdatedAt ?? existing?.updatedAt ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }
-
   const now = new Date();
   const nextVersion = (existing?.stateVersion ?? 0) + 1;
   const progressMs = resolvePersistedProgressMs(input, now);

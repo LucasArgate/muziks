@@ -146,23 +146,6 @@ export function usePlaybackSync({
       syncMode: coordinatorRef.current?.mode ?? null,
       preferredDeviceId: coordinatorRef.current?.preferredDevice ?? null,
     });
-    sendAgentDebugLog({
-      sessionId: "78c1c7",
-      runId: "initial-map",
-      hypothesisId: "H1",
-      location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-      message: "master local playback state accepted",
-      data: {
-        trackUri: state.trackUri,
-        status: state.status,
-        paused: state.paused,
-        positionMs: state.positionMs,
-        deviceId: state.deviceId,
-        syncMode: coordinatorRef.current?.mode ?? null,
-        preferredDeviceId: coordinatorRef.current?.preferredDevice ?? null,
-        stateVersion: stateVersionRef.current,
-      },
-    });
     setPlayback(state);
     onLocalStateRef.current(state);
   }, []);
@@ -232,24 +215,7 @@ export function usePlaybackSync({
             stateVersion: 0,
           },
       onLocalState: handleLocalState,
-      onSdkQueue: (queue) => {
-        sendAgentDebugLog({
-          sessionId: "78c1c7",
-          runId: "initial-map",
-          hypothesisId: "H4",
-          location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-          message: "master sdk queue received",
-          data: {
-            currentTrackUri: playbackRef.current?.trackUri ?? null,
-            queueCurrentUri: queue?.currentlyPlaying?.uri ?? null,
-            upcomingCount: queue?.upcoming.length ?? 0,
-            hasQueue: Boolean(queue),
-            syncMode: coordinatorRef.current?.mode ?? null,
-            stateVersion: stateVersionRef.current,
-          },
-        });
-        setSpotifyQueue(queue);
-      },
+      onSdkQueue: setSpotifyQueue,
       onStateVersion: setStateVersion,
       onActiveDeviceName: setActiveDeviceName,
       onPollError: setPollError,
@@ -280,30 +246,6 @@ export function usePlaybackSync({
       const initialVersion = sessionMeta?.stateVersion ?? 0;
       const current = playbackRef.current;
       const shouldApply = !current || initialVersion > stateVersionRef.current;
-      // #region agent log
-      fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "78c1c7",
-        },
-        body: JSON.stringify({
-          sessionId: "78c1c7",
-          runId: "post-fix",
-          hypothesisId: "H3",
-          location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-          message: "master initial playback reconciliation",
-          data: {
-            initialVersion,
-            currentVersion: stateVersionRef.current,
-            initialTrackUri: initialPlayback.trackUri,
-            currentTrackUri: current?.trackUri ?? null,
-            shouldApply,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
       if (!shouldApply) {
         return;
       }
@@ -337,24 +279,6 @@ export function usePlaybackSync({
           paused: next.paused,
           deviceId: next.deviceId,
           accepted: stateVersion > stateVersionRef.current,
-        });
-        sendAgentDebugLog({
-          sessionId: "78c1c7",
-          runId: "initial-map",
-          hypothesisId: "H3",
-          location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-          message: "master realtime snapshot received",
-          data: {
-            playerId,
-            currentVersion: stateVersionRef.current,
-            nextVersion: stateVersion,
-            trackUri: next.trackUri,
-            status: next.status,
-            paused: next.paused,
-            positionMs: next.positionMs,
-            deviceId: next.deviceId,
-            accepted: stateVersion > stateVersionRef.current,
-          },
         });
         if (stateVersion <= stateVersionRef.current) {
           return;

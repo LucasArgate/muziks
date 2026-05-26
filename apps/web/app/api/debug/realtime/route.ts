@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     string,
     unknown
   >;
-  const payload = {
+  const payload: Record<string, unknown> = {
     sessionId: "f48c1c",
     runId: "post-fix-web",
     ...body,

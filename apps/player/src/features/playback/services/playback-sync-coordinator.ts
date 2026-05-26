@@ -254,26 +254,6 @@ export class PlaybackSyncCoordinator {
       error?: string;
     };
 
-    sendAgentDebugLog({
-      sessionId: "78c1c7",
-      runId: "initial-map",
-      hypothesisId: "H1",
-      location:
-        "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
-      message: "spotify playback state GET completed",
-      data: {
-        responseStatus: response.status,
-        hasState: Boolean(body.state),
-        trackUri: body.state?.trackUri ?? null,
-        status: body.state?.status ?? null,
-        paused: body.state?.paused ?? null,
-        positionMs: body.state?.positionMs ?? null,
-        deviceId: body.state?.deviceId ?? null,
-        activeDeviceName: body.activeDeviceName ?? null,
-        error: body.error ?? null,
-      },
-    });
-
     if (!response.ok) {
       throw new Error(body.error ?? "spotify_playback_state_failed");
     }

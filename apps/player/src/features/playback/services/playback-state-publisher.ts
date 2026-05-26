@@ -343,7 +343,7 @@ export class PlaybackStatePublisher {
       this.metadataFingerprint() === this.lastMetadataFingerprint
     ) {
       logPlaybackPublisherCurrentDebug("H3", "publisher skipped api remote publish", {
-        source,
+        source: "api",
         remoteMode,
         stateDeviceId: display.deviceId,
         lastPublishedDeviceId: this.lastPublished?.deviceId ?? null,
@@ -479,30 +479,6 @@ export class PlaybackStatePublisher {
         postedDeviceId: body.deviceId,
         postedPreferredDeviceId: body.preferredDeviceId,
         postedActiveDeviceName: body.activeDeviceName,
-      });
-      sendAgentDebugLog({
-        sessionId: "78c1c7",
-        runId: "initial-map",
-        hypothesisId: "H3",
-        location:
-          "apps/player/src/features/playback/services/playback-state-publisher.ts",
-        message: "publisher session post response",
-        data: {
-          source,
-          stateSource,
-          authority,
-          postedStateVersion: body.stateVersion,
-          responseStateVersion: session.stateVersion,
-          accepted: session.accepted ?? null,
-          trackUri: body.trackUri,
-          status: body.status,
-          paused: body.paused,
-          deviceId: body.deviceId,
-          playerId: this.options?.playerId ?? null,
-          willBroadcast: Boolean(
-            this.options?.playerId && session.accepted !== false,
-          ),
-        },
       });
 
       if (session.stateVersion !== undefined) {

@@ -59,32 +59,12 @@ export function SpotifyPlaybackQueueList({
       : []),
     ...(queue?.upcoming ?? []).map((track) => ({ ...track, isCurrent: false })),
   ];
-  const visibleTracksCount = tracks.length;
 
   useEffect(() => {
     if (!enabled || !trackUri) {
       return;
     }
     if (trackUri !== listCurrentUri) {
-      sendAgentDebugLog({
-        sessionId: "78c1c7",
-        runId: "initial-map",
-        hypothesisId: "H5",
-        location: "apps/player/src/components/organisms/spotify-playback-queue-list.tsx",
-        message: "spotify queue UI detected out-of-sync state",
-        data: {
-          syncMode,
-          trackUri,
-          listCurrentUri,
-          hasSdkQueueSource,
-          sdkQueueAligned,
-          hasPolledQueue,
-          loading,
-          error,
-          visibleTracksCount,
-          queueSource: sdkQueueAligned ? "sdk" : "poll",
-        },
-      });
       sendAgentDebugLog({
         hypothesisId: "H8",
         location: "apps/player/src/components/organisms/spotify-playback-queue-list.tsx",
@@ -113,7 +93,6 @@ export function SpotifyPlaybackQueueList({
     sdkQueueAligned,
     syncMode,
     trackUri,
-    visibleTracksCount,
   ]);
 
   return (
