@@ -57,6 +57,14 @@ export function playbackSessionToNormalized(
   };
 }
 
+export function resolvePlaybackSessionStatus(
+  state: NormalizedSpotifyPlayerState,
+): PlaybackSessionStatus {
+  return (
+    state.status ?? (state.paused ? "paused" : state.trackUri ? "playing" : "idle")
+  );
+}
+
 export function resolvePersistedProgressMs(
   state: NormalizedSpotifyPlayerState,
   persistedAt: Date,
