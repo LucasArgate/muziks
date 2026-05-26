@@ -1,0 +1,23 @@
+{
+  "name": "@muziks/playback",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo playback: no build step",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@muziks/db": "workspace:*",
+    "@muziks/spotify": "workspace:*",
+    "@muziks/types": "workspace:*",
+    "drizzle-orm": "^0.38.3"
+  },
+  "devDependencies": {
+    "@muziks/config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

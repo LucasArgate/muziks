@@ -1,7 +1,7 @@
 import { schedules } from "@trigger.dev/sdk";
 
 import { getPlaybackWorkerConfig } from "../config.js";
-import { runPlaybackTick } from "../muziks-api-client.js";
+import { runPlaybackOrchestrator } from "../playback-orchestrator.js";
 
 const config = getPlaybackWorkerConfig();
 
@@ -9,7 +9,7 @@ export const playbackTick = schedules.task({
   id: "playback-tick",
   cron: config.playbackTickCron,
   run: async (payload) => {
-    const result = await runPlaybackTick();
+    const result = await runPlaybackOrchestrator();
     return {
       scheduledAt: payload.timestamp.toISOString(),
       playersProcessed: result.playersProcessed,

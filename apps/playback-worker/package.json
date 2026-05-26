@@ -8,6 +8,10 @@
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@muziks/db": "workspace:*",
+    "@muziks/playback": "workspace:*",
+    "@muziks/types": "workspace:*",
+    "@supabase/supabase-js": "^2.47.10",
     "@trigger.dev/sdk": "^4.4.6"
   },
   "devDependencies": {
