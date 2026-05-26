@@ -7,6 +7,14 @@ import {
 } from "../domain/playback-state";
 
 export type BackgroundPlaybackSession = PlaybackSessionProjection & {
+  spotifyUserId: string | null;
+  syncMode: string;
+  preferredDeviceId: string | null;
+  activeDeviceName: string | null;
+  sdkDeviceId: string | null;
+  browserInstanceId: string | null;
+  browserVisibility: string;
+  browserLastSeenAt: Date | null;
   stateVersion: number;
   stateSource: string;
   authority: string;

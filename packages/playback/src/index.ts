@@ -1,22 +1,25 @@
 export {
-  getPlaybackSessionRow,
-  listPlayerIdsForBackgroundTick,
   runBackgroundPlaybackOrchestrator,
-  savePlaybackPollCursor,
   tickBackgroundPlayer,
-  upsertWorkerPlaybackSession,
-  type BackgroundPlaybackOrchestratorDeps,
+  type BackgroundPlaybackOrchestratorPorts,
+  type BackgroundPlaybackSession,
+  type CurrentPlaybackSample,
   type PlaybackAccessTokenProvider,
-  type PlaybackSessionRow,
   type PlaybackSessionSnapshotPublisher,
   type RunPlaybackOrchestratorResult,
   type TickPlayerResult,
 } from "./application/background-playback-orchestrator";
 export {
+  createDrizzleSpotifyBackgroundPlaybackPorts,
+  type DrizzleSpotifyBackgroundPlaybackOptions,
+  type PlaybackSessionRow,
+} from "./infrastructure/drizzle-spotify-background-playback";
+export {
   fingerprintPlaybackState,
   hasSemanticPlaybackChange,
   playbackSessionToNormalized,
   resolvePersistedProgressMs,
+  resolvePlaybackSessionStatus,
   type PlaybackSessionProjection,
 } from "./domain/playback-state";
 export {

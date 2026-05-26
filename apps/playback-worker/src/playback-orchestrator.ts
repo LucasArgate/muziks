@@ -1,8 +1,9 @@
 import { createTokenCrypto, getAccessTokenForPlayer } from "@muziks/db";
 import {
+  createDrizzleSpotifyBackgroundPlaybackPorts,
   playbackSessionToNormalized,
   runBackgroundPlaybackOrchestrator,
-  type PlaybackSessionRow,
+  type BackgroundPlaybackSession,
   type RunPlaybackOrchestratorResult,
 } from "@muziks/playback";
 import {
@@ -14,7 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPlaybackWorkerConfig } from "./config.js";
 
 async function broadcastSessionSnapshot(
-  input: { playerId: string; session: PlaybackSessionRow },
+  input: { playerId: string; session: BackgroundPlaybackSession },
 ): Promise<void> {
   const config = getPlaybackWorkerConfig();
   const supabase = createClient(
@@ -68,8 +69,10 @@ async function getWorkerAccessToken(playerId: string): Promise<string | null> {
 }
 
 export async function runPlaybackOrchestrator(): Promise<RunPlaybackOrchestratorResult> {
-  return runBackgroundPlaybackOrchestrator({
-    getAccessToken: getWorkerAccessToken,
-    publishSessionSnapshot: broadcastSessionSnapshot,
-  });
+  return runBackgroundPlaybackOrchestrator(
+    createDrizzleSpotifyBackgroundPlaybackPorts({
+      getAccessToken: getWorkerAccessToken,
+      publishSessionSnapshot: broadcastSessionSnapshot,
+    }),
+  );
 }

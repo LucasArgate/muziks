@@ -8,7 +8,8 @@ Worker Node/Trigger.dev responsável por executar o `playback-tick` de sessões 
 - [`src/tasks/playback-tick.ts`](./src/tasks/playback-tick.ts): task agendada `playback-tick`.
 - [`src/config.ts`](./src/config.ts): leitura das envs obrigatórias do worker.
 - [`src/playback-orchestrator.ts`](./src/playback-orchestrator.ts): adapter do worker para config, token vault e Supabase Broadcast.
-- [`../../packages/playback/src/application/background-playback-orchestrator.ts`](../../packages/playback/src/application/background-playback-orchestrator.ts): caso de uso compartilhado para seleção de players em background, budget/backoff, consulta Spotify e persistência.
+- [`../../packages/playback/src/application/background-playback-orchestrator.ts`](../../packages/playback/src/application/background-playback-orchestrator.ts): caso de uso compartilhado, escrito contra portas de aplicação.
+- [`../../packages/playback/src/infrastructure/drizzle-spotify-background-playback.ts`](../../packages/playback/src/infrastructure/drizzle-spotify-background-playback.ts): adapter Drizzle/Spotify para seleção de players, budget/backoff, consulta Spotify e persistência.
 - [`../../packages/playback/src/domain`](../../packages/playback/src/domain): regras puras de domínio de playback usadas por worker e futuros adapters.
 - [`../../packages/db/src/schema/player-sessions.ts`](../../packages/db/src/schema/player-sessions.ts): estado persistido de playback.
 - [`../../packages/db/src/schema/playback-poll-cursors.ts`](../../packages/db/src/schema/playback-poll-cursors.ts): orçamento de tick por player.
