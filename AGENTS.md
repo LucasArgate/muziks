@@ -12,6 +12,7 @@
 | `apps/player` | `player.muziks.app` — master Spotify, playback | [`apps/player/AGENTS.md`](apps/player/AGENTS.md) |
 | `apps/landing` | Landing institucional | [`apps/landing/AGENTS.md`](apps/landing/AGENTS.md) |
 | `apps/spotify-bridge` | Bridge librespot + WS (VM/Docker) | [`apps/spotify-bridge/AGENTS.md`](apps/spotify-bridge/AGENTS.md) |
+| `apps/playback-worker` | Worker Trigger.dev para estado em background | [`apps/playback-worker/AGENTS.md`](apps/playback-worker/AGENTS.md) |
 
 ## Onde colocar código (apps Next.js)
 
