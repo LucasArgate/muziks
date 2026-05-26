@@ -88,10 +88,34 @@ export class SpotifyApiPlaybackPoller {
     this.cacheExpiresAt = 0;
   }
 
-  async refreshOnce(): Promise<void> {
-    if (!this.options) return;
+  async refreshOnce(options?: SpotifyApiPlaybackPollerOptions): Promise<void> {
+    const resolvedOptions = options ?? this.options;
+    if (!resolvedOptions) return;
+
+    const previousOptions = this.options;
+    const previousProfile = this.profile;
+    if (options) {
+      this.options = options;
+      this.profile = options.profile ?? "default";
+    }
+
     this.cacheExpiresAt = 0;
-    await this.tick(true);
+    try {
+      const state = await this.fetchPlaybackState();
+      const fp = fingerprint(state);
+      this.lastFingerprint = fp;
+      this.lastState = state;
+      resolvedOptions.onState(state);
+    } catch (error) {
+      resolvedOptions.onError?.(
+        error instanceof Error ? error.message : "poll_error",
+      );
+    } finally {
+      if (options && !this.running) {
+        this.options = previousOptions;
+        this.profile = previousProfile;
+      }
+    }
   }
 
   get active(): boolean {

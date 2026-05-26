@@ -18,6 +18,7 @@ import type { SpotifyServiceInstance } from "./SpotifyService";
 export type PlaybackSyncCoordinatorOptions = {
   slug: string;
   playerId?: string | null;
+  browserInstanceId?: string | null;
   sessionMeta: PlayerMasterSessionMeta | null;
   publishRemote?: PublishRemoteMode;
   onLocalState: (state: NormalizedSpotifyPlayerState) => void;
@@ -106,6 +107,10 @@ export class PlaybackSyncCoordinator {
     this.publisher.ingest(state, status, "bridge");
   }
 
+  publishBrowserHeartbeat(): void {
+    this.publisher.publishBrowserHeartbeat();
+  }
+
   startSessionPolling(): void {
     this.startApiPolling();
   }
@@ -154,8 +159,7 @@ export class PlaybackSyncCoordinator {
     this.refreshPublisherConfig();
 
     this.sdkSource.start(service, this.sdkSourceOptions());
-    this.startApiPolling();
-    void this.apiPoller.refreshOnce();
+    void this.refreshApiOnce();
   }
 
   stopSdk(): void {
@@ -198,7 +202,7 @@ export class PlaybackSyncCoordinator {
       if (this.sdkService) {
         this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
       }
-      this.startApiPolling();
+      this.stopApiPolling();
       return;
     }
 
@@ -214,7 +218,15 @@ export class PlaybackSyncCoordinator {
   }
 
   async refreshApiOnce(): Promise<void> {
-    await this.apiPoller.refreshOnce();
+    if (!this.options) return;
+
+    const profile =
+      this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
+    await this.apiPoller.refreshOnce({
+      profile,
+      onState: (state) => this.applyApiState(state),
+      onError: (message) => this.options?.onPollError?.(message),
+    });
   }
 
   get sdkPlayer(): Spotify.Player | null {
@@ -243,6 +255,7 @@ export class PlaybackSyncCoordinator {
     this.publisher.configure({
       slug: this.options.slug,
       playerId: this.options.playerId,
+      browserInstanceId: this.options.browserInstanceId,
       syncMode: this.syncMode,
       preferredDeviceId: this.preferredDeviceId,
       activeDeviceName: this.activeDeviceName,

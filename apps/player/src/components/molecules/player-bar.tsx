@@ -1,6 +1,9 @@
 "use client";
 
-import type { NormalizedSpotifyPlayerState, PlaybackSyncMode } from "@muziks/types";
+import type {
+  NormalizedSpotifyPlayerState,
+  PlaybackSyncMode,
+} from "@muziks/types";
 import { cn } from "@muziks/utils";
 import { Loader2, Pause, Play, SkipForward } from "lucide-react";
 
@@ -12,6 +15,7 @@ import { usePlaybackProgress } from "@/src/features/playback/hooks/usePlaybackPr
 type PlayerBarProps = {
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
+  canStartPlayback?: boolean;
   playPauseLoading?: boolean;
   skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
@@ -26,6 +30,7 @@ type PlayerBarProps = {
 export function PlayerBar({
   playback,
   ready,
+  canStartPlayback = false,
   playPauseLoading = false,
   skipLoading = false,
   onTogglePlay,
@@ -38,16 +43,18 @@ export function PlayerBar({
 }: PlayerBarProps) {
   const progress = usePlaybackProgress(playback);
   const canControl = hasActivePlayback(playback);
+  const canUsePlayPause = canControl || canStartPlayback;
+  const willStartDefault = canStartPlayback && !playback?.trackUri;
 
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="p-3">
         <div className="flex items-center gap-3">
           {playback?.albumImageUrl ? (
-            <img
-              src={playback.albumImageUrl}
-              alt=""
-              className="h-12 w-12 shrink-0 rounded-md object-cover"
+            <div
+              className="h-12 w-12 shrink-0 rounded-md bg-cover bg-center"
+              style={{ backgroundImage: `url(${playback.albumImageUrl})` }}
+              aria-hidden="true"
             />
           ) : (
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-surface-container-high text-on-surface-variant">
@@ -78,9 +85,17 @@ export function PlayerBar({
               size="icon"
               variant="secondary"
               onClick={() => void onTogglePlay()}
-              disabled={!ready || !canControl || playPauseLoading || skipLoading}
+              disabled={
+                !ready || !canUsePlayPause || playPauseLoading || skipLoading
+              }
               className="h-8 w-8 rounded-full"
-              aria-label={playback?.paused !== false ? "Reproduzir" : "Pausar"}
+              aria-label={
+                playback?.paused !== false
+                  ? willStartDefault
+                    ? "Reproduzir playlist padrão"
+                    : "Reproduzir"
+                  : "Pausar"
+              }
             >
               {playPauseLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

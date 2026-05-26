@@ -63,13 +63,13 @@ flowchart TB
 
 ## Camada 1 — Master → API → Postgres → Broadcast
 
-**Status:** implementado em `apps/player` (Fase 1–2), com reconciliação Web API no browser e hooks de bridge no publisher.
+**Status:** implementado em `apps/player` (Fase 1–2), com SDK browser como autoridade quando toca no navegador, reconciliação Web API pontual/background e hooks de bridge no publisher.
 
 | Peça | Status |
 |------|--------|
 | `SdkPlaybackSource` + taxonomia `SdkPlaybackEvent` | Implementado — lifecycle, playback, errors; hidratação via `getCurrentState()` no `ready` |
-| `SpotifyApiPlaybackPoller` (`GET /api/spotify/playback/state`) | Implementado — perfil `hybrid` ~3,5 s; perfil `default` ~18 s / 35 s — ver [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) |
-| `PlaybackSyncCoordinator` | Implementado — `hybrid` = SDK + API poll; `api_device` = API poll (não eco Postgres) |
+| `SpotifyApiPlaybackPoller` (`GET /api/spotify/playback/state`) | Implementado — uso pontual no browser e contínuo apenas em `api_device`/background — ver [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) |
+| `PlaybackSyncCoordinator` | Implementado — `sdk`/`hybrid` = SDK browser como fonte; `api_device` = API/worker |
 | `SessionPlaybackPoller` no Master | **Não usado** para now playing ao vivo — mantido no repo para outros consumidores |
 | Fonte `bridge` no `PlaybackStatePublisher` | Hook (`applyBridgeState`, `setBridgeActive`) — librespot/WS em PR futuro |
 
@@ -113,7 +113,7 @@ sequenceDiagram
 
 | Peça | Papel |
 |------|--------|
-| `PlaybackSyncCoordinator` | SDK + poll Web API; modos `hybrid` / `api_device` / `sdk` |
+| `PlaybackSyncCoordinator` | SDK + reconciliação Web API; modos `hybrid` / `api_device` / `sdk` |
 | `SdkPlaybackSource` | Listeners Web Playback SDK; eventos tipados |
 | `SpotifyApiPlaybackPoller` | Poll `GET /api/spotify/playback/state` no browser |
 | `PlaybackStatePublisher` | Normaliza estado, evita spam, chama API e Broadcast |
@@ -141,7 +141,7 @@ Implementadas em `PlaybackStatePublisher`:
 - **Debounce:** 800 ms para mudanças que não são troca de faixa.
 - **Troca de faixa:** flush imediato.
 - **Fingerprint:** track + paused + status + device + bucket de `positionMs` (5 s tocando, 10 s pausado).
-- **Modo hybrid:** poll Web API lento no browser; em divergência SDK vs API, **API vence** para reconciliação.
+- **Modo SDK browser:** SDK publica quando é o device ativo; em divergência com outro device, a sessão migra para background/API.
 
 ### O que não fazer
 
@@ -167,7 +167,7 @@ Com **somente** a camada 1:
 
 **Status:** proposto para validação, sem substituir a camada Master nem o bridge.
 
-Trigger.dev pode complementar a arquitetura como scheduler/worker server-side para `playback-tick`, backoff Spotify e reconciliação tardia. O worker deve chamar APIs internas do `apps/player` e preservar as mesmas regras de domínio, idempotência e Broadcast explícito.
+Trigger.dev pode complementar a arquitetura como scheduler/worker server-side para `playback-tick`, backoff Spotify e reconciliação de sessões background. O worker deve chamar APIs internas do `apps/player`, nunca escrever direto no Postgres, e preservar as mesmas regras de domínio, idempotência e Broadcast explícito.
 
 | Regra | Decisão |
 | ----- | ------- |

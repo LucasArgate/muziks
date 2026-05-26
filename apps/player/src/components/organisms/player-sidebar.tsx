@@ -19,6 +19,7 @@ type PlayerSidebarProps = {
   profile: ProfileSummary | null;
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
+  canStartPlayback?: boolean;
   playPauseLoading?: boolean;
   skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
@@ -36,6 +37,7 @@ export function PlayerSidebar({
   profile,
   playback,
   ready,
+  canStartPlayback,
   playPauseLoading,
   skipLoading,
   onTogglePlay,
@@ -88,6 +90,7 @@ export function PlayerSidebar({
         <PlayerBar
           playback={playback}
           ready={ready}
+          canStartPlayback={canStartPlayback}
           playPauseLoading={playPauseLoading}
           skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}

@@ -3,9 +3,24 @@
 import type { PublicPlaybackSession } from "@muziks/types";
 import { useCallback, useEffect, useState } from "react";
 
-export function usePublicPlaybackSession(slug: string, pollMs = 4000) {
+import { subscribePlaybackSessionSnapshots } from "@/src/lib/realtime/playback-session-channel";
+
+export type UsePublicPlaybackSessionOptions = {
+  slug: string;
+  playerId: string | null;
+  transport?: "poll" | "realtime";
+  pollMs?: number;
+};
+
+export function usePublicPlaybackSession({
+  slug,
+  playerId,
+  transport = "realtime",
+  pollMs = 30000,
+}: UsePublicPlaybackSessionOptions) {
   const [session, setSession] = useState<PublicPlaybackSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [realtimeFailed, setRealtimeFailed] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -23,11 +38,46 @@ export function usePublicPlaybackSession(slug: string, pollMs = 4000) {
 
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    setRealtimeFailed(false);
+  }, [playerId, transport]);
+
+  useEffect(() => {
+    const shouldPoll =
+      transport === "poll" || !playerId || realtimeFailed;
+    if (!shouldPoll) {
+      return;
+    }
+
     const timer = window.setInterval(() => {
       void refresh();
     }, pollMs);
     return () => window.clearInterval(timer);
-  }, [pollMs, refresh]);
+  }, [playerId, pollMs, realtimeFailed, refresh, transport]);
+
+  useEffect(() => {
+    if (transport !== "realtime" || !playerId || realtimeFailed) {
+      return;
+    }
+
+    return subscribePlaybackSessionSnapshots(
+      playerId,
+      (next) => {
+        setSession((current) => {
+          if (current && next.stateVersion < current.stateVersion) {
+            return current;
+          }
+          return next;
+        });
+        setLoading(false);
+      },
+      () => {
+        setRealtimeFailed(true);
+      },
+    );
+  }, [playerId, realtimeFailed, transport]);
 
   return { session, loading };
 }

@@ -24,6 +24,27 @@ export const playerSessionSyncModeEnum = [
   "hybrid",
 ] as const;
 
+export const playerSessionStateSourceEnum = [
+  "sdk_browser",
+  "browser_api",
+  "worker_api",
+  "bridge",
+  "unknown",
+] as const;
+
+export const playerSessionAuthorityEnum = [
+  "browser",
+  "worker",
+  "bridge",
+  "unknown",
+] as const;
+
+export const playerSessionBrowserVisibilityEnum = [
+  "visible",
+  "hidden",
+  "unknown",
+] as const;
+
 export const playerSessions = pgTable("player_sessions", {
   playerId: uuid("player_id")
     .primaryKey()
@@ -42,6 +63,13 @@ export const playerSessions = pgTable("player_sessions", {
   syncMode: text("sync_mode").notNull().default("api_device"),
   preferredDeviceId: text("preferred_device_id"),
   activeDeviceName: text("active_device_name"),
+  stateSource: text("state_source").notNull().default("unknown"),
+  authority: text("authority").notNull().default("unknown"),
+  sdkDeviceId: text("sdk_device_id"),
+  browserInstanceId: text("browser_instance_id"),
+  browserVisibility: text("browser_visibility").notNull().default("unknown"),
+  browserLastSeenAt: timestamp("browser_last_seen_at", { withTimezone: true }),
+  sourceUpdatedAt: timestamp("source_updated_at", { withTimezone: true }),
   stateVersion: integer("state_version").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

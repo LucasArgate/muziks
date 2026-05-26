@@ -24,6 +24,7 @@ type PlayerMasterLayoutProps = {
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
   error: string | null;
+  canStartPlayback?: boolean;
   playPauseLoading?: boolean;
   skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
@@ -43,6 +44,7 @@ export function PlayerMasterLayout({
   playback,
   ready,
   error,
+  canStartPlayback,
   playPauseLoading,
   skipLoading,
   onTogglePlay,
@@ -63,6 +65,7 @@ export function PlayerMasterLayout({
         profile={profile}
         playback={playback}
         ready={ready}
+        canStartPlayback={canStartPlayback}
         playPauseLoading={playPauseLoading}
         skipLoading={skipLoading}
         onTogglePlay={onTogglePlay}
@@ -102,6 +105,7 @@ export function PlayerMasterLayout({
         <PlayerBar
           playback={playback}
           ready={ready}
+          canStartPlayback={canStartPlayback}
           playPauseLoading={playPauseLoading}
           skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}

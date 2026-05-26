@@ -24,6 +24,7 @@ export type PublishRemoteMode = "off" | "minimal" | "full";
 export type PlaybackStatePublisherOptions = {
   slug: string;
   playerId?: string | null;
+  browserInstanceId?: string | null;
   syncMode: PlaybackSyncMode;
   preferredDeviceId?: string | null;
   activeDeviceName?: string | null;
@@ -134,6 +135,18 @@ export class PlaybackStatePublisher {
     this.options?.onLocalState(state);
   }
 
+  publishBrowserHeartbeat(): void {
+    if (!this.lastSdkState) {
+      return;
+    }
+    void this.flushPublish(
+      this.lastSdkState,
+      this.lastSdkState.status,
+      "sdk",
+      true,
+    );
+  }
+
   ingest(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
@@ -172,7 +185,7 @@ export class PlaybackStatePublisher {
     status?: PlaybackSessionStatus,
   ): void {
     this.emitLocal(state);
-    this.publishIfNeeded(state, status);
+    this.publishIfNeeded(state, status, "bridge");
   }
 
   private ingestSdk(
@@ -185,12 +198,13 @@ export class PlaybackStatePublisher {
     }
 
     this.emitLocal(state);
-    this.publishIfNeeded(state, status);
+    this.publishIfNeeded(state, status, "sdk");
   }
 
   private publishIfNeeded(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
   ): void {
     const remoteMode = this.options?.publishRemote ?? "minimal";
     if (remoteMode === "off") {
@@ -201,7 +215,7 @@ export class PlaybackStatePublisher {
     if (trackChanged && state.trackUri) {
       this.lastTrackUri = state.trackUri;
       this.options?.onTrackChanged?.(state);
-      void this.flushPublish(state, status);
+      void this.flushPublish(state, status, source);
       return;
     }
 
@@ -209,7 +223,7 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    this.schedulePublish(state, status);
+    this.schedulePublish(state, status, source);
   }
 
   private ingestApi(
@@ -239,7 +253,7 @@ export class PlaybackStatePublisher {
     if (trackChanged && display.trackUri) {
       this.lastTrackUri = display.trackUri;
       this.options?.onTrackChanged?.(display);
-      void this.flushPublish(display, status);
+      void this.flushPublish(display, status, "api");
       return;
     }
 
@@ -253,29 +267,32 @@ export class PlaybackStatePublisher {
     }
 
     if (diverged) {
-      void this.flushPublish(display, status);
+      void this.flushPublish(display, status, "api");
       return;
     }
 
-    this.schedulePublish(display, status);
+    this.schedulePublish(display, status, "api");
   }
 
   private schedulePublish(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
   ): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null;
-      void this.flushPublish(state, status);
+      void this.flushPublish(state, status, source);
     }, DEBOUNCE_MS);
   }
 
   private async flushPublish(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
+    force = false,
   ): Promise<void> {
     const remoteMode = this.options?.publishRemote ?? "minimal";
     if (remoteMode === "off") {
@@ -286,7 +303,7 @@ export class PlaybackStatePublisher {
       remoteMode === "full"
         ? fingerprintFull(state)
         : fingerprintSemantic(state);
-    if (fp === this.lastFingerprint) {
+    if (!force && fp === this.lastFingerprint) {
       return;
     }
 
@@ -295,6 +312,21 @@ export class PlaybackStatePublisher {
 
     const resolvedStatus =
       status ?? state.status ?? (state.paused ? "paused" : "playing");
+    const nowIso = new Date().toISOString();
+    const browserVisibility =
+      typeof document === "undefined"
+        ? "unknown"
+        : document.visibilityState === "hidden"
+          ? "hidden"
+          : "visible";
+    const stateSource =
+      source === "sdk"
+        ? "sdk_browser"
+        : source === "api"
+          ? "browser_api"
+          : "bridge";
+    const authority = source === "bridge" ? "bridge" : "browser";
+    const browserLastSeenAt = authority === "browser" ? nowIso : null;
 
     const body: PublishPlaybackSessionInput = {
       trackUri: state.trackUri,
@@ -310,6 +342,13 @@ export class PlaybackStatePublisher {
       syncMode: this.options?.syncMode,
       preferredDeviceId: this.options?.preferredDeviceId ?? null,
       activeDeviceName: this.options?.activeDeviceName ?? null,
+      stateSource,
+      authority,
+      sdkDeviceId: this.lastSdkState?.deviceId ?? null,
+      browserInstanceId: this.options?.browserInstanceId ?? null,
+      browserVisibility,
+      browserLastSeenAt,
+      sourceUpdatedAt: nowIso,
       stateVersion: this.stateVersion,
     };
 
@@ -343,6 +382,9 @@ export class PlaybackStatePublisher {
         void broadcastSessionSnapshot(playerId, {
           playback: state,
           stateVersion: this.stateVersion,
+          stateSource,
+          authority,
+          sourceUpdatedAt: nowIso,
         });
       }
     } catch {

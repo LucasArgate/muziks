@@ -35,7 +35,11 @@ export function ParticipantPlayerPage({
   const { session, isAuthenticated, refresh: refreshSession } =
     useParticipantSession();
   const { session: playback, loading: playbackLoading } =
-    usePublicPlaybackSession(slug);
+    usePublicPlaybackSession({
+      slug,
+      playerId,
+      transport: queueTransport,
+    });
   const { items, loading, error, refresh: refreshQueue } =
     useMuziksCustomerQueue({
       slug,

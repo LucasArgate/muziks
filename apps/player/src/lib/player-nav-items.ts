@@ -1,4 +1,4 @@
-export type PlayerNavSection = "home" | "queue" | "settings";
+export type PlayerNavSection = "home" | "queue" | "playlists" | "settings";
 
 export type PlayerNavItem = {
   label: string;
@@ -22,6 +22,12 @@ export function getPlayerNavItems(
       label: "Fila",
       href: `/${slug}/queue`,
       active: active === "queue",
+      disabled: false,
+    },
+    {
+      label: "Playlists",
+      href: `/${slug}/playlists`,
+      active: active === "playlists",
       disabled: false,
     },
     {

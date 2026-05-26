@@ -39,10 +39,16 @@ export {
 } from "./auth/session-view";
 
 export {
+  browserVisibilitySchema,
+  playbackAuthoritySchema,
   playbackSessionSchema,
   playbackSessionStatusSchema,
+  playbackStateSourceSchema,
+  type BrowserVisibility,
+  type PlaybackAuthority,
   type PlaybackSession,
   type PlaybackSessionStatus,
+  type PlaybackStateSource,
 } from "./playback/session";
 
 export {
@@ -141,3 +147,22 @@ export {
   type QueueSnapshotSource,
   type QueueSnapshotBroadcast,
 } from "./queue/queue-broadcast";
+
+export {
+  playlistProviderSchema,
+  providerPlaylistSummarySchema,
+  savedProviderPlaylistItemSchema,
+  savedProviderPlaylistSchema,
+  savedProviderPlaylistWithItemsSchema,
+  syncProviderPlaylistResultSchema,
+  syncProviderPlaylistsInputSchema,
+  syncProviderPlaylistsResponseSchema,
+  type PlaylistProvider,
+  type ProviderPlaylistSummary,
+  type SavedProviderPlaylist,
+  type SavedProviderPlaylistItem,
+  type SavedProviderPlaylistWithItems,
+  type SyncProviderPlaylistResult,
+  type SyncProviderPlaylistsInput,
+  type SyncProviderPlaylistsResponse,
+} from "./playlists/provider-playlist";

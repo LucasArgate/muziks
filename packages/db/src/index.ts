@@ -43,3 +43,18 @@ export {
   type DequeueNextResult,
   type QueueItemRow,
 } from "./repositories/queue-items";
+export {
+  getDefaultSavedPlaylistForPlayer,
+  getSavedPlaylistWithItems,
+  listSavedPlaylistsByProviderIds,
+  listSavedPlaylistsForPlayer,
+  setDefaultSavedPlaylistForPlayer,
+  toSavedProviderPlaylistDto,
+  toSavedProviderPlaylistItemDto,
+  upsertSyncedProviderPlaylist,
+  type SavedPlaylistItemRow,
+  type SavedPlaylistRow,
+  type SyncedPlaylistItemInput,
+  type UpsertSyncedPlaylistInput,
+  type UpsertSyncedPlaylistResult,
+} from "./repositories/player-saved-playlists";

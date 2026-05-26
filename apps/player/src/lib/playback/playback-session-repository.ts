@@ -27,9 +27,21 @@ function rowToPlaybackSession(
     syncMode: (row.syncMode ?? "api_device") as PlaybackSyncMode,
     preferredDeviceId: row.preferredDeviceId,
     activeDeviceName: row.activeDeviceName,
+    stateSource: (row.stateSource ?? "unknown") as PlaybackSession["stateSource"],
+    authority: (row.authority ?? "unknown") as PlaybackSession["authority"],
+    sdkDeviceId: row.sdkDeviceId,
+    browserInstanceId: row.browserInstanceId,
+    browserVisibility: (row.browserVisibility ??
+      "unknown") as PlaybackSession["browserVisibility"],
+    browserLastSeenAt: row.browserLastSeenAt?.toISOString() ?? null,
+    sourceUpdatedAt: row.sourceUpdatedAt?.toISOString() ?? null,
     stateVersion: row.stateVersion ?? 0,
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function optionalIsoToDate(value: string | null | undefined): Date | null {
+  return value ? new Date(value) : null;
 }
 
 function resolvePersistedProgressMs(
@@ -93,6 +105,9 @@ export async function upsertConnectedSession(input: {
       spotifyUserId: input.spotifyUserId,
       status: "connected",
       syncMode: "api_device",
+      stateSource: "unknown",
+      authority: "unknown",
+      browserVisibility: "unknown",
       paused: true,
       progressMs: 0,
       durationMs: 0,
@@ -157,6 +172,26 @@ export async function upsertPlaybackSession(
         ? input.activeDeviceName
         : (existing?.activeDeviceName ?? null),
     stateVersion: nextVersion,
+    stateSource: input.stateSource ?? existing?.stateSource ?? "unknown",
+    authority: input.authority ?? existing?.authority ?? "unknown",
+    sdkDeviceId:
+      input.sdkDeviceId !== undefined
+        ? input.sdkDeviceId
+        : (existing?.sdkDeviceId ?? null),
+    browserInstanceId:
+      input.browserInstanceId !== undefined
+        ? input.browserInstanceId
+        : (existing?.browserInstanceId ?? null),
+    browserVisibility:
+      input.browserVisibility ?? existing?.browserVisibility ?? "unknown",
+    browserLastSeenAt:
+      input.browserLastSeenAt !== undefined
+        ? optionalIsoToDate(input.browserLastSeenAt)
+        : optionalIsoToDate(existing?.browserLastSeenAt ?? null),
+    sourceUpdatedAt:
+      input.sourceUpdatedAt !== undefined
+        ? optionalIsoToDate(input.sourceUpdatedAt)
+        : (optionalIsoToDate(existing?.sourceUpdatedAt ?? null) ?? now),
     updatedAt: now,
   };
 
@@ -180,6 +215,13 @@ export async function upsertPlaybackSession(
         syncMode: values.syncMode,
         preferredDeviceId: values.preferredDeviceId,
         activeDeviceName: values.activeDeviceName,
+        stateSource: values.stateSource,
+        authority: values.authority,
+        sdkDeviceId: values.sdkDeviceId,
+        browserInstanceId: values.browserInstanceId,
+        browserVisibility: values.browserVisibility,
+        browserLastSeenAt: values.browserLastSeenAt,
+        sourceUpdatedAt: values.sourceUpdatedAt,
         stateVersion: values.stateVersion,
         updatedAt: values.updatedAt,
       },

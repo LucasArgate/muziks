@@ -16,7 +16,10 @@ export function PlayerSettingsShell({
 }: PlayerSettingsShellProps) {
   return (
     <PlayerAppFrame slug={slug} viewState={viewState} activeNav="settings">
-      <PlayerSettingsView slug={slug} />
+      <PlayerSettingsView
+        slug={slug}
+        defaultPlaylist={viewState.defaultPlaylist ?? null}
+      />
     </PlayerAppFrame>
   );
 }

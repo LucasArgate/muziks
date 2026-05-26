@@ -1,4 +1,6 @@
 import { cn } from "@muziks/utils";
+import type { SavedProviderPlaylist } from "@muziks/types";
+import Link from "next/link";
 
 import { Button } from "@/src/components/ui/button";
 import {
@@ -12,6 +14,7 @@ import { Separator } from "@/src/components/ui/separator";
 
 type PlayerSettingsViewProps = {
   slug: string;
+  defaultPlaylist: SavedProviderPlaylist | null;
 };
 
 type SettingsSectionProps = {
@@ -44,7 +47,10 @@ function PocPlaceholder({ label }: { label: string }) {
   );
 }
 
-export function PlayerSettingsView({ slug }: PlayerSettingsViewProps) {
+export function PlayerSettingsView({
+  slug,
+  defaultPlaylist,
+}: PlayerSettingsViewProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -65,7 +71,23 @@ export function PlayerSettingsView({ slug }: PlayerSettingsViewProps) {
         title="Player"
         description="Nome público, aparência e comportamento do player."
       >
-        <PocPlaceholder label="Configurações do player" />
+        <div className="space-y-3">
+          <div className="rounded-lg border border-outline/40 bg-surface-container/50 p-4">
+            <p className="text-sm font-medium text-on-surface">
+              Playlist padrão
+            </p>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              {defaultPlaylist
+                ? `${defaultPlaylist.name} · ${defaultPlaylist.tracksTotal} faixas`
+                : "Nenhuma playlist padrão definida."}
+            </p>
+          </div>
+          <Button asChild variant="outline" className="w-full">
+            <Link href={`/${slug}/playlists`}>
+              Gerenciar playlists do player
+            </Link>
+          </Button>
+        </div>
       </SettingsSection>
 
       <SettingsSection

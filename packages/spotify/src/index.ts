@@ -54,6 +54,13 @@ export {
   type GetPlaybackQueueParams,
   type SpotifyApiPlaybackQueueResponse,
 } from "./playback/queue";
+export {
+  getSpotifyPlaylistSnapshot,
+  listSpotifyCurrentUserPlaylists,
+  type ListSpotifyPlaylistsParams,
+  type SpotifyPlaylistSnapshot,
+  type SpotifyPlaylistTrackSnapshotItem,
+} from "./playlists";
 export type {
   SpotifyApiDevice,
   SpotifyApiDevicesResponse,

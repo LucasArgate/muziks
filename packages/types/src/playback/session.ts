@@ -13,6 +13,31 @@ export const playbackSessionStatusSchema = z.enum([
 
 export type PlaybackSessionStatus = z.infer<typeof playbackSessionStatusSchema>;
 
+export const playbackStateSourceSchema = z.enum([
+  "sdk_browser",
+  "browser_api",
+  "worker_api",
+  "bridge",
+  "unknown",
+]);
+
+export const playbackAuthoritySchema = z.enum([
+  "browser",
+  "worker",
+  "bridge",
+  "unknown",
+]);
+
+export const browserVisibilitySchema = z.enum([
+  "visible",
+  "hidden",
+  "unknown",
+]);
+
+export type PlaybackStateSource = z.infer<typeof playbackStateSourceSchema>;
+export type PlaybackAuthority = z.infer<typeof playbackAuthoritySchema>;
+export type BrowserVisibility = z.infer<typeof browserVisibilitySchema>;
+
 /** Snapshot de playback — alinhado a docs/mvp/06-arquitetura-playback-spotify.md §6.1 */
 export const playbackSessionSchema = z.object({
   playerId: z.string().uuid(),
@@ -30,6 +55,13 @@ export const playbackSessionSchema = z.object({
   syncMode: playbackSyncModeSchema,
   preferredDeviceId: z.string().nullable(),
   activeDeviceName: z.string().nullable(),
+  stateSource: playbackStateSourceSchema,
+  authority: playbackAuthoritySchema,
+  sdkDeviceId: z.string().nullable(),
+  browserInstanceId: z.string().nullable(),
+  browserVisibility: browserVisibilitySchema,
+  browserLastSeenAt: z.string().datetime().nullable(),
+  sourceUpdatedAt: z.string().datetime().nullable(),
   stateVersion: z.number().int().nonnegative(),
   updatedAt: z.string().datetime(),
 });

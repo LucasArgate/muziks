@@ -89,6 +89,9 @@ export async function tickPlayer(playerId: string): Promise<TickPlayerResult> {
     syncMode: existing?.syncMode ?? "api_device",
     preferredDeviceId: existing?.preferredDeviceId ?? null,
     activeDeviceName: raw?.device?.name ?? existing?.activeDeviceName ?? null,
+    stateSource: "worker_api",
+    authority: "worker",
+    sourceUpdatedAt: new Date().toISOString(),
   };
 
   const { session, accepted } = await upsertPlaybackSession(playerId, body);
@@ -117,6 +120,9 @@ export async function tickPlayer(playerId: string): Promise<TickPlayerResult> {
         lastError: session.lastError,
       },
       stateVersion: session.stateVersion,
+      stateSource: session.stateSource,
+      authority: session.authority,
+      sourceUpdatedAt: session.sourceUpdatedAt,
     });
   }
 
