@@ -126,7 +126,7 @@ export function SpotifyPlaybackQueueList({
             ? "Atualizando espelho da fila nativa para alinhar com a faixa atual."
           : "Espelho da fila nativa do dispositivo Connect (a API do Spotify mostra poucas faixas à frente)."
       }
-      loading={!sdkQueueAligned && loading && (!queue || queueOutOfSync)}
+      loading={!sdkQueueAligned && loading && !queue}
       isEmpty={!loading && tracks.length === 0}
       emptyMessage={
         error

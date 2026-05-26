@@ -3,6 +3,7 @@
 import type { NormalizedSpotifyPlaybackQueue } from "@muziks/types";
 import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { create } from "zustand";
 
 export type UseSpotifyPlaybackQueueOptions = {
   enabled: boolean;
@@ -13,6 +14,18 @@ export type UseSpotifyPlaybackQueueOptions = {
   pollPausedMs?: number;
 };
 
+type SpotifyPlaybackQueueStore = {
+  queue: NormalizedSpotifyPlaybackQueue | null;
+  setQueue: (queue: NormalizedSpotifyPlaybackQueue | null) => void;
+};
+
+export const useSpotifyPlaybackQueueStore = create<SpotifyPlaybackQueueStore>(
+  (set) => ({
+    queue: null,
+    setQueue: (queue) => set({ queue }),
+  }),
+);
+
 export function useSpotifyPlaybackQueue({
   enabled,
   pollEnabled = true,
@@ -20,8 +33,9 @@ export function useSpotifyPlaybackQueue({
   pollPlayingMs = 8000,
   pollPausedMs = 20000,
 }: UseSpotifyPlaybackQueueOptions) {
-  const [queue, setQueue] = useState<NormalizedSpotifyPlaybackQueue | null>(
-    null,
+  const queue = useSpotifyPlaybackQueueStore((state) => state.queue);
+  const setQueue = useSpotifyPlaybackQueueStore(
+    (state) => state.setQueue,
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +125,7 @@ export function useSpotifyPlaybackQueue({
         setLoading(false);
       }
     }
-  }, [enabled, logQueueDebug, pollEnabled, trackUri]);
+  }, [enabled, logQueueDebug, pollEnabled, setQueue, trackUri]);
 
   useEffect(() => {
     if (previousTrackUriRef.current === trackUri) {
@@ -135,13 +149,28 @@ export function useSpotifyPlaybackQueue({
         requestSeq: requestSeqRef.current,
       },
     });
-    setQueue(null);
     setError(null);
     setLoading(false);
+    sendAgentDebugLog({
+      sessionId: "78c1c7",
+      runId: "post-fix",
+      hypothesisId: "H2",
+      location: "apps/player/src/features/queue/hooks/useSpotifyPlaybackQueue.ts",
+      message: "spotify queue retained after trackUri change",
+      data: {
+        enabled,
+        pollEnabled,
+        previousTrackUri: previousTrackUri ?? null,
+        nextTrackUri: trackUri ?? null,
+        retainedQueueCurrentUri: queue?.currentlyPlaying?.uri ?? null,
+        retainedUpcomingCount: queue?.upcoming.length ?? 0,
+        requestSeq: requestSeqRef.current,
+      },
+    });
     logQueueDebug("spotify queue reset after track change", {
       requestSeq: requestSeqRef.current,
     });
-  }, [enabled, logQueueDebug, pollEnabled, trackUri]);
+  }, [enabled, logQueueDebug, pollEnabled, queue, trackUri]);
 
   useEffect(() => {
     if (!enabled || !pollEnabled) {

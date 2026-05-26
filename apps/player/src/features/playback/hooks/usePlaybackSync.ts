@@ -177,6 +177,9 @@ export function usePlaybackSync({
 
   useEffect(() => {
     const nextVersion = sessionMeta?.stateVersion ?? 0;
+    if (nextVersion < stateVersionRef.current) {
+      return;
+    }
     stateVersionRef.current = nextVersion;
     setStateVersion(nextVersion);
   }, [playerId, sessionMeta?.stateVersion]);
@@ -274,6 +277,36 @@ export function usePlaybackSync({
 
   useEffect(() => {
     if (initialPlayback) {
+      const initialVersion = sessionMeta?.stateVersion ?? 0;
+      const current = playbackRef.current;
+      const shouldApply = !current || initialVersion > stateVersionRef.current;
+      // #region agent log
+      fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "78c1c7",
+        },
+        body: JSON.stringify({
+          sessionId: "78c1c7",
+          runId: "post-fix",
+          hypothesisId: "H3",
+          location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+          message: "master initial playback reconciliation",
+          data: {
+            initialVersion,
+            currentVersion: stateVersionRef.current,
+            initialTrackUri: initialPlayback.trackUri,
+            currentTrackUri: current?.trackUri ?? null,
+            shouldApply,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      if (!shouldApply) {
+        return;
+      }
       logPlaybackSyncDebug("H1", "master initial playback applied", {
         trackUri: initialPlayback.trackUri,
         status: initialPlayback.status,
@@ -281,9 +314,11 @@ export function usePlaybackSync({
         deviceId: initialPlayback.deviceId,
         stateVersion: stateVersionRef.current,
       });
+      stateVersionRef.current = initialVersion;
+      playbackRef.current = initialPlayback;
       setPlayback(initialPlayback);
     }
-  }, [initialPlayback]);
+  }, [initialPlayback, sessionMeta?.stateVersion]);
 
   useEffect(() => {
     if (!enabled || !playerId) {

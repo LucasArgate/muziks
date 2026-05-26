@@ -58,6 +58,37 @@ function optionalIsoToDate(value: string | null | undefined): Date | null {
   return value ? new Date(value) : null;
 }
 
+function optionalIsoToTime(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? time : null;
+}
+
+function isNewerSemanticPlaybackInput(
+  existing: PlaybackSession,
+  input: PublishPlaybackSessionInput,
+): boolean {
+  const inputSourceTime = optionalIsoToTime(input.sourceUpdatedAt);
+  const existingSourceTime =
+    optionalIsoToTime(existing.sourceUpdatedAt) ??
+    optionalIsoToTime(existing.updatedAt);
+
+  if (
+    inputSourceTime === null ||
+    existingSourceTime === null ||
+    inputSourceTime <= existingSourceTime
+  ) {
+    return false;
+  }
+
+  return (
+    input.trackUri !== existing.currentTrackUri ||
+    input.deviceId !== existing.activeDeviceId ||
+    input.paused !== existing.paused ||
+    input.status !== existing.status
+  );
+}
+
 function resolvePersistedProgressMs(
   input: PublishPlaybackSessionInput,
   persistedAt: Date,
@@ -150,12 +181,16 @@ export async function upsertPlaybackSession(
 ): Promise<UpsertPlaybackSessionResult> {
   const db = getDb();
   const existing = await getPlaybackSessionByPlayerId(playerId);
-
-  if (
+  const staleVersion =
     existing &&
     input.stateVersion !== undefined &&
-    input.stateVersion < existing.stateVersion
-  ) {
+    input.stateVersion < existing.stateVersion;
+  const allowStaleVersionForNewerSemanticState =
+    Boolean(existing) &&
+    staleVersion &&
+    isNewerSemanticPlaybackInput(existing!, input);
+
+  if (staleVersion && !allowStaleVersionForNewerSemanticState) {
     logPlaybackRepositoryCurrentDebug("H4", "playback session rejected as stale", {
       playerId,
       inputStateVersion: input.stateVersion,
@@ -168,6 +203,35 @@ export async function upsertPlaybackSession(
       existingActiveDeviceName: existing.activeDeviceName,
     });
     return { session: existing, accepted: false };
+  }
+
+  if (allowStaleVersionForNewerSemanticState) {
+    // #region agent log
+    fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "78c1c7",
+      },
+      body: JSON.stringify({
+        sessionId: "78c1c7",
+        runId: "post-fix",
+        hypothesisId: "H3",
+        location: "apps/player/src/lib/playback/playback-session-repository.ts",
+        message: "playback stale version allowed for newer semantic state",
+        data: {
+          playerId,
+          inputStateVersion: input.stateVersion ?? null,
+          existingStateVersion: existing?.stateVersion ?? null,
+          inputTrackUri: input.trackUri,
+          existingTrackUri: existing?.currentTrackUri ?? null,
+          inputSourceUpdatedAt: input.sourceUpdatedAt ?? null,
+          existingSourceUpdatedAt: existing?.sourceUpdatedAt ?? existing?.updatedAt ?? null,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
   }
 
   const now = new Date();
