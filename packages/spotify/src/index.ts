@@ -11,6 +11,7 @@ export {
 } from "./search";
 export { createSpotifyApi, sdkForAccessToken, type SpotifyApi } from "./client";
 export type { CreateSpotifyApiOptions } from "./client";
+export { SpotifyRateLimitError } from "./fetch-with-retry";
 export { createCodeChallenge, generateCodeVerifier } from "./pkce";
 export {
   buildAuthorizeUrl,

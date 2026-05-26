@@ -57,6 +57,10 @@ export async function ensurePlayerSessionChannel(
 
   return new Promise((resolve, reject) => {
     channel.subscribe((status, err) => {
+      // #region agent log
+      fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "867515" }, body: JSON.stringify({ sessionId: "867515", runId: "initial", hypothesisId: "H2", location: "apps/web/src/lib/realtime/player-session-channel.ts:63", message: "web realtime subscribe status", data: { playerId, channel: playerSessionChannelName(playerId), status, state: channel.state, error: err instanceof Error ? { name: err.name, message: err.message } : err ? { value: String(err) } : null }, timestamp: Date.now() }) }).catch(() => {});
+      fetch("/api/debug/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ runId: "same-origin", hypothesisId: "H2", location: "apps/web/src/lib/realtime/player-session-channel.ts:63", message: "web realtime subscribe status", data: { playerId, channel: playerSessionChannelName(playerId), status, state: channel.state, error: err instanceof Error ? { name: err.name, message: err.message } : err ? { value: String(err) } : null }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
       if (status === "SUBSCRIBED") {
         resolve(channel);
         return;
@@ -98,6 +102,10 @@ export function subscribePlayerBroadcastEvent(
   if (!entry.boundEvents.has(event)) {
     entry.boundEvents.add(event);
     entry.channel.on("broadcast", { event }, (message) => {
+      // #region agent log
+      fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "867515" }, body: JSON.stringify({ sessionId: "867515", runId: "initial", hypothesisId: "H4", location: "apps/web/src/lib/realtime/player-session-channel.ts:106", message: "web realtime broadcast received", data: { playerId, channel: playerSessionChannelName(playerId), event, hasPayload: Boolean(message.payload) }, timestamp: Date.now() }) }).catch(() => {});
+      fetch("/api/debug/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ runId: "same-origin", hypothesisId: "H4", location: "apps/web/src/lib/realtime/player-session-channel.ts:106", message: "web realtime broadcast received", data: { playerId, channel: playerSessionChannelName(playerId), event, hasPayload: Boolean(message.payload) }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
       const current = entry.listeners.get(event);
       if (!current) return;
       for (const listener of current) {
@@ -107,6 +115,10 @@ export function subscribePlayerBroadcastEvent(
   }
 
   void ensurePlayerSessionChannel(playerId).catch((error) => {
+    // #region agent log
+    fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "867515" }, body: JSON.stringify({ sessionId: "867515", runId: "initial", hypothesisId: "H2", location: "apps/web/src/lib/realtime/player-session-channel.ts:119", message: "web realtime subscribe failed", data: { playerId, channel: playerSessionChannelName(playerId), event, error: error instanceof Error ? { name: error.name, message: error.message } : { value: String(error) } }, timestamp: Date.now() }) }).catch(() => {});
+    fetch("/api/debug/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ runId: "same-origin", hypothesisId: "H2", location: "apps/web/src/lib/realtime/player-session-channel.ts:119", message: "web realtime subscribe failed", data: { playerId, channel: playerSessionChannelName(playerId), event, error: error instanceof Error ? { name: error.name, message: error.message } : { value: String(error) } }, timestamp: Date.now() }) }).catch(() => {});
+    // #endregion
     onError?.(error);
   });
 

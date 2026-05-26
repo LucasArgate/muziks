@@ -4,7 +4,8 @@
   "private": true,
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
   },
   "scripts": {
     "build": "echo playback: no build step",

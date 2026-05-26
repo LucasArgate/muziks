@@ -10,6 +10,10 @@ export {
   type TickPlayerResult,
 } from "./application/background-playback-orchestrator";
 export {
+  PlaybackStatePoller,
+  type PlaybackStatePollerOptions,
+} from "./application/playback-state-poller";
+export {
   createDrizzleSpotifyBackgroundPlaybackPorts,
   type DrizzleSpotifyBackgroundPlaybackOptions,
   type PlaybackSessionRow,
@@ -25,6 +29,10 @@ export {
 export {
   PLAYBACK_ACTIVE_WINDOW_MS,
   PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
+  PLAYBACK_CLIENT_IDLE_POLL_MS,
+  PLAYBACK_CLIENT_MAX_BACKOFF_MULTIPLIER,
+  PLAYBACK_CLIENT_PAUSED_POLL_MS,
+  PLAYBACK_CLIENT_PLAYING_POLL_MS,
   PLAYBACK_ENDING_SOON_MS,
   PLAYBACK_ERROR_BACKOFF_MS,
   PLAYBACK_IDLE_NEXT_TICK_MS,

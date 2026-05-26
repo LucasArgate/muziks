@@ -29,7 +29,7 @@ export function PlayerPlaylistsShell({
             playbackReady={sync.ready}
             playbackLoading={sync.playPauseLoading}
             onPlayPlaylist={(providerUri) =>
-              sync.startContextPlayback(providerUri)
+              sync.connectSdk(providerUri)
             }
           />
         </PlaybackMasterGate>

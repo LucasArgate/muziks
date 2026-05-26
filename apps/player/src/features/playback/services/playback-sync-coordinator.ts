@@ -4,6 +4,7 @@ import type {
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
+import { PlaybackStatePoller } from "@muziks/playback/client";
 
 import { playbackDebug } from "../lib/playback-debug";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
@@ -12,7 +13,6 @@ import {
   type PublishRemoteMode,
 } from "./playback-state-publisher";
 import { SdkPlaybackSource } from "./sdk-playback-source";
-import { SpotifyApiPlaybackPoller } from "./spotify-api-playback-poller";
 import type { SpotifyServiceInstance } from "./SpotifyService";
 
 export type PlaybackSyncCoordinatorOptions = {
@@ -40,8 +40,8 @@ export class PlaybackSyncCoordinator {
   private activeDeviceName: string | null = null;
 
   private readonly publisher = new PlaybackStatePublisher();
-  private readonly apiPoller = new SpotifyApiPlaybackPoller();
   private readonly sdkSource = new SdkPlaybackSource();
+  private readonly apiPoller = new PlaybackStatePoller();
   private sdkService: SpotifyServiceInstance | null = null;
 
   configure(options: PlaybackSyncCoordinatorOptions): void {
@@ -101,6 +101,10 @@ export class PlaybackSyncCoordinator {
     this.publisher.ingest(state, status, "api");
   }
 
+  applySyncedSessionState(state: NormalizedSpotifyPlayerState): void {
+    this.publisher.applySyncedSnapshot(state);
+  }
+
   /** Future: called by bridge WS client when librespot reports playback. */
   applyBridgeState(state: NormalizedSpotifyPlayerState): void {
     const status = state.status ?? (state.paused ? "paused" : "playing");
@@ -116,28 +120,20 @@ export class PlaybackSyncCoordinator {
   }
 
   startApiPolling(): void {
-    if (this.requiresDeviceSelection) return;
-
-    const profile =
-      this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
-
     playbackDebug("coordinator", "api-poll:start", {
       syncMode: this.syncMode,
-      profile,
       preferredDeviceId: this.preferredDeviceId,
     });
     this.apiPoller.start({
-      profile,
+      fetchState: () => this.fetchApiState(),
       onState: (state) => this.applyApiState(state),
       onError: (message) => this.options?.onPollError?.(message),
     });
   }
 
   stopApiPolling(): void {
-    if (this.apiPoller.active) {
-      playbackDebug("coordinator", "api-poll:stop");
-    }
     this.apiPoller.stop();
+    playbackDebug("coordinator", "api-poll:stopped");
   }
 
   startSdk(service: SpotifyServiceInstance): void {
@@ -159,7 +155,7 @@ export class PlaybackSyncCoordinator {
     this.refreshPublisherConfig();
 
     this.sdkSource.start(service, this.sdkSourceOptions());
-    void this.refreshApiOnce();
+    this.startApiPolling();
   }
 
   stopSdk(): void {
@@ -202,7 +198,7 @@ export class PlaybackSyncCoordinator {
       if (this.sdkService) {
         this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
       }
-      this.stopApiPolling();
+      this.startApiPolling();
       return;
     }
 
@@ -214,19 +210,11 @@ export class PlaybackSyncCoordinator {
   }
 
   async refreshSessionOnce(): Promise<void> {
-    await this.apiPoller.refreshOnce();
+    await this.refreshApiOnce();
   }
 
   async refreshApiOnce(): Promise<void> {
-    if (!this.options) return;
-
-    const profile =
-      this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
-    await this.apiPoller.refreshOnce({
-      profile,
-      onState: (state) => this.applyApiState(state),
-      onError: (message) => this.options?.onPollError?.(message),
-    });
+    await this.apiPoller.refreshOnce();
   }
 
   get sdkPlayer(): Spotify.Player | null {
@@ -245,6 +233,50 @@ export class PlaybackSyncCoordinator {
       onQueue: (queue) => this.options?.onSdkQueue?.(queue),
       onEvent: (event) => this.options?.onSdkEvent?.(event),
     };
+  }
+
+  private async fetchApiState(): Promise<NormalizedSpotifyPlayerState | null> {
+    playbackDebug("coordinator", "api-refresh:start", {
+      syncMode: this.syncMode,
+    });
+
+    const response = await fetch("/api/spotify/playback/state");
+    const body = (await response.json().catch(() => ({}))) as {
+      state?: NormalizedSpotifyPlayerState;
+      error?: string;
+    };
+
+    if (!response.ok) {
+      throw new Error(body.error ?? "spotify_playback_state_failed");
+    }
+    if (!body.state) {
+      return null;
+    }
+
+    // #region agent log
+    fetch("/api/debug/realtime", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "cc732b",
+        runId: "initial",
+        hypothesisId: "H7",
+        location:
+          "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
+        message: "coordinator api playback state fetched",
+        data: {
+          syncMode: this.syncMode,
+          trackUri: body.state.trackUri,
+          status: body.state.status,
+          paused: body.state.paused,
+          deviceId: body.state.deviceId,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
+    return body.state;
   }
 
   private refreshPublisherConfig(): void {

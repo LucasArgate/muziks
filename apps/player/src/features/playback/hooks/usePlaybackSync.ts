@@ -8,6 +8,8 @@ import type {
 } from "@muziks/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { subscribeSessionSnapshots } from "@/src/lib/realtime/player-session-channel";
+
 import {
   shouldControlViaSdk,
 } from "../lib/playback-control-routing";
@@ -25,6 +27,37 @@ import {
 const SDK_DEVICE_WAIT_TIMEOUT_MS = 5000;
 const SDK_DEVICE_WAIT_INTERVAL_MS = 100;
 const BROWSER_HEARTBEAT_MS = 15000;
+
+function logPlaybackSyncDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  const payload = {
+    sessionId: "cc732b",
+    runId: "initial",
+    hypothesisId,
+    location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+    message,
+    data,
+    timestamp: Date.now(),
+  };
+  // #region agent log
+  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "cc732b",
+    },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+  fetch("/api/debug/realtime", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+  // #endregion
+}
 
 async function waitForSdkDeviceId(
   instance: SpotifyServiceInstance,
@@ -88,6 +121,7 @@ export function usePlaybackSync({
 
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
   const browserInstanceIdRef = useRef<string | null>(null);
+  const stateVersionRef = useRef(sessionMeta?.stateVersion ?? 0);
   const playPauseLoadingRef = useRef(false);
   const skipLoadingRef = useRef(false);
   const playbackBeforeActionRef = useRef<NormalizedSpotifyPlayerState | null>(
@@ -97,9 +131,27 @@ export function usePlaybackSync({
   onLocalStateRef.current = onLocalState;
 
   const handleLocalState = useCallback((state: NormalizedSpotifyPlayerState) => {
+    logPlaybackSyncDebug("H1", "master local state accepted", {
+      trackUri: state.trackUri,
+      status: state.status,
+      paused: state.paused,
+      deviceId: state.deviceId,
+      syncMode: coordinatorRef.current?.mode ?? null,
+      preferredDeviceId: coordinatorRef.current?.preferredDevice ?? null,
+    });
     setPlayback(state);
     onLocalStateRef.current(state);
   }, []);
+
+  useEffect(() => {
+    stateVersionRef.current = stateVersion;
+  }, [stateVersion]);
+
+  useEffect(() => {
+    const nextVersion = sessionMeta?.stateVersion ?? 0;
+    stateVersionRef.current = nextVersion;
+    setStateVersion(nextVersion);
+  }, [playerId, sessionMeta?.stateVersion]);
 
   const handleSdkEvent = useCallback((event: SdkPlaybackEvent) => {
     setSdkPhase(sdkEventToPhase(event));
@@ -176,9 +228,45 @@ export function usePlaybackSync({
 
   useEffect(() => {
     if (initialPlayback) {
+      logPlaybackSyncDebug("H1", "master initial playback applied", {
+        trackUri: initialPlayback.trackUri,
+        status: initialPlayback.status,
+        paused: initialPlayback.paused,
+        deviceId: initialPlayback.deviceId,
+        stateVersion: stateVersionRef.current,
+      });
       setPlayback(initialPlayback);
     }
   }, [initialPlayback]);
+
+  useEffect(() => {
+    if (!enabled || !playerId) {
+      return;
+    }
+
+    return subscribeSessionSnapshots(
+      playerId,
+      ({ playback: next, stateVersion }) => {
+        logPlaybackSyncDebug("H3", "master realtime snapshot received", {
+          playerId,
+          currentVersion: stateVersionRef.current,
+          nextVersion: stateVersion,
+          trackUri: next.trackUri,
+          status: next.status,
+          paused: next.paused,
+          deviceId: next.deviceId,
+          accepted: stateVersion > stateVersionRef.current,
+        });
+        if (stateVersion <= stateVersionRef.current) {
+          return;
+        }
+
+        stateVersionRef.current = stateVersion;
+        setStateVersion(stateVersion);
+        coordinatorRef.current?.applySyncedSessionState(next);
+      },
+    );
+  }, [enabled, playerId]);
 
   useEffect(() => {
     if (!enabled || hybridInitAttempted) {
@@ -283,7 +371,7 @@ export function usePlaybackSync({
     [],
   );
 
-  const connectSdk = useCallback(async () => {
+  const connectSdk = useCallback(async (contextUri?: string) => {
     setSdkError(null);
     try {
       const instance = await initializeSpotifyPlayer(playerName);
@@ -292,11 +380,18 @@ export function usePlaybackSync({
       await instance.connect();
       const deviceId = await waitForSdkDeviceId(instance);
       setSdkReady(true);
+      logPlaybackSyncDebug("H5", "browser sdk device ready before transfer", {
+        playerName,
+        sdkDeviceId: deviceId,
+        currentPlaybackDeviceId: playback?.deviceId ?? null,
+        currentTrackUri: playback?.trackUri ?? null,
+        currentStatus: playback?.status ?? null,
+      });
 
       const response = await fetch("/api/spotify/playback/transfer", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId, play: true }),
+        body: JSON.stringify({ deviceId, play: !contextUri }),
       });
 
       const body = (await response.json().catch(() => ({}))) as {
@@ -306,13 +401,56 @@ export function usePlaybackSync({
       if (!response.ok) {
         throw new Error(body.error ?? "transfer_failed");
       }
+      logPlaybackSyncDebug("H5", "browser sdk transfer response", {
+        sdkDeviceId: deviceId,
+        requestedDefaultContext: Boolean(contextUri),
+        responseStateDeviceId: body.state?.deviceId ?? null,
+        responseStateTrackUri: body.state?.trackUri ?? null,
+        responseStateStatus: body.state?.status ?? null,
+        responseStatePaused: body.state?.paused ?? null,
+      });
       if (body.state) {
         coordinatorRef.current?.applyApiState(body.state);
+      }
+
+      if (contextUri) {
+        logPlaybackSyncDebug("H5", "browser sdk default context request", {
+          sdkDeviceId: deviceId,
+          hasContextUri: true,
+        });
+        const playbackResponse = await fetch("/api/spotify/playback/control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "play",
+            deviceId,
+            contextUri,
+          }),
+        });
+        const playbackBody = (await playbackResponse
+          .json()
+          .catch(() => ({}))) as {
+          state?: NormalizedSpotifyPlayerState;
+          error?: string;
+        };
+        if (!playbackResponse.ok) {
+          throw new Error(playbackBody.error ?? "control_failed");
+        }
+        logPlaybackSyncDebug("H5", "browser sdk default context response", {
+          sdkDeviceId: deviceId,
+          responseStateDeviceId: playbackBody.state?.deviceId ?? null,
+          responseStateTrackUri: playbackBody.state?.trackUri ?? null,
+          responseStateStatus: playbackBody.state?.status ?? null,
+          responseStatePaused: playbackBody.state?.paused ?? null,
+        });
+        if (playbackBody.state) {
+          coordinatorRef.current?.applyApiState(playbackBody.state);
+        }
       }
     } catch (err) {
       setSdkError(err instanceof Error ? err.message : "playback_error");
     }
-  }, [playerName]);
+  }, [playerName, playback?.deviceId, playback?.status, playback?.trackUri]);
 
   const disconnectSdk = useCallback(() => {
     const coordinator = coordinatorRef.current;
@@ -349,6 +487,15 @@ export function usePlaybackSync({
     ) => {
       const coordinator = coordinatorRef.current;
       const deviceId = resolveControlDeviceId();
+      logPlaybackSyncDebug("H6", "client spotify control request", {
+        action,
+        deviceId: deviceId ?? null,
+        syncMode,
+        preferredDeviceId: preferredDeviceId ?? null,
+        playbackDeviceId: playback?.deviceId ?? null,
+        coordinatorDeviceId: coordinator?.activeControlDeviceId ?? null,
+        hasContextUri: Boolean(options?.contextUri),
+      });
       const response = await fetch("/api/spotify/playback/control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -363,15 +510,33 @@ export function usePlaybackSync({
         error?: string;
       };
       if (!response.ok) {
+        logPlaybackSyncDebug("H6", "client spotify control failed", {
+          action,
+          deviceId: deviceId ?? null,
+          responseStatus: response.status,
+          error: body.error ?? null,
+        });
         throw new Error(body.error ?? "control_failed");
       }
+      logPlaybackSyncDebug("H6", "client spotify control response", {
+        action,
+        deviceId: deviceId ?? null,
+        responseStateDeviceId: body.state?.deviceId ?? null,
+        responseStateTrackUri: body.state?.trackUri ?? null,
+        responseStateStatus: body.state?.status ?? null,
+      });
       if (body.state) {
         coordinator?.applyApiState(body.state);
       } else {
         await coordinator?.refreshApiOnce();
       }
     },
-    [resolveControlDeviceId],
+    [
+      resolveControlDeviceId,
+      syncMode,
+      preferredDeviceId,
+      playback?.deviceId,
+    ],
   );
 
   const runPlayPauseAction = useCallback(

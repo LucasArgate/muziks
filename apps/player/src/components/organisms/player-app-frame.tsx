@@ -77,7 +77,7 @@ export function PlayerAppFrame({
       skipLoading={sync.skipLoading}
       onTogglePlay={() => {
         if (!displayPlayback?.trackUri && defaultPlaylistContextUri) {
-          void sync.startContextPlayback(defaultPlaylistContextUri);
+          void sync.connectSdk(defaultPlaylistContextUri);
           return;
         }
         void sync.togglePlay();

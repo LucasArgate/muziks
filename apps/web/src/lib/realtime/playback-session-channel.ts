@@ -11,6 +11,9 @@ function mapBroadcastToPublicSession(
 ): PublicPlaybackSession | null {
   const parsed = sessionSnapshotBroadcastSchema.safeParse(payload);
   if (!parsed.success) {
+    // #region agent log
+    fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "867515" }, body: JSON.stringify({ sessionId: "867515", runId: "initial", hypothesisId: "H4", location: "apps/web/src/lib/realtime/playback-session-channel.ts:16", message: "web playback realtime payload parse failed", data: { issues: parsed.error.issues.map((issue) => ({ path: issue.path.join("."), code: issue.code, message: issue.message })) }, timestamp: Date.now() }) }).catch(() => {});
+    // #endregion
     return null;
   }
 

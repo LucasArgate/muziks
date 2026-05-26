@@ -34,7 +34,7 @@ function DefaultPlaylistAutoStart({
   const attemptedRef = useRef(false);
   const contextUri = defaultPlaylist?.providerUri ?? null;
   const playback = sync.playback;
-  const { ready, playPauseLoading, startContextPlayback } = sync;
+  const { ready, playPauseLoading, syncMode, connectSdk } = sync;
 
   useEffect(() => {
     if (
@@ -52,16 +52,20 @@ function DefaultPlaylistAutoStart({
     if (!isInitialState) {
       return;
     }
+    if (syncMode === "api_device") {
+      return;
+    }
 
     attemptedRef.current = true;
-    void startContextPlayback(contextUri);
+    void connectSdk(contextUri);
   }, [
+    connectSdk,
     contextUri,
     enabled,
     playback,
     playPauseLoading,
     ready,
-    startContextPlayback,
+    syncMode,
   ]);
 
   return null;
@@ -118,7 +122,11 @@ export function PlayerMasterShell({
                     type="button"
                     variant="outline"
                     className="w-full"
-                    onClick={() => void sync.connectSdk()}
+                    onClick={() =>
+                      void sync.connectSdk(
+                        viewState.defaultPlaylist?.providerUri ?? undefined,
+                      )
+                    }
                   >
                     Ativar player neste navegador
                   </Button>

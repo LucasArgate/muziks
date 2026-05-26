@@ -103,6 +103,9 @@ importers:
       '@muziks/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@muziks/playback':
+        specifier: workspace:*
+        version: link:../../packages/playback
       '@muziks/queue':
         specifier: workspace:*
         version: link:../../packages/queue

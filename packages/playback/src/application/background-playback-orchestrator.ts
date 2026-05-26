@@ -25,6 +25,7 @@ export type TickPlayerResult = {
   playerId: string;
   ok: boolean;
   skipped?: "no_token" | "spotify_error";
+  retryAfterMs?: number;
   eventsEmitted: number;
   sessionUpdated: boolean;
   paused?: boolean;
@@ -87,11 +88,18 @@ export async function tickBackgroundPlayer(
   let sample: CurrentPlaybackSample;
   try {
     sample = await ports.fetchCurrentPlayback(accessToken);
-  } catch {
+  } catch (error) {
+    const retryAfterMs =
+      error instanceof Error &&
+      "retryAfterMs" in error &&
+      typeof error.retryAfterMs === "number"
+        ? error.retryAfterMs
+        : undefined;
     return {
       playerId,
       ok: false,
       skipped: "spotify_error",
+      retryAfterMs,
       eventsEmitted: 0,
       sessionUpdated: false,
     };

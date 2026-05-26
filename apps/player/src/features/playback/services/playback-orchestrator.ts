@@ -29,6 +29,7 @@ export type TickPlayerResult = {
   playerId: string;
   ok: boolean;
   skipped?: "no_token" | "spotify_error";
+  retryAfterMs?: number;
   eventsEmitted: number;
   sessionUpdated: boolean;
   lifecycleAction?: string;
@@ -54,11 +55,18 @@ export async function tickPlayer(playerId: string): Promise<TickPlayerResult> {
     raw = await getCurrentPlayback({ accessToken });
   } catch (error) {
     const message = error instanceof Error ? error.message : "spotify_error";
+    const retryAfterMs =
+      error instanceof Error &&
+      "retryAfterMs" in error &&
+      typeof error.retryAfterMs === "number"
+        ? error.retryAfterMs
+        : undefined;
     logPlaybackLifecycle("warn", "spotify_api_error", { playerId, message });
     return {
       playerId,
       ok: false,
       skipped: "spotify_error",
+      retryAfterMs,
       eventsEmitted: 0,
       sessionUpdated: false,
     };

@@ -8,6 +8,7 @@ import {
 } from "@muziks/db";
 import {
   and,
+  asc,
   desc,
   eq,
   gt,
@@ -31,12 +32,61 @@ const PLAYING_NEXT_TICK_MS = 15_000;
 const PAUSED_NEXT_TICK_MS = 60_000;
 const IDLE_NEXT_TICK_MS = 5 * 60_000;
 const ERROR_BACKOFF_MS = 30_000;
+const TICK_BATCH_SIZE = 20;
+const TICK_LOCK_MS = 2 * 60_000;
 
 export type RunPlaybackOrchestratorResult = {
   playersProcessed: number;
   eventsEmitted: number;
   results: TickPlayerResult[];
 };
+
+async function lockPlayerIdsForTick(
+  playerIds: string[],
+  now: Date,
+): Promise<string[]> {
+  if (playerIds.length === 0) {
+    return [];
+  }
+
+  const db = getDb();
+  const lockedUntil = new Date(now.getTime() + TICK_LOCK_MS);
+
+  await db
+    .insert(playbackPollCursors)
+    .values(
+      playerIds.map((playerId) => ({
+        playerId,
+        nextTickAt: now,
+        lockedUntil,
+        lastTickAt: null,
+        updatedAt: now,
+      })),
+    )
+    .onConflictDoUpdate({
+      target: playbackPollCursors.playerId,
+      set: {
+        lockedUntil,
+        updatedAt: now,
+      },
+      where: or(
+        isNull(playbackPollCursors.lockedUntil),
+        lte(playbackPollCursors.lockedUntil, now),
+      ),
+    });
+
+  const claimed = await db
+    .select({ playerId: playbackPollCursors.playerId })
+    .from(playbackPollCursors)
+    .where(
+      and(
+        inArray(playbackPollCursors.playerId, playerIds),
+        eq(playbackPollCursors.lockedUntil, lockedUntil),
+      ),
+    );
+
+  return claimed.map((row) => row.playerId);
+}
 
 async function listPlayerIdsForTick(): Promise<string[]> {
   const db = getDb();
@@ -99,12 +149,15 @@ async function listPlayerIdsForTick(): Promise<string[]> {
     )
     .orderBy(
       sql`CASE
-        WHEN ${playbackTrackLifecycle.phase} = 'paused' THEN 0
-        WHEN ${playbackTrackLifecycle.expectedEndAt} IS NOT NULL AND ${playbackTrackLifecycle.expectedEndAt} <= ${endingSoon} THEN 1
-        ELSE 2
+        WHEN ${playbackTrackLifecycle.expectedEndAt} IS NOT NULL AND ${playbackTrackLifecycle.expectedEndAt} <= ${endingSoon} THEN 0
+        WHEN ${playbackTrackLifecycle.phase} = 'paused' THEN 2
+        ELSE 1
       END`,
+      asc(playbackPollCursors.nextTickAt),
+      asc(playbackPollCursors.lastTickAt),
       desc(playerSessions.updatedAt),
-    );
+    )
+    .limit(TICK_BATCH_SIZE);
 
   const seen = new Set<string>();
   const ordered: string[] = [];
@@ -113,12 +166,16 @@ async function listPlayerIdsForTick(): Promise<string[]> {
     seen.add(row.playerId);
     ordered.push(row.playerId);
   }
-  return ordered;
+  return lockPlayerIdsForTick(ordered, now);
 }
 
 function resolveNextTickAt(result: TickPlayerResult): Date {
   const now = Date.now();
   if (!result.ok) {
+    if (result.retryAfterMs !== undefined) {
+      return new Date(now + Math.max(result.retryAfterMs, 1000));
+    }
+
     const delay =
       result.skipped === "no_token" ? IDLE_NEXT_TICK_MS : ERROR_BACKOFF_MS;
     return new Date(now + delay);
@@ -135,7 +192,8 @@ async function savePollCursor(result: TickPlayerResult): Promise<void> {
   const db = getDb();
   const now = new Date();
   const nextTickAt = resolveNextTickAt(result);
-  const retryAfterUntil = result.ok ? null : nextTickAt;
+  const retryAfterUntil =
+    result.ok || result.skipped === "no_token" ? null : nextTickAt;
 
   await db
     .insert(playbackPollCursors)

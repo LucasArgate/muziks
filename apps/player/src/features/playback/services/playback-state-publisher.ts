@@ -19,6 +19,32 @@ const DEBOUNCE_MS = 800;
 const PLAYING_POSITION_BUCKET_MS = 5000;
 const PAUSED_POSITION_BUCKET_MS = 10000;
 
+function logPlaybackPublisherDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  // #region agent log
+  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "cc732b",
+    },
+    body: JSON.stringify({
+      sessionId: "cc732b",
+      runId: "initial",
+      hypothesisId,
+      location:
+        "apps/player/src/features/playback/services/playback-state-publisher.ts",
+      message,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
+
 export type PublishRemoteMode = "off" | "minimal" | "full";
 
 export type PlaybackStatePublisherOptions = {
@@ -58,6 +84,13 @@ function fingerprintSemantic(state: NormalizedSpotifyPlayerState): string {
     state.status ?? "",
     state.deviceId ?? "",
   ].join("|");
+}
+
+function fingerprintForMode(
+  state: NormalizedSpotifyPlayerState,
+  mode: PublishRemoteMode,
+): string {
+  return mode === "full" ? fingerprintFull(state) : fingerprintSemantic(state);
 }
 
 export function shouldPublishRemote(
@@ -135,6 +168,17 @@ export class PlaybackStatePublisher {
     this.options?.onLocalState(state);
   }
 
+  applySyncedSnapshot(state: NormalizedSpotifyPlayerState): void {
+    this.lastApiState = state;
+    this.lastPublished = state;
+    this.lastFingerprint = fingerprintForMode(
+      state,
+      this.options?.publishRemote ?? "minimal",
+    );
+    this.lastTrackUri = state.trackUri;
+    this.emitLocal(state);
+  }
+
   publishBrowserHeartbeat(): void {
     if (!this.lastSdkState) {
       return;
@@ -193,6 +237,15 @@ export class PlaybackStatePublisher {
     status?: PlaybackSessionStatus,
   ): void {
     const mode = this.options?.syncMode ?? "hybrid";
+    logPlaybackPublisherDebug("H4", "publisher sdk ingest", {
+      mode,
+      status: status ?? state.status ?? null,
+      sdkDeviceId: state.deviceId,
+      apiDeviceId: this.lastApiState?.deviceId ?? null,
+      preferredDeviceId: this.options?.preferredDeviceId ?? null,
+      activeDeviceName: this.options?.activeDeviceName ?? null,
+      suppressed: shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState),
+    });
     if (shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState)) {
       return;
     }
@@ -238,6 +291,15 @@ export class PlaybackStatePublisher {
 
     const mode = this.options?.syncMode ?? "api_device";
     const diverged = statesDiverge(this.lastSdkState, state);
+    logPlaybackPublisherDebug("H4", "publisher api ingest", {
+      mode,
+      status: status ?? state.status ?? null,
+      apiDeviceId: state.deviceId,
+      sdkDeviceId: this.lastSdkState?.deviceId ?? null,
+      preferredDeviceId: this.options?.preferredDeviceId ?? null,
+      activeDeviceName: this.options?.activeDeviceName ?? null,
+      diverged,
+    });
 
     if (mode === "hybrid" && !diverged) {
       return;
@@ -299,10 +361,7 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    const fp =
-      remoteMode === "full"
-        ? fingerprintFull(state)
-        : fingerprintSemantic(state);
+    const fp = fingerprintForMode(state, remoteMode);
     if (!force && fp === this.lastFingerprint) {
       return;
     }
