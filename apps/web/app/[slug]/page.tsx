@@ -1,4 +1,5 @@
-import { getPlayerSummaryBySlug } from "@muziks/db";
+import { getPlayerSummaryBySlug, getPublicPlaybackSession } from "@muziks/db";
+import { publicPlaybackSessionSchema } from "@muziks/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -21,6 +22,21 @@ export default async function PlayerSlugPage({ params }: PlayerPageProps) {
     notFound();
   }
 
+  const playbackRow = await getPublicPlaybackSession(player.id);
+  const initialPlayback = playbackRow
+    ? publicPlaybackSessionSchema.parse({
+        trackName: playbackRow.trackName,
+        artistName: playbackRow.artistName,
+        albumImageUrl: playbackRow.albumImageUrl,
+        progressMs: playbackRow.progressMs,
+        durationMs: playbackRow.durationMs,
+        paused: playbackRow.paused,
+        status: playbackRow.status,
+        stateVersion: playbackRow.stateVersion,
+        updatedAt: playbackRow.updatedAt.toISOString(),
+      })
+    : null;
+
   return (
     <Suspense fallback={<p className="p-6 text-center text-sm">Carregando...</p>}>
       <ParticipantPlayerPage
@@ -28,6 +44,7 @@ export default async function PlayerSlugPage({ params }: PlayerPageProps) {
         playerId={player.id}
         displayName={player.displayName}
         queueTransport={queueTransport}
+        initialPlayback={initialPlayback}
       />
     </Suspense>
   );

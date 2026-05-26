@@ -126,6 +126,9 @@ export function usePlaybackSync({
   const coordinatorRef = useRef<PlaybackSyncCoordinator | null>(null);
   const browserInstanceIdRef = useRef<string | null>(null);
   const stateVersionRef = useRef(sessionMeta?.stateVersion ?? 0);
+  const playbackRef = useRef<NormalizedSpotifyPlayerState | null>(
+    initialPlayback ?? null,
+  );
   const playPauseLoadingRef = useRef(false);
   const skipLoadingRef = useRef(false);
   const playbackBeforeActionRef = useRef<NormalizedSpotifyPlayerState | null>(
@@ -143,6 +146,23 @@ export function usePlaybackSync({
       syncMode: coordinatorRef.current?.mode ?? null,
       preferredDeviceId: coordinatorRef.current?.preferredDevice ?? null,
     });
+    sendAgentDebugLog({
+      sessionId: "78c1c7",
+      runId: "initial-map",
+      hypothesisId: "H1",
+      location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+      message: "master local playback state accepted",
+      data: {
+        trackUri: state.trackUri,
+        status: state.status,
+        paused: state.paused,
+        positionMs: state.positionMs,
+        deviceId: state.deviceId,
+        syncMode: coordinatorRef.current?.mode ?? null,
+        preferredDeviceId: coordinatorRef.current?.preferredDevice ?? null,
+        stateVersion: stateVersionRef.current,
+      },
+    });
     setPlayback(state);
     onLocalStateRef.current(state);
   }, []);
@@ -150,6 +170,10 @@ export function usePlaybackSync({
   useEffect(() => {
     stateVersionRef.current = stateVersion;
   }, [stateVersion]);
+
+  useEffect(() => {
+    playbackRef.current = playback;
+  }, [playback]);
 
   useEffect(() => {
     const nextVersion = sessionMeta?.stateVersion ?? 0;
@@ -205,7 +229,24 @@ export function usePlaybackSync({
             stateVersion: 0,
           },
       onLocalState: handleLocalState,
-      onSdkQueue: setSpotifyQueue,
+      onSdkQueue: (queue) => {
+        sendAgentDebugLog({
+          sessionId: "78c1c7",
+          runId: "initial-map",
+          hypothesisId: "H4",
+          location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+          message: "master sdk queue received",
+          data: {
+            currentTrackUri: playbackRef.current?.trackUri ?? null,
+            queueCurrentUri: queue?.currentlyPlaying?.uri ?? null,
+            upcomingCount: queue?.upcoming.length ?? 0,
+            hasQueue: Boolean(queue),
+            syncMode: coordinatorRef.current?.mode ?? null,
+            stateVersion: stateVersionRef.current,
+          },
+        });
+        setSpotifyQueue(queue);
+      },
       onStateVersion: setStateVersion,
       onActiveDeviceName: setActiveDeviceName,
       onPollError: setPollError,
@@ -261,6 +302,24 @@ export function usePlaybackSync({
           paused: next.paused,
           deviceId: next.deviceId,
           accepted: stateVersion > stateVersionRef.current,
+        });
+        sendAgentDebugLog({
+          sessionId: "78c1c7",
+          runId: "initial-map",
+          hypothesisId: "H3",
+          location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+          message: "master realtime snapshot received",
+          data: {
+            playerId,
+            currentVersion: stateVersionRef.current,
+            nextVersion: stateVersion,
+            trackUri: next.trackUri,
+            status: next.status,
+            paused: next.paused,
+            positionMs: next.positionMs,
+            deviceId: next.deviceId,
+            accepted: stateVersion > stateVersionRef.current,
+          },
         });
         if (stateVersion <= stateVersionRef.current) {
           return;
@@ -689,7 +748,7 @@ export function usePlaybackSync({
     playback?.deviceId &&
     preferredDeviceId &&
     playback.deviceId !== preferredDeviceId
-      ? "Dispositivo atual"
+      ? (activeDeviceName ?? "Dispositivo Spotify ativo")
       : activeDeviceName;
 
   return {

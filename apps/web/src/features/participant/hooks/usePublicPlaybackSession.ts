@@ -11,6 +11,7 @@ export type UsePublicPlaybackSessionOptions = {
   playerId: string | null;
   transport?: "poll" | "realtime";
   pollMs?: number;
+  initialSession?: PublicPlaybackSession | null;
 };
 
 function logPlaybackSessionCurrentDebug(
@@ -34,9 +35,12 @@ export function usePublicPlaybackSession({
   playerId,
   transport = "realtime",
   pollMs = 30000,
+  initialSession = null,
 }: UsePublicPlaybackSessionOptions) {
-  const [session, setSession] = useState<PublicPlaybackSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<PublicPlaybackSession | null>(
+    initialSession,
+  );
+  const [loading, setLoading] = useState(!initialSession);
   const [realtimeFailed, setRealtimeFailed] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -86,14 +90,30 @@ export function usePublicPlaybackSession({
   }, [playerId, slug, transport]);
 
   useEffect(() => {
+    setSession((current) => {
+      if (!initialSession) {
+        return current;
+      }
+      if (current && current.stateVersion > initialSession.stateVersion) {
+        return current;
+      }
+      return initialSession;
+    });
+    if (initialSession) {
+      setLoading(false);
+    }
+  }, [initialSession]);
+
+  useEffect(() => {
     logPlaybackSessionCurrentDebug("H6", "public playback hook configured", {
       slug,
       playerId,
       transport,
       pollMs,
+      initialVersion: initialSession?.stateVersion ?? null,
     });
     void refresh();
-  }, [playerId, pollMs, refresh, slug, transport]);
+  }, [initialSession?.stateVersion, playerId, pollMs, refresh, slug, transport]);
 
   useEffect(() => {
     setRealtimeFailed(false);

@@ -480,6 +480,30 @@ export class PlaybackStatePublisher {
         postedPreferredDeviceId: body.preferredDeviceId,
         postedActiveDeviceName: body.activeDeviceName,
       });
+      sendAgentDebugLog({
+        sessionId: "78c1c7",
+        runId: "initial-map",
+        hypothesisId: "H3",
+        location:
+          "apps/player/src/features/playback/services/playback-state-publisher.ts",
+        message: "publisher session post response",
+        data: {
+          source,
+          stateSource,
+          authority,
+          postedStateVersion: body.stateVersion,
+          responseStateVersion: session.stateVersion,
+          accepted: session.accepted ?? null,
+          trackUri: body.trackUri,
+          status: body.status,
+          paused: body.paused,
+          deviceId: body.deviceId,
+          playerId: this.options?.playerId ?? null,
+          willBroadcast: Boolean(
+            this.options?.playerId && session.accepted !== false,
+          ),
+        },
+      });
 
       if (session.stateVersion !== undefined) {
         this.stateVersion = session.stateVersion;

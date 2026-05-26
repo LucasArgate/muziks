@@ -5,6 +5,7 @@ import type {
   PlayerMasterSessionMeta,
 } from "@muziks/types";
 import { PlaybackStatePoller } from "@muziks/playback/client";
+import { sendAgentDebugLog } from "@muziks/utils";
 
 import { playbackDebug } from "../lib/playback-debug";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
@@ -146,28 +147,21 @@ export class PlaybackSyncCoordinator {
     this.apiPoller.start({
       fetchState: () => this.fetchApiState(),
       onState: (state) => {
-        // #region agent log
-        fetch("/api/debug/realtime", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: "cc732b",
-            runId: "initial",
-            hypothesisId: "H7",
-            location:
-              "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
-            message: "coordinator api playback state accepted",
-            data: {
-              syncMode: this.syncMode,
-              trackUri: state.trackUri,
-              status: state.status,
-              paused: state.paused,
-              deviceId: state.deviceId,
-            },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
+        sendAgentDebugLog({
+          sessionId: "cc732b",
+          sameOriginPath: "/api/debug/realtime",
+          hypothesisId: "H7",
+          location:
+            "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
+          message: "coordinator api playback state accepted",
+          data: {
+            syncMode: this.syncMode,
+            trackUri: state.trackUri,
+            status: state.status,
+            paused: state.paused,
+            deviceId: state.deviceId,
+          },
+        });
         this.applyApiState(state, this.latestApiActiveDeviceName);
       },
       onError: (message) => this.options?.onPollError?.(message),
@@ -259,6 +253,26 @@ export class PlaybackSyncCoordinator {
       activeDeviceName?: string | null;
       error?: string;
     };
+
+    sendAgentDebugLog({
+      sessionId: "78c1c7",
+      runId: "initial-map",
+      hypothesisId: "H1",
+      location:
+        "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
+      message: "spotify playback state GET completed",
+      data: {
+        responseStatus: response.status,
+        hasState: Boolean(body.state),
+        trackUri: body.state?.trackUri ?? null,
+        status: body.state?.status ?? null,
+        paused: body.state?.paused ?? null,
+        positionMs: body.state?.positionMs ?? null,
+        deviceId: body.state?.deviceId ?? null,
+        activeDeviceName: body.activeDeviceName ?? null,
+        error: body.error ?? null,
+      },
+    });
 
     if (!response.ok) {
       throw new Error(body.error ?? "spotify_playback_state_failed");

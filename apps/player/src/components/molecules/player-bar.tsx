@@ -135,6 +135,7 @@ export function PlayerBar({
           <ConnectDeviceControl
             syncMode={syncMode}
             deviceName={deviceName}
+            playbackStatus={playback?.status ?? null}
             onSelectDevice={onSelectDevice}
           />
         </div>

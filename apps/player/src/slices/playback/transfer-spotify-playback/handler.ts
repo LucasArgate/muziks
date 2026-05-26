@@ -10,6 +10,10 @@ const transferBodySchema = z.object({
   play: z.boolean().optional(),
 });
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function logSpotifyTransferDebug(
   hypothesisId: string,
   message: string,
@@ -64,27 +68,45 @@ export async function transferSpotifyPlaybackHandler(rawBody: unknown) {
     play: parsed.data.play,
   });
 
-  const { state, activeDeviceName } =
-    await readSpotifyPlaybackSnapshot(accessToken);
+  try {
+    const { state, activeDeviceName } =
+      await readSpotifyPlaybackSnapshot(accessToken);
 
-  logSpotifyTransferDebug("H5", "server spotify transfer state read", {
-    requestDeviceId: parsed.data.deviceId,
-    play: parsed.data.play ?? null,
-    stateDeviceId: state.deviceId,
-    stateTrackUri: state.trackUri,
-    stateStatus: state.status,
-    statePaused: state.paused,
-    activeDeviceName,
-  });
-  logSpotifyTransferCurrentDebug("H2", "server spotify transfer state read", {
-    requestDeviceId: parsed.data.deviceId,
-    play: parsed.data.play ?? null,
-    stateDeviceId: state.deviceId,
-    stateTrackUri: state.trackUri,
-    stateStatus: state.status,
-    statePaused: state.paused,
-    activeDeviceName,
-  });
+    logSpotifyTransferDebug("H5", "server spotify transfer state read", {
+      requestDeviceId: parsed.data.deviceId,
+      play: parsed.data.play ?? null,
+      stateDeviceId: state.deviceId,
+      stateTrackUri: state.trackUri,
+      stateStatus: state.status,
+      statePaused: state.paused,
+      activeDeviceName,
+    });
+    logSpotifyTransferCurrentDebug("H2", "server spotify transfer state read", {
+      requestDeviceId: parsed.data.deviceId,
+      play: parsed.data.play ?? null,
+      stateDeviceId: state.deviceId,
+      stateTrackUri: state.trackUri,
+      stateStatus: state.status,
+      statePaused: state.paused,
+      activeDeviceName,
+    });
 
-  return { status: 200 as const, body: { ok: true, state, activeDeviceName } };
+    return { status: 200 as const, body: { ok: true, state, activeDeviceName } };
+  } catch (error) {
+    logSpotifyTransferCurrentDebug("H2", "server spotify transfer state read failed", {
+      requestDeviceId: parsed.data.deviceId,
+      play: parsed.data.play ?? null,
+      error: errorMessage(error),
+    });
+
+    return {
+      status: 200 as const,
+      body: {
+        ok: true,
+        state: null,
+        activeDeviceName: null,
+        stateReadError: errorMessage(error),
+      },
+    };
+  }
 }

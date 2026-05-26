@@ -16,6 +16,10 @@ const controlBodySchema = z.object({
   contextUri: z.string().optional(),
 });
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function logSpotifyControlDebug(
   hypothesisId: string,
   message: string,
@@ -67,18 +71,36 @@ export async function controlSpotifyPlaybackHandler(rawBody: unknown) {
       break;
   }
 
-  const { state, activeDeviceName } =
-    await readSpotifyPlaybackSnapshot(accessToken);
+  try {
+    const { state, activeDeviceName } =
+      await readSpotifyPlaybackSnapshot(accessToken);
 
-  logSpotifyControlDebug("H6", "server spotify control state read", {
-    action,
-    requestDeviceId: deviceId ?? null,
-    stateDeviceId: state.deviceId,
-    stateTrackUri: state.trackUri,
-    stateStatus: state.status,
-    statePaused: state.paused,
-    activeDeviceName,
-  });
+    logSpotifyControlDebug("H6", "server spotify control state read", {
+      action,
+      requestDeviceId: deviceId ?? null,
+      stateDeviceId: state.deviceId,
+      stateTrackUri: state.trackUri,
+      stateStatus: state.status,
+      statePaused: state.paused,
+      activeDeviceName,
+    });
 
-  return { status: 200 as const, body: { ok: true, state, activeDeviceName } };
+    return { status: 200 as const, body: { ok: true, state, activeDeviceName } };
+  } catch (error) {
+    logSpotifyControlDebug("H6", "server spotify control state read failed", {
+      action,
+      requestDeviceId: deviceId ?? null,
+      error: errorMessage(error),
+    });
+
+    return {
+      status: 200 as const,
+      body: {
+        ok: true,
+        state: null,
+        activeDeviceName: null,
+        stateReadError: errorMessage(error),
+      },
+    };
+  }
 }
