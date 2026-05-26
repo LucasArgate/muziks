@@ -20,7 +20,7 @@ import { DeviceSelector } from "@/src/components/molecules/device-selector";
 const modeLabels: Record<PlaybackSyncMode, string> = {
   api_device: "Spotify Connect",
   sdk: "Navegador",
-  hybrid: "Híbrido",
+  hybrid: "Spotify Connect",
 };
 
 type ConnectDeviceControlProps = {

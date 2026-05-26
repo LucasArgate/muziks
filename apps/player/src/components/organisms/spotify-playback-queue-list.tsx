@@ -24,9 +24,7 @@ export function SpotifyPlaybackQueueList({
   trackUri,
   paused,
 }: SpotifyPlaybackQueueListProps) {
-  const hasSdkQueueSource =
-    syncMode === "sdk" ||
-    (syncMode === "hybrid" && Boolean(sdkQueue?.currentlyPlaying));
+  const hasSdkQueueSource = syncMode === "sdk";
 
   const sdkQueueAligned =
     hasSdkQueueSource &&

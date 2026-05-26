@@ -108,7 +108,7 @@ export function PlayerMasterShell({
 
                 <DequeueTestButton slug={slug} />
 
-                {sync.syncMode === "hybrid" || sync.syncMode === "sdk" ? (
+                {sync.syncMode === "sdk" ? (
                   <Button
                     type="button"
                     variant="ghost"

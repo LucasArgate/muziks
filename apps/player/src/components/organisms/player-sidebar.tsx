@@ -59,11 +59,8 @@ export function PlayerSidebar({
       )}
     >
       <div className="shrink-0 border-b border-outline/40 px-5 py-5">
-        <OwnerProfileBlock profile={profile} className="mb-4" />
-        <MuziksLogo variant="light" className="h-6 w-auto" />
-        <p className="mt-2 truncate text-lg font-semibold text-on-surface">
-          {slug}
-        </p>
+        <MuziksLogo variant="light" className="mb-4 h-4 w-auto opacity-90" />
+        <OwnerProfileBlock profile={profile} />
       </div>
 
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">

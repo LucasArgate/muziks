@@ -9,9 +9,7 @@ import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-chan
 
 import {
   mergeApiOverSdk,
-  preferSdkProgressInHybrid,
   type PlaybackStateSource,
-  shouldSdkSuppressLocalDisplay,
   statesDiverge,
 } from "./playback-state-merge";
 
@@ -138,16 +136,16 @@ export class PlaybackStatePublisher {
     return this.stateVersion;
   }
 
-  /** Last normalized state from Web API poll (authoritative in hybrid). */
+  /** Last normalized state from Web API poll. */
   get apiPlaybackState(): NormalizedSpotifyPlayerState | null {
     return this.lastApiState;
   }
 
   /** Device id for Web API play/pause/skip (API state, then preferred Connect device). */
   get activeControlDeviceId(): string | null {
-    const mode = this.options?.syncMode ?? "hybrid";
+    const mode = this.options?.syncMode ?? "api_device";
     if (mode === "api_device") {
-      return this.options?.preferredDeviceId ?? this.lastApiState?.deviceId ?? null;
+      return this.lastApiState?.deviceId ?? this.options?.preferredDeviceId ?? null;
     }
     return this.lastApiState?.deviceId ?? this.lastSdkState?.deviceId ?? null;
   }
@@ -236,7 +234,7 @@ export class PlaybackStatePublisher {
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): void {
-    const mode = this.options?.syncMode ?? "hybrid";
+    const mode = this.options?.syncMode ?? "sdk";
     logPlaybackPublisherDebug("H4", "publisher sdk ingest", {
       mode,
       status: status ?? state.status ?? null,
@@ -244,11 +242,8 @@ export class PlaybackStatePublisher {
       apiDeviceId: this.lastApiState?.deviceId ?? null,
       preferredDeviceId: this.options?.preferredDeviceId ?? null,
       activeDeviceName: this.options?.activeDeviceName ?? null,
-      suppressed: shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState),
+      suppressed: false,
     });
-    if (shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState)) {
-      return;
-    }
 
     this.emitLocal(state);
     this.publishIfNeeded(state, status, "sdk");
@@ -301,14 +296,7 @@ export class PlaybackStatePublisher {
       diverged,
     });
 
-    if (mode === "hybrid" && !diverged) {
-      return;
-    }
-
-    let display = mergeApiOverSdk(this.lastSdkState, state);
-    if (mode === "hybrid") {
-      display = preferSdkProgressInHybrid(this.lastSdkState, display);
-    }
+    const display = mergeApiOverSdk(this.lastSdkState, state);
     this.emitLocal(display);
 
     const trackChanged = display.trackUri !== this.lastTrackUri;

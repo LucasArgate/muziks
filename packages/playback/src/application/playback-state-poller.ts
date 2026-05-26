@@ -34,6 +34,11 @@ export class PlaybackStatePoller {
   private backoffMultiplier = 1;
 
   start(options: PlaybackStatePollerOptions): void {
+    if (this.running) {
+      this.options = options;
+      return;
+    }
+
     this.stop();
     this.options = options;
     this.running = true;

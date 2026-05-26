@@ -1,9 +1,12 @@
 "use client";
 
 import { cn } from "@muziks/utils";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ShareParticipantLinkButton } from "@/src/components/molecules/share-participant-link-button";
+import { tryGetParticipantPlayerUrl } from "@/src/config/app-urls";
 
 type PlayerMainProps = {
   slug: string;
@@ -18,12 +21,30 @@ export function PlayerMain({
   error,
   children,
 }: PlayerMainProps) {
+  const participantPlayerUrl = tryGetParticipantPlayerUrl(slug);
+
   return (
     <div className="flex min-h-full flex-col">
       <header className="hidden shrink-0 items-center justify-between gap-4 border-b border-outline/30 px-8 py-4 md:flex">
-        <h1 className="min-w-0 truncate text-2xl font-semibold text-on-surface">
-          {slug}
-        </h1>
+        {participantPlayerUrl ? (
+          <Link
+            href={participantPlayerUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group min-w-0 inline-flex items-center gap-2 text-2xl font-semibold text-on-surface transition-colors hover:text-primary"
+            aria-label={`Abrir player ${slug} em nova janela`}
+          >
+            <span className="truncate">{slug}</span>
+            <ExternalLink
+              className="h-4 w-4 shrink-0 text-on-surface-variant transition-colors group-hover:text-primary"
+              aria-hidden
+            />
+          </Link>
+        ) : (
+          <h1 className="min-w-0 truncate text-2xl font-semibold text-on-surface">
+            {slug}
+          </h1>
+        )}
         <ShareParticipantLinkButton slug={slug} className="shrink-0" />
       </header>
 

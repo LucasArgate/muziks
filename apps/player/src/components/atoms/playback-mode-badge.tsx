@@ -13,7 +13,7 @@ type PlaybackModeBadgeProps = {
 const labels: Record<PlaybackSyncMode, string> = {
   api_device: "Spotify Connect",
   sdk: "Navegador",
-  hybrid: "Híbrido",
+  hybrid: "Spotify Connect",
 };
 
 export function PlaybackModeBadge({
