@@ -4,14 +4,13 @@ import type {
   PlaybackSyncMode,
   PublishPlaybackSessionInput,
 } from "@muziks/types";
+import { sendAgentDebugLog } from "@muziks/utils";
 
 import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-channel";
 
 import {
   mergeApiOverSdk,
-  preferSdkProgressInHybrid,
   type PlaybackStateSource,
-  shouldSdkSuppressLocalDisplay,
   statesDiverge,
 } from "./playback-state-merge";
 
@@ -19,11 +18,41 @@ const DEBOUNCE_MS = 800;
 const PLAYING_POSITION_BUCKET_MS = 5000;
 const PAUSED_POSITION_BUCKET_MS = 10000;
 
+function logPlaybackPublisherDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  sendAgentDebugLog({
+    sessionId: "cc732b",
+    hypothesisId,
+    location:
+      "apps/player/src/features/playback/services/playback-state-publisher.ts",
+    message,
+    data,
+  });
+}
+
+function logPlaybackPublisherCurrentDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  sendAgentDebugLog({
+    hypothesisId,
+    location:
+      "apps/player/src/features/playback/services/playback-state-publisher.ts",
+    message,
+    data,
+  });
+}
+
 export type PublishRemoteMode = "off" | "minimal" | "full";
 
 export type PlaybackStatePublisherOptions = {
   slug: string;
   playerId?: string | null;
+  browserInstanceId?: string | null;
   syncMode: PlaybackSyncMode;
   preferredDeviceId?: string | null;
   activeDeviceName?: string | null;
@@ -59,6 +88,13 @@ function fingerprintSemantic(state: NormalizedSpotifyPlayerState): string {
   ].join("|");
 }
 
+function fingerprintForMode(
+  state: NormalizedSpotifyPlayerState,
+  mode: PublishRemoteMode,
+): string {
+  return mode === "full" ? fingerprintFull(state) : fingerprintSemantic(state);
+}
+
 export function shouldPublishRemote(
   prev: NormalizedSpotifyPlayerState | null,
   next: NormalizedSpotifyPlayerState,
@@ -87,6 +123,7 @@ export class PlaybackStatePublisher {
   private options: PlaybackStatePublisherOptions | null = null;
   private lastPublished: NormalizedSpotifyPlayerState | null = null;
   private lastFingerprint: string | null = null;
+  private lastMetadataFingerprint: string | null = null;
   private lastTrackUri: string | null = null;
   private lastSdkState: NormalizedSpotifyPlayerState | null = null;
   private lastApiState: NormalizedSpotifyPlayerState | null = null;
@@ -104,22 +141,30 @@ export class PlaybackStatePublisher {
     return this.stateVersion;
   }
 
-  /** Last normalized state from Web API poll (authoritative in hybrid). */
+  /** Last normalized state from Web API poll. */
   get apiPlaybackState(): NormalizedSpotifyPlayerState | null {
     return this.lastApiState;
   }
 
   /** Device id for Web API play/pause/skip (API state, then preferred Connect device). */
   get activeControlDeviceId(): string | null {
-    const mode = this.options?.syncMode ?? "hybrid";
+    const mode = this.options?.syncMode ?? "api_device";
     if (mode === "api_device") {
-      return this.options?.preferredDeviceId ?? this.lastApiState?.deviceId ?? null;
+      return this.lastApiState?.deviceId ?? this.options?.preferredDeviceId ?? null;
     }
     return this.lastApiState?.deviceId ?? this.lastSdkState?.deviceId ?? null;
   }
 
   setStateVersion(version: number): void {
     this.stateVersion = version;
+  }
+
+  private metadataFingerprint(): string {
+    return [
+      this.options?.syncMode ?? "",
+      this.options?.preferredDeviceId ?? "",
+      this.options?.activeDeviceName ?? "",
+    ].join("|");
   }
 
   /** When true, bridge snapshots take priority over SDK and API ingest. */
@@ -132,6 +177,29 @@ export class PlaybackStatePublisher {
 
   emitLocal(state: NormalizedSpotifyPlayerState): void {
     this.options?.onLocalState(state);
+  }
+
+  applySyncedSnapshot(state: NormalizedSpotifyPlayerState): void {
+    this.lastApiState = state;
+    this.lastPublished = state;
+    this.lastFingerprint = fingerprintForMode(
+      state,
+      this.options?.publishRemote ?? "minimal",
+    );
+    this.lastTrackUri = state.trackUri;
+    this.emitLocal(state);
+  }
+
+  publishBrowserHeartbeat(): void {
+    if (!this.lastSdkState) {
+      return;
+    }
+    void this.flushPublish(
+      this.lastSdkState,
+      this.lastSdkState.status,
+      "sdk",
+      true,
+    );
   }
 
   ingest(
@@ -172,25 +240,32 @@ export class PlaybackStatePublisher {
     status?: PlaybackSessionStatus,
   ): void {
     this.emitLocal(state);
-    this.publishIfNeeded(state, status);
+    this.publishIfNeeded(state, status, "bridge");
   }
 
   private ingestSdk(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
   ): void {
-    const mode = this.options?.syncMode ?? "hybrid";
-    if (shouldSdkSuppressLocalDisplay(mode, state, this.lastApiState)) {
-      return;
-    }
+    const mode = this.options?.syncMode ?? "sdk";
+    logPlaybackPublisherDebug("H4", "publisher sdk ingest", {
+      mode,
+      status: status ?? state.status ?? null,
+      sdkDeviceId: state.deviceId,
+      apiDeviceId: this.lastApiState?.deviceId ?? null,
+      preferredDeviceId: this.options?.preferredDeviceId ?? null,
+      activeDeviceName: this.options?.activeDeviceName ?? null,
+      suppressed: false,
+    });
 
     this.emitLocal(state);
-    this.publishIfNeeded(state, status);
+    this.publishIfNeeded(state, status, "sdk");
   }
 
   private publishIfNeeded(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
   ): void {
     const remoteMode = this.options?.publishRemote ?? "minimal";
     if (remoteMode === "off") {
@@ -201,15 +276,28 @@ export class PlaybackStatePublisher {
     if (trackChanged && state.trackUri) {
       this.lastTrackUri = state.trackUri;
       this.options?.onTrackChanged?.(state);
-      void this.flushPublish(state, status);
+      void this.flushPublish(state, status, source);
       return;
     }
 
-    if (!shouldPublishRemote(this.lastPublished, state, remoteMode)) {
+    if (
+      !shouldPublishRemote(this.lastPublished, state, remoteMode) &&
+      this.metadataFingerprint() === this.lastMetadataFingerprint
+    ) {
+      logPlaybackPublisherCurrentDebug("H3", "publisher skipped remote publish", {
+        source,
+        remoteMode,
+        stateDeviceId: state.deviceId,
+        lastPublishedDeviceId: this.lastPublished?.deviceId ?? null,
+        preferredDeviceId: this.options?.preferredDeviceId ?? null,
+        activeDeviceName: this.options?.activeDeviceName ?? null,
+        trackUri: state.trackUri,
+        status: status ?? state.status ?? null,
+      });
       return;
     }
 
-    this.schedulePublish(state, status);
+    this.schedulePublish(state, status, source);
   }
 
   private ingestApi(
@@ -224,22 +312,24 @@ export class PlaybackStatePublisher {
 
     const mode = this.options?.syncMode ?? "api_device";
     const diverged = statesDiverge(this.lastSdkState, state);
+    logPlaybackPublisherDebug("H4", "publisher api ingest", {
+      mode,
+      status: status ?? state.status ?? null,
+      apiDeviceId: state.deviceId,
+      sdkDeviceId: this.lastSdkState?.deviceId ?? null,
+      preferredDeviceId: this.options?.preferredDeviceId ?? null,
+      activeDeviceName: this.options?.activeDeviceName ?? null,
+      diverged,
+    });
 
-    if (mode === "hybrid" && !diverged) {
-      return;
-    }
-
-    let display = mergeApiOverSdk(this.lastSdkState, state);
-    if (mode === "hybrid") {
-      display = preferSdkProgressInHybrid(this.lastSdkState, display);
-    }
+    const display = mergeApiOverSdk(this.lastSdkState, state);
     this.emitLocal(display);
 
     const trackChanged = display.trackUri !== this.lastTrackUri;
     if (trackChanged && display.trackUri) {
       this.lastTrackUri = display.trackUri;
       this.options?.onTrackChanged?.(display);
-      void this.flushPublish(display, status);
+      void this.flushPublish(display, status, "api");
       return;
     }
 
@@ -248,45 +338,64 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    if (!shouldPublishRemote(this.lastPublished, display, remoteMode)) {
+    if (
+      !shouldPublishRemote(this.lastPublished, display, remoteMode) &&
+      this.metadataFingerprint() === this.lastMetadataFingerprint
+    ) {
+      logPlaybackPublisherCurrentDebug("H3", "publisher skipped api remote publish", {
+        source: "api",
+        remoteMode,
+        stateDeviceId: display.deviceId,
+        lastPublishedDeviceId: this.lastPublished?.deviceId ?? null,
+        preferredDeviceId: this.options?.preferredDeviceId ?? null,
+        activeDeviceName: this.options?.activeDeviceName ?? null,
+        trackUri: display.trackUri,
+        status: status ?? display.status ?? null,
+        diverged,
+      });
       return;
     }
 
     if (diverged) {
-      void this.flushPublish(display, status);
+      void this.flushPublish(display, status, "api");
       return;
     }
 
-    this.schedulePublish(display, status);
+    this.schedulePublish(display, status, "api");
   }
 
   private schedulePublish(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
   ): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null;
-      void this.flushPublish(state, status);
+      void this.flushPublish(state, status, source);
     }, DEBOUNCE_MS);
   }
 
   private async flushPublish(
     state: NormalizedSpotifyPlayerState,
     status?: PlaybackSessionStatus,
+    source: PlaybackStateSource = "sdk",
+    force = false,
   ): Promise<void> {
     const remoteMode = this.options?.publishRemote ?? "minimal";
     if (remoteMode === "off") {
       return;
     }
 
-    const fp =
-      remoteMode === "full"
-        ? fingerprintFull(state)
-        : fingerprintSemantic(state);
-    if (fp === this.lastFingerprint) {
+    const fp = fingerprintForMode(state, remoteMode);
+    const metadataFp = this.metadataFingerprint();
+    if (
+      !force &&
+      fp === this.lastFingerprint &&
+      metadataFp === this.lastMetadataFingerprint
+    ) {
       return;
     }
 
@@ -295,6 +404,21 @@ export class PlaybackStatePublisher {
 
     const resolvedStatus =
       status ?? state.status ?? (state.paused ? "paused" : "playing");
+    const nowIso = new Date().toISOString();
+    const browserVisibility =
+      typeof document === "undefined"
+        ? "unknown"
+        : document.visibilityState === "hidden"
+          ? "hidden"
+          : "visible";
+    const stateSource =
+      source === "sdk"
+        ? "sdk_browser"
+        : source === "api"
+          ? "browser_api"
+          : "bridge";
+    const authority = source === "bridge" ? "bridge" : "browser";
+    const browserLastSeenAt = authority === "browser" ? nowIso : null;
 
     const body: PublishPlaybackSessionInput = {
       trackUri: state.trackUri,
@@ -310,10 +434,29 @@ export class PlaybackStatePublisher {
       syncMode: this.options?.syncMode,
       preferredDeviceId: this.options?.preferredDeviceId ?? null,
       activeDeviceName: this.options?.activeDeviceName ?? null,
+      stateSource,
+      authority,
+      sdkDeviceId: this.lastSdkState?.deviceId ?? null,
+      browserInstanceId: this.options?.browserInstanceId ?? null,
+      browserVisibility,
+      browserLastSeenAt,
+      sourceUpdatedAt: nowIso,
       stateVersion: this.stateVersion,
     };
 
     try {
+      logPlaybackPublisherCurrentDebug("H3", "publisher posting session state", {
+        source,
+        stateSource,
+        authority,
+        stateVersion: this.stateVersion,
+        deviceId: body.deviceId,
+        preferredDeviceId: body.preferredDeviceId,
+        activeDeviceName: body.activeDeviceName,
+        trackUri: body.trackUri,
+        status: body.status,
+        browserVisibility,
+      });
       const response = await fetch(
         `/api/players/${encodeURIComponent(slug)}/playback/session`,
         {
@@ -329,6 +472,14 @@ export class PlaybackStatePublisher {
         stateVersion: number;
         accepted?: boolean;
       };
+      logPlaybackPublisherCurrentDebug("H3", "publisher session post response", {
+        source,
+        responseStateVersion: session.stateVersion,
+        accepted: session.accepted ?? null,
+        postedDeviceId: body.deviceId,
+        postedPreferredDeviceId: body.preferredDeviceId,
+        postedActiveDeviceName: body.activeDeviceName,
+      });
 
       if (session.stateVersion !== undefined) {
         this.stateVersion = session.stateVersion;
@@ -337,12 +488,16 @@ export class PlaybackStatePublisher {
 
       this.lastPublished = state;
       this.lastFingerprint = fp;
+      this.lastMetadataFingerprint = metadataFp;
 
       const playerId = this.options?.playerId;
       if (playerId && session.accepted !== false) {
         void broadcastSessionSnapshot(playerId, {
           playback: state,
           stateVersion: this.stateVersion,
+          stateSource,
+          authority,
+          sourceUpdatedAt: nowIso,
         });
       }
     } catch {
@@ -358,6 +513,7 @@ export class PlaybackStatePublisher {
     this.options = null;
     this.lastPublished = null;
     this.lastFingerprint = null;
+    this.lastMetadataFingerprint = null;
     this.lastTrackUri = null;
     this.lastSdkState = null;
     this.lastApiState = null;

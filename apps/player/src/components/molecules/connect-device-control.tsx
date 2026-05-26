@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlaybackSyncMode } from "@muziks/types";
+import type { PlaybackSessionStatus, PlaybackSyncMode } from "@muziks/types";
 import { cn } from "@muziks/utils";
 import { ChevronRight, Speaker } from "lucide-react";
 import { useState } from "react";
@@ -20,12 +20,22 @@ import { DeviceSelector } from "@/src/components/molecules/device-selector";
 const modeLabels: Record<PlaybackSyncMode, string> = {
   api_device: "Spotify Connect",
   sdk: "Navegador",
-  hybrid: "Híbrido",
+  hybrid: "Spotify Connect",
+};
+
+const spotifyStatusLabels: Partial<Record<PlaybackSessionStatus, string>> = {
+  connected: "Spotify conectado",
+  playing: "Tocando no Spotify",
+  paused: "Pausado no Spotify",
+  ready: "Spotify pronto",
+  idle: "Spotify sem reprodução",
+  error: "Erro no estado Spotify",
 };
 
 type ConnectDeviceControlProps = {
   syncMode: PlaybackSyncMode;
   deviceName?: string | null;
+  playbackStatus?: PlaybackSessionStatus | null;
   onSelectDevice: (deviceId: string, deviceName: string) => Promise<void>;
   className?: string;
 };
@@ -33,10 +43,14 @@ type ConnectDeviceControlProps = {
 export function ConnectDeviceControl({
   syncMode,
   deviceName,
+  playbackStatus,
   onSelectDevice,
   className,
 }: ConnectDeviceControlProps) {
   const [open, setOpen] = useState(false);
+  const spotifyStatusLabel = playbackStatus
+    ? spotifyStatusLabels[playbackStatus]
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -59,6 +73,11 @@ export function ConnectDeviceControl({
             <span className="block truncate text-sm font-medium text-on-surface">
               {deviceName ?? "Escolher dispositivo"}
             </span>
+            {spotifyStatusLabel ? (
+              <span className="block truncate text-xs text-on-surface-variant">
+                {spotifyStatusLabel}
+              </span>
+            ) : null}
           </span>
           <ChevronRight
             className="h-4 w-4 shrink-0 text-on-surface-variant"

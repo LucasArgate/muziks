@@ -4,6 +4,7 @@ import { ownerAuthStateSchema } from "../auth/owner-session";
 import { spotifyConnectionStateSchema } from "../auth/session-view";
 import { playbackSyncModeSchema } from "../playback/sync-mode";
 import { normalizedSpotifyPlayerStateSchema } from "../playback/spotify-state";
+import { savedProviderPlaylistSchema } from "../playlists/provider-playlist";
 
 export const playerMasterSessionMetaSchema = z.object({
   syncMode: playbackSyncModeSchema,
@@ -21,6 +22,7 @@ export const playerMasterViewStateSchema = z.object({
   spotify: spotifyConnectionStateSchema,
   playback: normalizedSpotifyPlayerStateSchema.nullable().optional(),
   sessionMeta: playerMasterSessionMetaSchema.nullable().optional(),
+  defaultPlaylist: savedProviderPlaylistSchema.nullable().optional(),
 });
 
 export type PlayerMasterViewState = z.infer<typeof playerMasterViewStateSchema>;

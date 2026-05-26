@@ -1,5 +1,9 @@
 import type { Config } from "tailwindcss";
+import { createRequire } from "node:module";
 import tailwindcssAnimate from "tailwindcss-animate";
+
+const require = createRequire(import.meta.url);
+const muziksUiPreset = require("@muziks/ui/tailwind-preset");
 
 const config: Config = {
   darkMode: ["class"],
@@ -8,7 +12,7 @@ const config: Config = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "../../packages/ui/src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  presets: [require("@muziks/ui/tailwind-preset")],
+  presets: [muziksUiPreset],
   theme: {
     extend: {
       borderRadius: {

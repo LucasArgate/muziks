@@ -3,7 +3,7 @@
 **Status:** implementado (MVP-B)
 **Data:** 2026-05-20
 
-**Propósito:** descrever o fluxo **no browser do Player Master** entre Web Playback SDK, poll da Web API, merge de estado, barra de progresso, lista **Próximas no Spotify** e publicação remota (Postgres + Realtime). Complementa os ADRs de decisão e o espelho near-end.
+**Propósito:** descrever o fluxo **no browser do Player Master** entre Web Playback SDK, reconciliação pontual da Web API, merge de estado, barra de progresso, lista **Próximas no Spotify** e publicação remota (Postgres + Realtime). Complementa os ADRs de decisão e o espelho near-end.
 
 Documentos irmãos:
 
@@ -21,7 +21,7 @@ Documentos irmãos:
 flowchart TB
   subgraph Sources["Fontes de verdade Spotify"]
     SDK["Web Playback SDK\n(player_state_changed)"]
-    API["Web API GET /me/player\n(SpotifyApiPlaybackPoller)"]
+    API["Web API GET /me/player\n(reconciliacao pontual/background)"]
     BR["Bridge WS\n(futuro: applyBridgeState)"]
   end
 
@@ -62,7 +62,7 @@ flowchart TB
 |------|---------|--------|
 | Orquestração | `playback-sync-coordinator.ts` | Liga SDK, poll API e publisher conforme `syncMode` |
 | Eventos SDK | `sdk-playback-source.ts` | Listeners Spotify → estado normalizado + fila `track_window` |
-| Poll API | `spotify-api-playback-poller.ts` | `GET /api/spotify/playback/state` no browser |
+| Poll API | `spotify-api-playback-poller.ts` | `GET /api/spotify/playback/state` pontual ou em `api_device` |
 | Merge / publish | `playback-state-publisher.ts` | Debounce, fingerprint, POST sessão, Broadcast |
 | Regras híbrido | `playback-state-merge.ts` | Quem vence em divergência (API vs SDK) |
 | Hook UI | `usePlaybackSync.ts` | Estado React, connect/hybrid, controles |
@@ -76,17 +76,17 @@ flowchart TB
 
 | Modo | SDK | Poll API | Uso |
 |------|-----|----------|-----|
-| **`hybrid`** (default Master) | Sim | Sim (perfil `hybrid`) | Browser + celular / outro Connect |
-| **`sdk`** | Sim | Não | Áudio só no navegador Master |
+| **`hybrid`** (compat) | Sim | Pontual | Browser SDK como autoridade, com reconciliação em eventos |
+| **`sdk`** (default ativo) | Sim | Não contínuo | Áudio no navegador Master |
 | **`api_device`** | Não | Sim (perfil `default`) | Device Connect escolhido (`DeviceSelector`) |
 
-O coordinator expõe `startHybrid`, `startSdk`, `setPreferredDevice` + `api_device`.
+O coordinator expõe `startHybrid`, `startSdk`, `setPreferredDevice` + `api_device`. Quando o usuário ativa o player neste navegador, o Master transfere o playback para o device do SDK e passa a publicar `stateSource = sdk_browser`.
 
 ---
 
-## 3. Modo `hybrid` — now playing e pause no celular
+## 3. Reconciliacao fora do SDK
 
-O SDK **não** recebe `player_state_changed` do app Spotify no telefone. Pause/play no celular entra pela **Web API** (`GET /me/player`).
+O SDK **não** recebe `player_state_changed` do app Spotify no telefone. Se o áudio sai do browser, a sessão deve ser marcada como background/API e o estado entra pela **Web API** (`GET /me/player`) com orçamento.
 
 ### 3.1 Perfis de poll (`SpotifyApiPlaybackPoller`)
 
@@ -95,11 +95,12 @@ O SDK **não** recebe `player_state_changed` do app Spotify no telefone. Pause/p
 | `default` | 3,5 s | 18 s | 35 s | 35 s |
 | **`hybrid`** | 1,2 s | **3,5 s** | **3,5 s** | 12 s |
 
-Extras no perfil `hybrid`:
+Usos pontuais no browser:
 
 - `refreshOnce()` ao iniciar hybrid e quando a aba volta a `visible`
-- Após mudança de `paused` na API, **follow-up** ~1,2 s
 - SDK `not_ready` → `refreshApiOnce()` (troca de device)
+- quando o usuário escolhe dispositivo externo (`api_device`)
+- quando o worker detecta outro device ativo e publica `worker_api`
 
 ### 3.2 Merge quando API e SDK divergem
 
@@ -107,7 +108,7 @@ Extras no perfil `hybrid`:
 
 | Situação | Regra |
 |----------|--------|
-| API ≠ SDK (ex.: pause no celular) | **API vence** em `trackUri`, `deviceId`, `paused`, `status` |
+| API ≠ SDK (ex.: playback saiu do browser) | Sessão vira background/API; API vence em `trackUri`, `deviceId`, `paused`, `status` |
 | SDK com device/faixa vazia e API com playback | `shouldSdkSuppressLocalDisplay` — não sobrescrever UI |
 | Mesmo device, só progresso | `preferSdkProgressInHybrid` copia **só** `positionMs` do SDK (nunca `paused` se divergiu) |
 
@@ -182,7 +183,7 @@ Isso cobre skip no celular, next no Connect e troca no SDK com `track_window` at
 
 ---
 
-## 5. Publicação remota (telão / outras abas)
+## 5. Publicação remota (web / telão / outras abas)
 
 Após mudança semântica relevante, `PlaybackStatePublisher`:
 
@@ -190,13 +191,13 @@ Após mudança semântica relevante, `PlaybackStatePublisher`:
 2. `broadcastSessionSnapshot` → canal `player:{playerId}`, evento `session.snapshot`
 3. `broadcast.self: false` — Master não escuta o próprio envio
 
-Consumidores: `usePlaybackSession({ subscribeRealtime: true })` (telão). O Master usa `subscribeRealtime: false` e alimenta a UI pelo SDK/API local.
+Consumidores públicos fazem `GET` inicial e assinam `session.snapshot`. Poll HTTP fica apenas como fallback/degradação. O Master usa `subscribeRealtime: false` quando é a fonte SDK local.
 
 Ver [ADR-playback-hybrid-realtime.md](./ADR-playback-hybrid-realtime.md).
 
 ### 5.1 Worker/reconciliação (PoC Trigger.dev)
 
-Trigger.dev pode agendar `playback-tick` server-side para reconciliar estado, respeitar backoff Spotify e publicar snapshots quando o Master não for suficiente. Esse worker **não** substitui este fluxo: o Master continua responsável pela sincronização viva da UI via SDK/API + `PlaybackStatePublisher`.
+Trigger.dev pode agendar `playback-tick` server-side para reconciliar estado, respeitar backoff Spotify e publicar snapshots quando o browser não estiver tocando. Esse worker **não** substitui o SDK quando o Master está ativo; ele assume apenas `api_device`, background, SDK stale/offline ou device externo.
 
 Regras resumidas:
 

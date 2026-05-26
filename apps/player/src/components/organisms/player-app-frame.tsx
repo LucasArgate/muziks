@@ -51,6 +51,9 @@ export function PlayerAppFrame({
   });
 
   const displayPlayback = sync.playback;
+  const defaultPlaylistContextUri =
+    viewState.defaultPlaylist?.providerUri ?? null;
+  const canStartPlayback = Boolean(defaultPlaylistContextUri);
   const error =
     sync.pollError ?? sync.sdkError ?? displayPlayback?.lastError ?? null;
   const profile =
@@ -69,9 +72,16 @@ export function PlayerAppFrame({
       playback={displayPlayback}
       ready={sync.ready}
       error={error}
+      canStartPlayback={canStartPlayback}
       playPauseLoading={sync.playPauseLoading}
       skipLoading={sync.skipLoading}
-      onTogglePlay={() => void sync.togglePlay()}
+      onTogglePlay={() => {
+        if (!displayPlayback?.trackUri && defaultPlaylistContextUri) {
+          void sync.connectSdk(defaultPlaylistContextUri);
+          return;
+        }
+        void sync.togglePlay();
+      }}
       onSkipNext={() => void sync.skipToNext()}
       syncMode={sync.syncMode}
       deviceName={sync.activeDeviceName}

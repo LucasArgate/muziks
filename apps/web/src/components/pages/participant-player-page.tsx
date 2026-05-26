@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import type { PublicPlaybackSession } from "@muziks/types";
 import { useCallback, useEffect, useState } from "react";
 
 import { ParticipantPlayerTemplate } from "@/src/components/templates/participant-player-template";
@@ -23,6 +24,7 @@ type ParticipantPlayerPageProps = {
   playerId: string;
   displayName: string;
   queueTransport: "poll" | "realtime";
+  initialPlayback: PublicPlaybackSession | null;
 };
 
 export function ParticipantPlayerPage({
@@ -30,12 +32,18 @@ export function ParticipantPlayerPage({
   playerId,
   displayName,
   queueTransport,
+  initialPlayback,
 }: ParticipantPlayerPageProps) {
   const searchParams = useSearchParams();
   const { session, isAuthenticated, refresh: refreshSession } =
     useParticipantSession();
   const { session: playback, loading: playbackLoading } =
-    usePublicPlaybackSession(slug);
+    usePublicPlaybackSession({
+      slug,
+      playerId,
+      transport: queueTransport,
+      initialSession: initialPlayback,
+    });
   const { items, loading, error, refresh: refreshQueue } =
     useMuziksCustomerQueue({
       slug,

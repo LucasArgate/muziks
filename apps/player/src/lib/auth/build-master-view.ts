@@ -1,4 +1,5 @@
 import type { PlayerMasterViewState } from "@muziks/types";
+import { getDefaultSavedPlaylistForPlayer } from "@muziks/db";
 
 import { getMuziksSession } from "@/src/lib/auth/get-muziks-session";
 import { resolveSpotifyConnectionState } from "@/src/lib/auth/spotify-connection-state";
@@ -13,9 +14,11 @@ export async function buildPlayerMasterViewState(): Promise<PlayerMasterViewStat
 
   let playback: PlayerMasterViewState["playback"] = null;
   let sessionMeta: PlayerMasterViewState["sessionMeta"] = null;
+  let defaultPlaylist: PlayerMasterViewState["defaultPlaylist"] = null;
 
   if (muziks.status === "authenticated") {
     const session = await getPlaybackSessionByPlayerId(muziks.player.id);
+    defaultPlaylist = await getDefaultSavedPlaylistForPlayer(muziks.player.id);
     if (session) {
       playback = playbackSessionToNormalized(session);
       sessionMeta = {
@@ -32,5 +35,6 @@ export async function buildPlayerMasterViewState(): Promise<PlayerMasterViewStat
     spotify,
     playback,
     sessionMeta,
+    defaultPlaylist,
   };
 }

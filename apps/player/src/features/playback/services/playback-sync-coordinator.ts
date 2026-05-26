@@ -4,6 +4,8 @@ import type {
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
+import { PlaybackStatePoller } from "@muziks/playback/client";
+import { sendAgentDebugLog } from "@muziks/utils";
 
 import { playbackDebug } from "../lib/playback-debug";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
@@ -12,18 +14,23 @@ import {
   type PublishRemoteMode,
 } from "./playback-state-publisher";
 import { SdkPlaybackSource } from "./sdk-playback-source";
-import { SpotifyApiPlaybackPoller } from "./spotify-api-playback-poller";
 import type { SpotifyServiceInstance } from "./SpotifyService";
+
+function normalizeRuntimeSyncMode(mode: PlaybackSyncMode | null | undefined): PlaybackSyncMode {
+  return mode === "sdk" ? "sdk" : "api_device";
+}
 
 export type PlaybackSyncCoordinatorOptions = {
   slug: string;
   playerId?: string | null;
+  browserInstanceId?: string | null;
   sessionMeta: PlayerMasterSessionMeta | null;
   publishRemote?: PublishRemoteMode;
   onLocalState: (state: NormalizedSpotifyPlayerState) => void;
   onSdkQueue?: (queue: NormalizedSpotifyPlaybackQueue | null) => void;
   onStateVersion?: (version: number) => void;
   onTrackChanged?: (state: NormalizedSpotifyPlayerState) => void;
+  onActiveDeviceName?: (deviceName: string | null) => void;
   onPollError?: (message: string) => void;
   onSdkEvent?: (event: SdkPlaybackEvent) => void;
 };
@@ -34,19 +41,21 @@ export type PlaybackSyncCoordinatorOptions = {
  */
 export class PlaybackSyncCoordinator {
   private options: PlaybackSyncCoordinatorOptions | null = null;
-  private syncMode: PlaybackSyncMode = "hybrid";
+  private syncMode: PlaybackSyncMode = "api_device";
   private preferredDeviceId: string | null = null;
   private activeDeviceName: string | null = null;
 
   private readonly publisher = new PlaybackStatePublisher();
-  private readonly apiPoller = new SpotifyApiPlaybackPoller();
   private readonly sdkSource = new SdkPlaybackSource();
+  private readonly apiPoller = new PlaybackStatePoller();
   private sdkService: SpotifyServiceInstance | null = null;
+  private apiPolling = false;
+  private latestApiActiveDeviceName: string | null = null;
 
   configure(options: PlaybackSyncCoordinatorOptions): void {
     this.options = options;
     if (options.sessionMeta) {
-      this.syncMode = options.sessionMeta.syncMode;
+      this.syncMode = normalizeRuntimeSyncMode(options.sessionMeta.syncMode);
       this.preferredDeviceId = options.sessionMeta.preferredDeviceId;
       this.activeDeviceName = options.sessionMeta.activeDeviceName;
       this.publisher.setStateVersion(options.sessionMeta.stateVersion);
@@ -73,8 +82,8 @@ export class PlaybackSyncCoordinator {
   }
 
   setSyncMode(mode: PlaybackSyncMode): void {
-    this.syncMode = mode;
-    playbackDebug("coordinator", "sync-mode:set", { syncMode: mode });
+    this.syncMode = normalizeRuntimeSyncMode(mode);
+    playbackDebug("coordinator", "sync-mode:set", { syncMode: this.syncMode });
     this.refreshPublisherConfig();
     this.reconcileSources();
   }
@@ -95,9 +104,21 @@ export class PlaybackSyncCoordinator {
     this.publisher.setBridgeActive(active);
   }
 
-  applyApiState(state: NormalizedSpotifyPlayerState): void {
+  applyApiState(
+    state: NormalizedSpotifyPlayerState,
+    activeDeviceName?: string | null,
+  ): void {
+    if (activeDeviceName !== undefined) {
+      this.activeDeviceName = activeDeviceName;
+      this.options?.onActiveDeviceName?.(activeDeviceName);
+      this.refreshPublisherConfig();
+    }
     const status = state.status ?? (state.paused ? "paused" : "playing");
     this.publisher.ingest(state, status, "api");
+  }
+
+  applySyncedSessionState(state: NormalizedSpotifyPlayerState): void {
+    this.publisher.applySyncedSnapshot(state);
   }
 
   /** Future: called by bridge WS client when librespot reports playback. */
@@ -106,33 +127,51 @@ export class PlaybackSyncCoordinator {
     this.publisher.ingest(state, status, "bridge");
   }
 
+  publishBrowserHeartbeat(): void {
+    this.publisher.publishBrowserHeartbeat();
+  }
+
   startSessionPolling(): void {
     this.startApiPolling();
   }
 
   startApiPolling(): void {
-    if (this.requiresDeviceSelection) return;
-
-    const profile =
-      this.syncMode === "hybrid" ? ("hybrid" as const) : ("default" as const);
-
     playbackDebug("coordinator", "api-poll:start", {
       syncMode: this.syncMode,
-      profile,
       preferredDeviceId: this.preferredDeviceId,
     });
+    if (this.apiPolling) {
+      return;
+    }
+    this.apiPolling = true;
     this.apiPoller.start({
-      profile,
-      onState: (state) => this.applyApiState(state),
+      fetchState: () => this.fetchApiState(),
+      onState: (state) => {
+        sendAgentDebugLog({
+          sessionId: "cc732b",
+          sameOriginPath: "/api/debug/realtime",
+          hypothesisId: "H7",
+          location:
+            "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
+          message: "coordinator api playback state accepted",
+          data: {
+            syncMode: this.syncMode,
+            trackUri: state.trackUri,
+            status: state.status,
+            paused: state.paused,
+            deviceId: state.deviceId,
+          },
+        });
+        this.applyApiState(state, this.latestApiActiveDeviceName);
+      },
       onError: (message) => this.options?.onPollError?.(message),
     });
   }
 
   stopApiPolling(): void {
-    if (this.apiPoller.active) {
-      playbackDebug("coordinator", "api-poll:stop");
-    }
+    this.apiPolling = false;
     this.apiPoller.stop();
+    playbackDebug("coordinator", "api-poll:stopped");
   }
 
   startSdk(service: SpotifyServiceInstance): void {
@@ -143,19 +182,6 @@ export class PlaybackSyncCoordinator {
     this.stopApiPolling();
 
     this.sdkSource.start(service, this.sdkSourceOptions());
-  }
-
-  startHybrid(service: SpotifyServiceInstance): void {
-    this.sdkService = service;
-    this.syncMode = "hybrid";
-    playbackDebug("coordinator", "hybrid:start", {
-      hasSdkService: true,
-    });
-    this.refreshPublisherConfig();
-
-    this.sdkSource.start(service, this.sdkSourceOptions());
-    this.startApiPolling();
-    void this.apiPoller.refreshOnce();
   }
 
   stopSdk(): void {
@@ -183,21 +209,6 @@ export class PlaybackSyncCoordinator {
         preferredDeviceId: this.preferredDeviceId,
       });
       this.stopSdk();
-      if (this.preferredDeviceId) {
-        this.startApiPolling();
-      } else {
-        this.stopApiPolling();
-      }
-      return;
-    }
-
-    if (this.syncMode === "hybrid") {
-      playbackDebug("coordinator", "reconcile:hybrid", {
-        sdkActive: Boolean(this.sdkService),
-      });
-      if (this.sdkService) {
-        this.sdkSource.start(this.sdkService, this.sdkSourceOptions());
-      }
       this.startApiPolling();
       return;
     }
@@ -210,7 +221,7 @@ export class PlaybackSyncCoordinator {
   }
 
   async refreshSessionOnce(): Promise<void> {
-    await this.apiPoller.refreshOnce();
+    await this.refreshApiOnce();
   }
 
   async refreshApiOnce(): Promise<void> {
@@ -235,6 +246,25 @@ export class PlaybackSyncCoordinator {
     };
   }
 
+  private async fetchApiState(): Promise<NormalizedSpotifyPlayerState | null> {
+    const response = await fetch("/api/spotify/playback/state");
+    const body = (await response.json().catch(() => ({}))) as {
+      state?: NormalizedSpotifyPlayerState;
+      activeDeviceName?: string | null;
+      error?: string;
+    };
+
+    if (!response.ok) {
+      throw new Error(body.error ?? "spotify_playback_state_failed");
+    }
+    if (!body.state) {
+      return null;
+    }
+
+    this.latestApiActiveDeviceName = body.activeDeviceName ?? null;
+    return body.state;
+  }
+
   private refreshPublisherConfig(): void {
     if (!this.options) return;
 
@@ -243,6 +273,7 @@ export class PlaybackSyncCoordinator {
     this.publisher.configure({
       slug: this.options.slug,
       playerId: this.options.playerId,
+      browserInstanceId: this.options.browserInstanceId,
       syncMode: this.syncMode,
       preferredDeviceId: this.preferredDeviceId,
       activeDeviceName: this.activeDeviceName,

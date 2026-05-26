@@ -13,6 +13,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/src/components/ui/sheet";
+import { getLandingAppUrl } from "@/src/config/app-urls";
 
 import {
   getPlayerNavItems,
@@ -35,6 +36,7 @@ export function PlayerMobileNav({
   onClose,
 }: PlayerMobileNavProps) {
   const navItems = getPlayerNavItems(slug, activeNav);
+  const landingUrl = getLandingAppUrl();
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -51,11 +53,16 @@ export function PlayerMobileNav({
         </SheetDescription>
 
         <div className="border-b border-outline/40 px-5 py-5">
-          <OwnerProfileBlock profile={profile} className="mb-4" />
-          <MuziksLogo variant="light" className="h-6 w-auto" />
-          <p className="mt-2 truncate text-lg font-semibold text-on-surface">
-            {slug}
-          </p>
+          <Link
+            href={landingUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Abrir muziks.com.br em nova aba"
+            className="mb-4 block w-fit"
+          >
+            <MuziksLogo variant="light" className="!h-5 !w-auto opacity-90" />
+          </Link>
+          <OwnerProfileBlock profile={profile} />
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">

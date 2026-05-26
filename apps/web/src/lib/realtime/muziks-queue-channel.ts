@@ -5,9 +5,7 @@ import {
 } from "@muziks/types";
 
 import {
-  ensurePlayerSessionChannel,
-  getOrCreatePlayerChannel,
-  removePlayerChannel,
+  subscribePlayerBroadcastEvent,
 } from "@/src/lib/realtime/player-session-channel";
 
 export function subscribeQueueSnapshots(
@@ -15,26 +13,15 @@ export function subscribeQueueSnapshots(
   onSnapshot: (payload: QueueSnapshotBroadcast) => void,
   onError?: (error: unknown) => void,
 ): () => void {
-  const channel = getOrCreatePlayerChannel(playerId);
-
-  channel.on(
-    "broadcast",
-    { event: QUEUE_SNAPSHOT_BROADCAST_EVENT },
-    (message) => {
-      const parsed = queueSnapshotBroadcastSchema.safeParse(message.payload);
+  return subscribePlayerBroadcastEvent(
+    playerId,
+    QUEUE_SNAPSHOT_BROADCAST_EVENT,
+    (payload) => {
+      const parsed = queueSnapshotBroadcastSchema.safeParse(payload);
       if (parsed.success) {
         onSnapshot(parsed.data);
       }
     },
+    onError,
   );
-
-  void ensurePlayerSessionChannel(playerId).catch((error) => {
-    onError?.(error);
-  });
-
-  return () => {
-    void removePlayerChannel(playerId).catch((error) => {
-      onError?.(error);
-    });
-  };
 }

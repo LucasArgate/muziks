@@ -329,7 +329,8 @@ Registrar no app Spotify Developer Dashboard; fluxo OAuth do **dono** (não do p
 | `user-modify-playback-state` | Play, pause, skip, seek, volume |
 | `user-read-currently-playing` | Fallback / telão |
 | `user-read-email` | Opcional — identificar conta dono no painel |
-| `playlist-read-private` | **Não** necessário no MVP-B |
+| `playlist-read-private` | Necessário quando playlists do provider estão habilitadas — ver [18-playlists-provider-sync.md](../specs/18-playlists-provider-sync.md) |
+| `playlist-read-collaborative` | Necessário para listar playlists colaborativas do dono |
 | `user-library-read` | **Não** necessário no MVP-B |
 
 **Catálogo / busca** (MVP-A e B): scopes adicionais de busca conforme endpoints usados (`user-read-private` não exigido para search pública com client credentials onde aplicável — separar app “catalog” vs “playback” se quotas exigirem).

@@ -11,6 +11,7 @@ export {
 } from "./search";
 export { createSpotifyApi, sdkForAccessToken, type SpotifyApi } from "./client";
 export type { CreateSpotifyApiOptions } from "./client";
+export { SpotifyRateLimitError } from "./fetch-with-retry";
 export { createCodeChallenge, generateCodeVerifier } from "./pkce";
 export {
   buildAuthorizeUrl,
@@ -54,6 +55,13 @@ export {
   type GetPlaybackQueueParams,
   type SpotifyApiPlaybackQueueResponse,
 } from "./playback/queue";
+export {
+  getSpotifyPlaylistSnapshot,
+  listSpotifyCurrentUserPlaylists,
+  type ListSpotifyPlaylistsParams,
+  type SpotifyPlaylistSnapshot,
+  type SpotifyPlaylistTrackSnapshotItem,
+} from "./playlists";
 export type {
   SpotifyApiDevice,
   SpotifyApiDevicesResponse,

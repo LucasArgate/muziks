@@ -127,7 +127,7 @@ Fonte principal: [Spotify rate limits](https://developer.spotify.com/documentati
 
 Orçamento interno recomendado para MVP-B antes de extended quota:
 
-- `Get current playback`: no máximo 1 chamada a cada 5 s por Player Master ativo quando o SDK não entregar estado suficiente.
+- `Get current playback`: no browser, apenas reconciliação pontual quando o SDK não entregar estado suficiente; no worker, respeitar `nextTickAt` e nunca rodar para sessão `sdk_browser` saudável.
 - `Add item to queue`: no máximo 1 tentativa por faixa candidata e por sessão, com idempotência no servidor.
 - `Next/play/transfer`: somente por ação explícita do dono ou transição autoritativa; nunca por participante.
 - `Search`: cache por termo normalizado e debounce mínimo de 400-800 ms no cliente; limitar resultados e paginação.
@@ -137,7 +137,7 @@ Orçamento específico para a PoC Trigger.dev:
 
 | Operação | Uso permitido | Contenção |
 | --- | --- | --- |
-| `GET /me/player` | Tick adaptativo de players ativos | 3-5 s só perto do fim; 15-30 s longe do fim; suspender em `idle`. |
+| `GET /me/player` | Tick adaptativo de players background/API | 3-5 s só perto do fim; 15-30 s longe do fim; suspender em `idle` e pular `sdk_browser` saudável. |
 | `GET /me/player/queue` | Antes de enfileirar próxima faixa e em refresh pontual | Não usar como polling contínuo de UI. |
 | `POST /me/player/queue` | `enqueue-next-music-in-spotify-queue` | 1 tentativa por `playerId + currentTrackUri + nextTrackUri`; retry único com backoff. |
 | `next` / `play` | Comando do dono ou transição autoritativa | Nunca por participante; nunca em loop de recovery. |

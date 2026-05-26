@@ -5,6 +5,8 @@ export const SPOTIFY_PLAYBACK_SCOPES = [
   "user-modify-playback-state",
   "user-read-currently-playing",
   "user-read-email",
+  "playlist-read-private",
+  "playlist-read-collaborative",
 ] as const;
 
 /** Participante em muziks.app — só identidade, sem playback. */

@@ -9,21 +9,22 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 
 ## Decisão
 
-### 1. Modo `hybrid` (default no browser Master)
+### 1. Autoridade `sdk_browser` (default no browser Master)
 
 | Fonte | Papel |
 |-------|--------|
-| **Spotify Web Playback SDK** | UI em tempo real (`player_state_changed`) |
-| **Spotify Web API** (`GET /me/player`) | Reconciliação: device ativo, faixa alterada noutro cliente, idle |
+| **Spotify Web Playback SDK** | Fonte viva quando o Muziks Player toca no navegador (`player_state_changed`) |
+| **Spotify Web API** (`GET /me/player`) | Reconciliação pontual e fonte de background quando o device ativo não é o SDK |
 
-- Poll da API no **browser** via `GET /api/spotify/playback/state` (perfil **`hybrid`**: ~3,5 s playing/paused, cache ~1,2 s; perfil **`default`** / `api_device`: ~18 s / 35 s). Detalhe de merge, timer, fila Spotify e debug: [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md).
-- Em divergência, **API vence** para `trackUri`, `deviceId`, `paused`, `status` (`preferSdkProgressInHybrid` não sobrescreve `paused` quando divergiu).
-- Modo `api_device`: só API (Connect externo, sem SDK).
+- O Master **não** mantém poll Web API contínuo quando o SDK está saudável, visível e é o device ativo. Nessa condição, o SDK publica `state_source = sdk_browser` em `player_sessions` e emite `session.snapshot`.
+- A Web API entra por eventos pontuais no browser: transfer/control, volta de visibilidade, SDK `not_ready`, divergência detectada ou transição para background.
+- Modo `api_device` / background: o worker chama Web API com orçamento e backoff; esse caminho publica `state_source = worker_api`.
+- Detalhe de merge, timer, fila Spotify e debug: [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md).
 
 ### 2. Distribuição de sessão (telão / outras abas)
 
 - **Supabase Realtime Broadcast** no canal `player:{playerId}`, evento `session.snapshot`.
-- Master publica após persistência relevante em `player_sessions`.
+- Master SDK ou worker publica após persistência relevante em `player_sessions`.
 - `broadcast.self: false` — Master não recebe eco do próprio envio.
 - **Não** usar `postgres_changes` por tick de progresso.
 
@@ -44,7 +45,7 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 
 ## Consequências
 
-- Menos invocações Vercel no hot path de leitura de playback.
+- Menos invocações Vercel/Spotify no hot path quando o browser SDK toca o áudio.
 - Conexões Realtime por player (participantes, telão e observadores); monitorar cotas Supabase.
 - Token Spotify no browser limitado ao dono autenticado; refresh permanece no servidor.
 
@@ -57,7 +58,7 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 
 ## Referências
 
-- [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) — fluxo implementado no cliente Master (SDK, poll, fila Spotify, timer)
+- [PLAYBACK-MASTER-CLIENT-SYNC.md](./PLAYBACK-MASTER-CLIENT-SYNC.md) — fluxo implementado no cliente Master (SDK como autoridade, reconciliação pontual, fila Spotify, timer)
 - [ADR-spotify-state-sync.md](./ADR-spotify-state-sync.md) — diagramas consolidados (Master → API → Broadcast; bridge)
 - [06-arquitetura-playback-spotify.md](../mvp/06-arquitetura-playback-spotify.md)
 - [ADR-librespot-playback-sidecar.md](./ADR-librespot-playback-sidecar.md)

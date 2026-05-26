@@ -9,6 +9,7 @@ import { GlassNavItem, MuziksLogo } from "@muziks/ui";
 import { OwnerProfileBlock } from "@/src/components/molecules/owner-profile-block";
 
 import { PlayerBar } from "@/src/components/molecules/player-bar";
+import { getLandingAppUrl } from "@/src/config/app-urls";
 import {
   getPlayerNavItems,
   type PlayerNavSection,
@@ -19,6 +20,7 @@ type PlayerSidebarProps = {
   profile: ProfileSummary | null;
   playback: NormalizedSpotifyPlayerState | null;
   ready: boolean;
+  canStartPlayback?: boolean;
   playPauseLoading?: boolean;
   skipLoading?: boolean;
   onTogglePlay: () => void | Promise<void>;
@@ -36,6 +38,7 @@ export function PlayerSidebar({
   profile,
   playback,
   ready,
+  canStartPlayback,
   playPauseLoading,
   skipLoading,
   onTogglePlay,
@@ -48,6 +51,7 @@ export function PlayerSidebar({
   className,
 }: PlayerSidebarProps) {
   const navItems = getPlayerNavItems(slug, activeNav);
+  const landingUrl = getLandingAppUrl();
 
   return (
     <aside
@@ -57,11 +61,16 @@ export function PlayerSidebar({
       )}
     >
       <div className="shrink-0 border-b border-outline/40 px-5 py-5">
-        <OwnerProfileBlock profile={profile} className="mb-4" />
-        <MuziksLogo variant="light" className="h-6 w-auto" />
-        <p className="mt-2 truncate text-lg font-semibold text-on-surface">
-          {slug}
-        </p>
+        <Link
+          href={landingUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Abrir muziks.com.br em nova aba"
+          className="mb-4 block w-fit"
+        >
+          <MuziksLogo variant="light" className="!h-5 !w-auto opacity-90" />
+        </Link>
+        <OwnerProfileBlock profile={profile} />
       </div>
 
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
@@ -88,6 +97,7 @@ export function PlayerSidebar({
         <PlayerBar
           playback={playback}
           ready={ready}
+          canStartPlayback={canStartPlayback}
           playPauseLoading={playPauseLoading}
           skipLoading={skipLoading}
           onTogglePlay={onTogglePlay}

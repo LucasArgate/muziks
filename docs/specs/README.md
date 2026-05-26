@@ -21,6 +21,7 @@ Este diretório concentra **especificação de produto e engenharia** derivada d
 15. [15-backend-architecture.md](15-backend-architecture.md) — API/backend, Vertical Slice
 16. [11-backend-and-integrations-open.md](11-backend-and-integrations-open.md) — decisões abertas
 17. [17-feedback-in-app-e-linear.md](17-feedback-in-app-e-linear.md) — feedback in-app, contexto rico, Linear, elegibilidade do backlog
+18. [18-playlists-provider-sync.md](18-playlists-provider-sync.md) — playlists de provider, sync local e playlist inicial do Player Master
 
 ## Convenções
 

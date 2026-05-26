@@ -17,15 +17,15 @@ Documentos relacionados:
 
 ## 1. Decisão para a PoC
 
-Trigger.dev entra como **camada de worker/reconciliação** para:
+Trigger.dev entra como **camada de worker/reconciliação em background** para:
 
-1. Executar ticks server-side em players ativos.
+1. Executar ticks server-side em players ativos cujo browser SDK não é a autoridade atual.
 2. Controlar orçamento de chamadas Spotify por player e por endpoint.
 3. Fazer backoff centralizado quando Spotify retornar `429` + `Retry-After`.
 4. Reconciliar `player_sessions`, lifecycle de faixa e snapshots Realtime.
 5. Validar caminho futuro self-hosted para reduzir custo operacional de players.
 
-Trigger.dev **não** substitui o Player Master como fonte viva da UI, nem assume votos, comandos do dono ou transições críticas como dependência única.
+Trigger.dev **não** substitui o Player Master quando o Web Playback SDK está tocando no browser, nem assume votos, comandos do dono ou transições críticas como dependência única.
 
 ---
 
@@ -33,7 +33,7 @@ Trigger.dev **não** substitui o Player Master como fonte viva da UI, nem assume
 
 | Invariante | Regra |
 | ---------- | ----- |
-| Fonte viva | Master continua com SDK + Web API hybrid para baixa latência quando aberto. |
+| Fonte viva | Master com SDK é autoridade quando o áudio toca no browser; worker assume somente background/device externo. |
 | Autoridade de domínio | Tasks chamam rotas/slices internos; não escrevem direto no Postgres para contornar regras. |
 | Fan-out | Estado compartilhado sai por Supabase Realtime Broadcast (`session.snapshot`, `queue.snapshot`). |
 | Token | Playback sempre usa token do dono via vault + refresh server-side; nunca cookie de browser nem SDK. |
@@ -49,7 +49,7 @@ Trigger.dev **não** substitui o Player Master como fonte viva da UI, nem assume
 
 ```mermaid
 flowchart TD
-  master["Player Master"] --> sessionApi["Playback Session API"]
+  master["Player Master SDK"] --> sessionApi["Playback Session API"]
   trigger["Trigger.dev task"] --> internalApi["Internal Playback Tick API"]
   tokenVault["Owner Token Vault"] --> internalApi
   internalApi --> spotify["Spotify Web API"]
@@ -72,7 +72,7 @@ Este fluxo é compatível com o tick existente:
 - `apps/player/app/api/internal/playback-tick/route.ts`
 - `apps/player/src/features/playback/services/playback-orchestrator-runner.ts`
 
-Na PoC, Trigger.dev pode substituir ou complementar o agendamento do tick, mas o contrato interno continua sendo a API do `apps/player`.
+Na PoC, Trigger.dev complementa o agendamento do tick para sessões `background`/`api_device`. O contrato interno continua sendo a API do `apps/player`, e o projeto do worker fica em `apps/playback-worker`.
 
 ---
 

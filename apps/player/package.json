@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@muziks/db": "workspace:*",
+    "@muziks/playback": "workspace:*",
     "@muziks/queue": "workspace:*",
     "@muziks/spotify": "workspace:*",
     "@muziks/types": "workspace:*",
@@ -25,7 +26,8 @@
     "lucide-react": "^1.16.0",
     "next": "^15.1.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@muziks/config": "workspace:*",

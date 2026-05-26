@@ -1,0 +1,12 @@
+---
+description: Centralize temporary debug instrumentation
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Debug Instrumentation
+
+- Do not scatter raw `fetch(...)` debug snippets across feature, route, or realtime files.
+- Put debug transport details in one helper and call that helper from the instrumented code.
+- Keep instrumentation compact: each call should pass `hypothesisId`, `location`, `message`, and safe structured `data`.
+- Do not log secrets, tokens, credentials, or personally identifiable data.

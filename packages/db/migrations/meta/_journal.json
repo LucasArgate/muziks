@@ -57,6 +57,13 @@
       "when": 1748006400000,
       "tag": "0007_discovery_votes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1748092800000,
+      "tag": "0008_player_saved_playlists",
+      "breakpoints": true
     }
   ]
 }

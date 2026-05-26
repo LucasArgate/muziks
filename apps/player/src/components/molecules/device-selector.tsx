@@ -1,12 +1,26 @@
 "use client";
 
 import type { SpotifyApiDevice } from "@muziks/spotify/types";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useState } from "react";
 
 type DeviceSelectorProps = {
   onSelect: (deviceId: string, deviceName: string) => Promise<void>;
   embedded?: boolean;
 };
+
+function logDeviceSelectorDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  sendAgentDebugLog({
+    hypothesisId,
+    location: "apps/player/src/components/molecules/device-selector.tsx",
+    message,
+    data,
+  });
+}
 
 export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorProps) {
   const [devices, setDevices] = useState<SpotifyApiDevice[]>([]);
@@ -26,7 +40,17 @@ export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorPro
         throw new Error(body.error ?? "devices_fetch_failed");
       }
       const body = (await response.json()) as { devices: SpotifyApiDevice[] };
-      setDevices(body.devices.filter((device) => device.id));
+      const availableDevices = body.devices.filter((device) => device.id);
+      logDeviceSelectorDebug("H1", "spotify devices loaded in selector", {
+        count: availableDevices.length,
+        devices: availableDevices.map((device) => ({
+          id: device.id,
+          name: device.name,
+          type: device.type,
+          isActive: device.is_active,
+        })),
+      });
+      setDevices(availableDevices);
     } catch (err) {
       setError(err instanceof Error ? err.message : "devices_error");
     } finally {
@@ -40,6 +64,12 @@ export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorPro
 
   const handleSelect = async (device: SpotifyApiDevice) => {
     if (!device.id) return;
+    logDeviceSelectorDebug("H1", "spotify device selected in selector", {
+      deviceId: device.id,
+      deviceName: device.name,
+      isActive: device.is_active,
+      type: device.type,
+    });
     setSelectingId(device.id);
     setError(null);
     try {

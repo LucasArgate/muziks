@@ -6,7 +6,21 @@ import type {
   PlaybackSyncMode,
   PublishPlaybackSessionInput,
 } from "@muziks/types";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { eq } from "drizzle-orm";
+
+function logPlaybackRepositoryCurrentDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  sendAgentDebugLog({
+    hypothesisId,
+    location: "apps/player/src/lib/playback/playback-session-repository.ts",
+    message,
+    data,
+  });
+}
 
 function rowToPlaybackSession(
   row: typeof playerSessions.$inferSelect,
@@ -27,9 +41,52 @@ function rowToPlaybackSession(
     syncMode: (row.syncMode ?? "api_device") as PlaybackSyncMode,
     preferredDeviceId: row.preferredDeviceId,
     activeDeviceName: row.activeDeviceName,
+    stateSource: (row.stateSource ?? "unknown") as PlaybackSession["stateSource"],
+    authority: (row.authority ?? "unknown") as PlaybackSession["authority"],
+    sdkDeviceId: row.sdkDeviceId,
+    browserInstanceId: row.browserInstanceId,
+    browserVisibility: (row.browserVisibility ??
+      "unknown") as PlaybackSession["browserVisibility"],
+    browserLastSeenAt: row.browserLastSeenAt?.toISOString() ?? null,
+    sourceUpdatedAt: row.sourceUpdatedAt?.toISOString() ?? null,
     stateVersion: row.stateVersion ?? 0,
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function optionalIsoToDate(value: string | null | undefined): Date | null {
+  return value ? new Date(value) : null;
+}
+
+function optionalIsoToTime(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? time : null;
+}
+
+function isNewerSemanticPlaybackInput(
+  existing: PlaybackSession,
+  input: PublishPlaybackSessionInput,
+): boolean {
+  const inputSourceTime = optionalIsoToTime(input.sourceUpdatedAt);
+  const existingSourceTime =
+    optionalIsoToTime(existing.sourceUpdatedAt) ??
+    optionalIsoToTime(existing.updatedAt);
+
+  if (
+    inputSourceTime === null ||
+    existingSourceTime === null ||
+    inputSourceTime <= existingSourceTime
+  ) {
+    return false;
+  }
+
+  return (
+    input.trackUri !== existing.currentTrackUri ||
+    input.deviceId !== existing.activeDeviceId ||
+    input.paused !== existing.paused ||
+    input.status !== existing.status
+  );
 }
 
 function resolvePersistedProgressMs(
@@ -93,6 +150,9 @@ export async function upsertConnectedSession(input: {
       spotifyUserId: input.spotifyUserId,
       status: "connected",
       syncMode: "api_device",
+      stateSource: "unknown",
+      authority: "unknown",
+      browserVisibility: "unknown",
       paused: true,
       progressMs: 0,
       durationMs: 0,
@@ -121,12 +181,27 @@ export async function upsertPlaybackSession(
 ): Promise<UpsertPlaybackSessionResult> {
   const db = getDb();
   const existing = await getPlaybackSessionByPlayerId(playerId);
-
-  if (
+  const staleVersion =
     existing &&
     input.stateVersion !== undefined &&
-    input.stateVersion < existing.stateVersion
-  ) {
+    input.stateVersion < existing.stateVersion;
+  const allowStaleVersionForNewerSemanticState =
+    Boolean(existing) &&
+    staleVersion &&
+    isNewerSemanticPlaybackInput(existing!, input);
+
+  if (staleVersion && !allowStaleVersionForNewerSemanticState) {
+    logPlaybackRepositoryCurrentDebug("H4", "playback session rejected as stale", {
+      playerId,
+      inputStateVersion: input.stateVersion,
+      existingStateVersion: existing.stateVersion,
+      inputDeviceId: input.deviceId,
+      existingActiveDeviceId: existing.activeDeviceId,
+      inputPreferredDeviceId: input.preferredDeviceId ?? null,
+      existingPreferredDeviceId: existing.preferredDeviceId,
+      inputActiveDeviceName: input.activeDeviceName ?? null,
+      existingActiveDeviceName: existing.activeDeviceName,
+    });
     return { session: existing, accepted: false };
   }
 
@@ -157,6 +232,26 @@ export async function upsertPlaybackSession(
         ? input.activeDeviceName
         : (existing?.activeDeviceName ?? null),
     stateVersion: nextVersion,
+    stateSource: input.stateSource ?? existing?.stateSource ?? "unknown",
+    authority: input.authority ?? existing?.authority ?? "unknown",
+    sdkDeviceId:
+      input.sdkDeviceId !== undefined
+        ? input.sdkDeviceId
+        : (existing?.sdkDeviceId ?? null),
+    browserInstanceId:
+      input.browserInstanceId !== undefined
+        ? input.browserInstanceId
+        : (existing?.browserInstanceId ?? null),
+    browserVisibility:
+      input.browserVisibility ?? existing?.browserVisibility ?? "unknown",
+    browserLastSeenAt:
+      input.browserLastSeenAt !== undefined
+        ? optionalIsoToDate(input.browserLastSeenAt)
+        : optionalIsoToDate(existing?.browserLastSeenAt ?? null),
+    sourceUpdatedAt:
+      input.sourceUpdatedAt !== undefined
+        ? optionalIsoToDate(input.sourceUpdatedAt)
+        : (optionalIsoToDate(existing?.sourceUpdatedAt ?? null) ?? now),
     updatedAt: now,
   };
 
@@ -180,6 +275,13 @@ export async function upsertPlaybackSession(
         syncMode: values.syncMode,
         preferredDeviceId: values.preferredDeviceId,
         activeDeviceName: values.activeDeviceName,
+        stateSource: values.stateSource,
+        authority: values.authority,
+        sdkDeviceId: values.sdkDeviceId,
+        browserInstanceId: values.browserInstanceId,
+        browserVisibility: values.browserVisibility,
+        browserLastSeenAt: values.browserLastSeenAt,
+        sourceUpdatedAt: values.sourceUpdatedAt,
         stateVersion: values.stateVersion,
         updatedAt: values.updatedAt,
       },
@@ -189,5 +291,21 @@ export async function upsertPlaybackSession(
   if (!session) {
     throw new Error("Failed to persist playback session");
   }
+  logPlaybackRepositoryCurrentDebug("H4", "playback session persisted", {
+    playerId,
+    accepted: true,
+    inputStateVersion: input.stateVersion ?? null,
+    existingStateVersion: existing?.stateVersion ?? null,
+    persistedStateVersion: session.stateVersion,
+    inputDeviceId: input.deviceId,
+    persistedActiveDeviceId: session.activeDeviceId,
+    inputPreferredDeviceId: input.preferredDeviceId ?? null,
+    persistedPreferredDeviceId: session.preferredDeviceId,
+    inputActiveDeviceName: input.activeDeviceName ?? null,
+    persistedActiveDeviceName: session.activeDeviceName,
+    status: session.status,
+    stateSource: session.stateSource,
+    authority: session.authority,
+  });
   return { session, accepted: true };
 }

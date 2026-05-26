@@ -5,6 +5,7 @@ import type {
   PlaybackSyncMode,
 } from "@muziks/types";
 import { QueueListShell, QueueTrackRow } from "@muziks/ui";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { useEffect } from "react";
 
 import { useSpotifyPlaybackQueue } from "@/src/features/queue/hooks/useSpotifyPlaybackQueue";
@@ -24,9 +25,7 @@ export function SpotifyPlaybackQueueList({
   trackUri,
   paused,
 }: SpotifyPlaybackQueueListProps) {
-  const hasSdkQueueSource =
-    syncMode === "sdk" ||
-    (syncMode === "hybrid" && Boolean(sdkQueue?.currentlyPlaying));
+  const hasSdkQueueSource = syncMode === "sdk";
 
   const sdkQueueAligned =
     hasSdkQueueSource &&
@@ -44,6 +43,7 @@ export function SpotifyPlaybackQueueList({
   const queue: NormalizedSpotifyPlaybackQueue | null = sdkQueueAligned
     ? sdkQueue
     : polledQueue;
+  const hasPolledQueue = Boolean(polledQueue);
 
   const listCurrentUri = queue?.currentlyPlaying?.uri ?? null;
   const queueOutOfSync = Boolean(
@@ -53,21 +53,47 @@ export function SpotifyPlaybackQueueList({
     queue?.currentlyPlaying && !queueOutOfSync && trackUri,
   );
 
-  useEffect(() => {
-    if (!enabled || !trackUri) {
-      return;
-    }
-    if (trackUri !== listCurrentUri) {
-      void refresh();
-    }
-  }, [enabled, trackUri, listCurrentUri, refresh]);
-
   const tracks = [
     ...(showCurrentTrack && queue?.currentlyPlaying
       ? [{ ...queue.currentlyPlaying, isCurrent: true }]
       : []),
     ...(queue?.upcoming ?? []).map((track) => ({ ...track, isCurrent: false })),
   ];
+
+  useEffect(() => {
+    if (!enabled || !trackUri) {
+      return;
+    }
+    if (trackUri !== listCurrentUri) {
+      sendAgentDebugLog({
+        hypothesisId: "H8",
+        location: "apps/player/src/components/organisms/spotify-playback-queue-list.tsx",
+        message: "spotify queue out of sync refresh requested",
+        data: {
+          syncMode,
+          trackUri,
+          listCurrentUri,
+          hasSdkQueueSource,
+          sdkQueueAligned,
+          hasPolledQueue,
+          loading,
+          error,
+        },
+      });
+      void refresh();
+    }
+  }, [
+    enabled,
+    error,
+    hasSdkQueueSource,
+    listCurrentUri,
+    loading,
+    hasPolledQueue,
+    refresh,
+    sdkQueueAligned,
+    syncMode,
+    trackUri,
+  ]);
 
   return (
     <QueueListShell
@@ -79,7 +105,7 @@ export function SpotifyPlaybackQueueList({
             ? "Atualizando espelho da fila nativa para alinhar com a faixa atual."
           : "Espelho da fila nativa do dispositivo Connect (a API do Spotify mostra poucas faixas à frente)."
       }
-      loading={!sdkQueueAligned && loading && (!queue || queueOutOfSync)}
+      loading={!sdkQueueAligned && loading && !queue}
       isEmpty={!loading && tracks.length === 0}
       emptyMessage={
         error
