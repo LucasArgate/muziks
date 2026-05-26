@@ -6,6 +6,7 @@ import type {
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { subscribeSessionSnapshots } from "@/src/lib/realtime/player-session-channel";
@@ -39,30 +40,14 @@ function logPlaybackSyncDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  const payload = {
+  sendAgentDebugLog({
     sessionId: "cc732b",
-    runId: "initial",
+    sameOriginPath: "/api/debug/realtime",
     hypothesisId,
     location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
     message,
     data,
-    timestamp: Date.now(),
-  };
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "cc732b",
-    },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-  fetch("/api/debug/realtime", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-  // #endregion
+  });
 }
 
 function logPlaybackSyncCurrentDebug(
@@ -70,24 +55,12 @@ function logPlaybackSyncCurrentDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "f48c1c",
-    },
-    body: JSON.stringify({
-      sessionId: "f48c1c",
-      runId: "initial",
-      hypothesisId,
-      location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    hypothesisId,
+    location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+    message,
+    data,
+  });
 }
 
 async function waitForSdkDeviceId(
@@ -234,6 +207,7 @@ export function usePlaybackSync({
       onLocalState: handleLocalState,
       onSdkQueue: setSpotifyQueue,
       onStateVersion: setStateVersion,
+      onActiveDeviceName: setActiveDeviceName,
       onPollError: setPollError,
       onSdkEvent: handleSdkEvent,
       publishRemote: "minimal",
@@ -385,6 +359,7 @@ export function usePlaybackSync({
 
       const body = (await response.json()) as {
         state?: NormalizedSpotifyPlayerState;
+        activeDeviceName?: string | null;
       };
       logPlaybackSyncCurrentDebug("H2", "client device transfer response", {
         requestedDeviceId: deviceId,
@@ -393,6 +368,7 @@ export function usePlaybackSync({
         responseTrackUri: body.state?.trackUri ?? null,
         responseStatus: body.state?.status ?? null,
         responsePaused: body.state?.paused ?? null,
+        activeDeviceName: body.activeDeviceName ?? null,
       });
 
       const coordinator = coordinatorRef.current;
@@ -402,11 +378,11 @@ export function usePlaybackSync({
       coordinator.setSyncMode("api_device");
       coordinator.setPreferredDevice(deviceId, deviceName);
       setPreferredDeviceId(deviceId);
-      setActiveDeviceName(deviceName);
+      setActiveDeviceName(body.activeDeviceName ?? deviceName);
       setSyncMode("api_device");
       setSdkReady(false);
       if (body.state) {
-        coordinator.applyApiState(body.state);
+        coordinator.applyApiState(body.state, body.activeDeviceName ?? deviceName);
       } else {
         await coordinator.refreshSessionOnce();
       }
@@ -439,6 +415,7 @@ export function usePlaybackSync({
 
       const body = (await response.json().catch(() => ({}))) as {
         state?: NormalizedSpotifyPlayerState;
+        activeDeviceName?: string | null;
         error?: string;
       };
       if (!response.ok) {
@@ -451,9 +428,10 @@ export function usePlaybackSync({
         responseStateTrackUri: body.state?.trackUri ?? null,
         responseStateStatus: body.state?.status ?? null,
         responseStatePaused: body.state?.paused ?? null,
+        activeDeviceName: body.activeDeviceName ?? null,
       });
       if (body.state) {
-        coordinatorRef.current?.applyApiState(body.state);
+        coordinatorRef.current?.applyApiState(body.state, body.activeDeviceName);
       }
 
       if (contextUri) {
@@ -474,6 +452,7 @@ export function usePlaybackSync({
           .json()
           .catch(() => ({}))) as {
           state?: NormalizedSpotifyPlayerState;
+          activeDeviceName?: string | null;
           error?: string;
         };
         if (!playbackResponse.ok) {
@@ -485,9 +464,13 @@ export function usePlaybackSync({
           responseStateTrackUri: playbackBody.state?.trackUri ?? null,
           responseStateStatus: playbackBody.state?.status ?? null,
           responseStatePaused: playbackBody.state?.paused ?? null,
+          activeDeviceName: playbackBody.activeDeviceName ?? null,
         });
         if (playbackBody.state) {
-          coordinatorRef.current?.applyApiState(playbackBody.state);
+          coordinatorRef.current?.applyApiState(
+            playbackBody.state,
+            playbackBody.activeDeviceName,
+          );
         }
       }
     } catch (err) {
@@ -557,6 +540,7 @@ export function usePlaybackSync({
       });
       const body = (await response.json().catch(() => ({}))) as {
         state?: NormalizedSpotifyPlayerState;
+        activeDeviceName?: string | null;
         error?: string;
       };
       if (!response.ok) {
@@ -574,9 +558,10 @@ export function usePlaybackSync({
         responseStateDeviceId: body.state?.deviceId ?? null,
         responseStateTrackUri: body.state?.trackUri ?? null,
         responseStateStatus: body.state?.status ?? null,
+        activeDeviceName: body.activeDeviceName ?? null,
       });
       if (body.state) {
-        coordinator?.applyApiState(body.state);
+        coordinator?.applyApiState(body.state, body.activeDeviceName);
       } else {
         await coordinator?.refreshApiOnce();
       }

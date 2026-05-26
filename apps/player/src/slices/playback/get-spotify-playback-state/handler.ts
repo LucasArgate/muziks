@@ -7,10 +7,11 @@ export async function getSpotifyPlaybackStateHandler() {
     return { status: 401 as const, body: { error: "spotify_not_connected" } };
   }
 
-  const { raw, state } = await readSpotifyPlaybackSnapshot(accessToken);
+  const { raw, state, activeDeviceName } =
+    await readSpotifyPlaybackSnapshot(accessToken);
 
   return {
     status: 200 as const,
-    body: { state, raw },
+    body: { state, raw, activeDeviceName },
   };
 }

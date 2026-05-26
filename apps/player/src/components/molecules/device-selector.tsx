@@ -1,6 +1,7 @@
 "use client";
 
 import type { SpotifyApiDevice } from "@muziks/spotify/types";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useState } from "react";
 
 type DeviceSelectorProps = {
@@ -13,24 +14,12 @@ function logDeviceSelectorDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "f48c1c",
-    },
-    body: JSON.stringify({
-      sessionId: "f48c1c",
-      runId: "initial",
-      hypothesisId,
-      location: "apps/player/src/components/molecules/device-selector.tsx",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    hypothesisId,
+    location: "apps/player/src/components/molecules/device-selector.tsx",
+    message,
+    data,
+  });
 }
 
 export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorProps) {

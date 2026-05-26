@@ -3,10 +3,11 @@ import {
   skipToNext,
   startPlayback,
 } from "@muziks/spotify";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { z } from "zod";
 
 import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
-import { readNormalizedSpotifyPlaybackState } from "@/src/lib/spotify/read-playback-state";
+import { readSpotifyPlaybackSnapshot } from "@/src/lib/spotify/read-playback-state";
 
 const controlBodySchema = z.object({
   action: z.enum(["play", "pause", "next"]),
@@ -20,25 +21,14 @@ function logSpotifyControlDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "cc732b",
-    },
-    body: JSON.stringify({
-      sessionId: "cc732b",
-      runId: "initial",
-      hypothesisId,
-      location:
-        "apps/player/src/slices/playback/control-spotify-playback/handler.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    sessionId: "cc732b",
+    hypothesisId,
+    location:
+      "apps/player/src/slices/playback/control-spotify-playback/handler.ts",
+    message,
+    data,
+  });
 }
 
 export async function controlSpotifyPlaybackHandler(rawBody: unknown) {
@@ -77,7 +67,8 @@ export async function controlSpotifyPlaybackHandler(rawBody: unknown) {
       break;
   }
 
-  const state = await readNormalizedSpotifyPlaybackState(accessToken);
+  const { state, activeDeviceName } =
+    await readSpotifyPlaybackSnapshot(accessToken);
 
   logSpotifyControlDebug("H6", "server spotify control state read", {
     action,
@@ -86,7 +77,8 @@ export async function controlSpotifyPlaybackHandler(rawBody: unknown) {
     stateTrackUri: state.trackUri,
     stateStatus: state.status,
     statePaused: state.paused,
+    activeDeviceName,
   });
 
-  return { status: 200 as const, body: { ok: true, state } };
+  return { status: 200 as const, body: { ok: true, state, activeDeviceName } };
 }

@@ -29,6 +29,7 @@ export type PlaybackSyncCoordinatorOptions = {
   onSdkQueue?: (queue: NormalizedSpotifyPlaybackQueue | null) => void;
   onStateVersion?: (version: number) => void;
   onTrackChanged?: (state: NormalizedSpotifyPlayerState) => void;
+  onActiveDeviceName?: (deviceName: string | null) => void;
   onPollError?: (message: string) => void;
   onSdkEvent?: (event: SdkPlaybackEvent) => void;
 };
@@ -48,6 +49,7 @@ export class PlaybackSyncCoordinator {
   private readonly apiPoller = new PlaybackStatePoller();
   private sdkService: SpotifyServiceInstance | null = null;
   private apiPolling = false;
+  private latestApiActiveDeviceName: string | null = null;
 
   configure(options: PlaybackSyncCoordinatorOptions): void {
     this.options = options;
@@ -101,7 +103,15 @@ export class PlaybackSyncCoordinator {
     this.publisher.setBridgeActive(active);
   }
 
-  applyApiState(state: NormalizedSpotifyPlayerState): void {
+  applyApiState(
+    state: NormalizedSpotifyPlayerState,
+    activeDeviceName?: string | null,
+  ): void {
+    if (activeDeviceName !== undefined) {
+      this.activeDeviceName = activeDeviceName;
+      this.options?.onActiveDeviceName?.(activeDeviceName);
+      this.refreshPublisherConfig();
+    }
     const status = state.status ?? (state.paused ? "paused" : "playing");
     this.publisher.ingest(state, status, "api");
   }
@@ -158,7 +168,7 @@ export class PlaybackSyncCoordinator {
           }),
         }).catch(() => {});
         // #endregion
-        this.applyApiState(state);
+        this.applyApiState(state, this.latestApiActiveDeviceName);
       },
       onError: (message) => this.options?.onPollError?.(message),
     });
@@ -246,6 +256,7 @@ export class PlaybackSyncCoordinator {
     const response = await fetch("/api/spotify/playback/state");
     const body = (await response.json().catch(() => ({}))) as {
       state?: NormalizedSpotifyPlayerState;
+      activeDeviceName?: string | null;
       error?: string;
     };
 
@@ -256,6 +267,7 @@ export class PlaybackSyncCoordinator {
       return null;
     }
 
+    this.latestApiActiveDeviceName = body.activeDeviceName ?? null;
     return body.state;
   }
 

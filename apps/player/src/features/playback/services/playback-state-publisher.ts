@@ -4,6 +4,7 @@ import type {
   PlaybackSyncMode,
   PublishPlaybackSessionInput,
 } from "@muziks/types";
+import { sendAgentDebugLog } from "@muziks/utils";
 
 import { broadcastSessionSnapshot } from "@/src/lib/realtime/player-session-channel";
 
@@ -22,25 +23,14 @@ function logPlaybackPublisherDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "cc732b",
-    },
-    body: JSON.stringify({
-      sessionId: "cc732b",
-      runId: "initial",
-      hypothesisId,
-      location:
-        "apps/player/src/features/playback/services/playback-state-publisher.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    sessionId: "cc732b",
+    hypothesisId,
+    location:
+      "apps/player/src/features/playback/services/playback-state-publisher.ts",
+    message,
+    data,
+  });
 }
 
 function logPlaybackPublisherCurrentDebug(
@@ -48,25 +38,13 @@ function logPlaybackPublisherCurrentDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "f48c1c",
-    },
-    body: JSON.stringify({
-      sessionId: "f48c1c",
-      runId: "initial",
-      hypothesisId,
-      location:
-        "apps/player/src/features/playback/services/playback-state-publisher.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    hypothesisId,
+    location:
+      "apps/player/src/features/playback/services/playback-state-publisher.ts",
+    message,
+    data,
+  });
 }
 
 export type PublishRemoteMode = "off" | "minimal" | "full";
@@ -145,6 +123,7 @@ export class PlaybackStatePublisher {
   private options: PlaybackStatePublisherOptions | null = null;
   private lastPublished: NormalizedSpotifyPlayerState | null = null;
   private lastFingerprint: string | null = null;
+  private lastMetadataFingerprint: string | null = null;
   private lastTrackUri: string | null = null;
   private lastSdkState: NormalizedSpotifyPlayerState | null = null;
   private lastApiState: NormalizedSpotifyPlayerState | null = null;
@@ -178,6 +157,14 @@ export class PlaybackStatePublisher {
 
   setStateVersion(version: number): void {
     this.stateVersion = version;
+  }
+
+  private metadataFingerprint(): string {
+    return [
+      this.options?.syncMode ?? "",
+      this.options?.preferredDeviceId ?? "",
+      this.options?.activeDeviceName ?? "",
+    ].join("|");
   }
 
   /** When true, bridge snapshots take priority over SDK and API ingest. */
@@ -293,7 +280,10 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    if (!shouldPublishRemote(this.lastPublished, state, remoteMode)) {
+    if (
+      !shouldPublishRemote(this.lastPublished, state, remoteMode) &&
+      this.metadataFingerprint() === this.lastMetadataFingerprint
+    ) {
       logPlaybackPublisherCurrentDebug("H3", "publisher skipped remote publish", {
         source,
         remoteMode,
@@ -348,7 +338,10 @@ export class PlaybackStatePublisher {
       return;
     }
 
-    if (!shouldPublishRemote(this.lastPublished, display, remoteMode)) {
+    if (
+      !shouldPublishRemote(this.lastPublished, display, remoteMode) &&
+      this.metadataFingerprint() === this.lastMetadataFingerprint
+    ) {
       logPlaybackPublisherCurrentDebug("H3", "publisher skipped api remote publish", {
         source,
         remoteMode,
@@ -397,7 +390,12 @@ export class PlaybackStatePublisher {
     }
 
     const fp = fingerprintForMode(state, remoteMode);
-    if (!force && fp === this.lastFingerprint) {
+    const metadataFp = this.metadataFingerprint();
+    if (
+      !force &&
+      fp === this.lastFingerprint &&
+      metadataFp === this.lastMetadataFingerprint
+    ) {
       return;
     }
 
@@ -490,6 +488,7 @@ export class PlaybackStatePublisher {
 
       this.lastPublished = state;
       this.lastFingerprint = fp;
+      this.lastMetadataFingerprint = metadataFp;
 
       const playerId = this.options?.playerId;
       if (playerId && session.accepted !== false) {
@@ -514,6 +513,7 @@ export class PlaybackStatePublisher {
     this.options = null;
     this.lastPublished = null;
     this.lastFingerprint = null;
+    this.lastMetadataFingerprint = null;
     this.lastTrackUri = null;
     this.lastSdkState = null;
     this.lastApiState = null;

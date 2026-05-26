@@ -1,8 +1,9 @@
 import { transferPlayback } from "@muziks/spotify";
+import { sendAgentDebugLog } from "@muziks/utils";
 import { z } from "zod";
 
 import { getOwnerSpotifyAccessToken } from "@/src/lib/spotify-token-resolver";
-import { readNormalizedSpotifyPlaybackState } from "@/src/lib/spotify/read-playback-state";
+import { readSpotifyPlaybackSnapshot } from "@/src/lib/spotify/read-playback-state";
 
 const transferBodySchema = z.object({
   deviceId: z.string().min(1),
@@ -14,25 +15,14 @@ function logSpotifyTransferDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "cc732b",
-    },
-    body: JSON.stringify({
-      sessionId: "cc732b",
-      runId: "initial",
-      hypothesisId,
-      location:
-        "apps/player/src/slices/playback/transfer-spotify-playback/handler.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    sessionId: "cc732b",
+    hypothesisId,
+    location:
+      "apps/player/src/slices/playback/transfer-spotify-playback/handler.ts",
+    message,
+    data,
+  });
 }
 
 function logSpotifyTransferCurrentDebug(
@@ -40,25 +30,13 @@ function logSpotifyTransferCurrentDebug(
   message: string,
   data: Record<string, unknown>,
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "f48c1c",
-    },
-    body: JSON.stringify({
-      sessionId: "f48c1c",
-      runId: "initial",
-      hypothesisId,
-      location:
-        "apps/player/src/slices/playback/transfer-spotify-playback/handler.ts",
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  sendAgentDebugLog({
+    hypothesisId,
+    location:
+      "apps/player/src/slices/playback/transfer-spotify-playback/handler.ts",
+    message,
+    data,
+  });
 }
 
 export async function transferSpotifyPlaybackHandler(rawBody: unknown) {
@@ -86,7 +64,8 @@ export async function transferSpotifyPlaybackHandler(rawBody: unknown) {
     play: parsed.data.play,
   });
 
-  const state = await readNormalizedSpotifyPlaybackState(accessToken);
+  const { state, activeDeviceName } =
+    await readSpotifyPlaybackSnapshot(accessToken);
 
   logSpotifyTransferDebug("H5", "server spotify transfer state read", {
     requestDeviceId: parsed.data.deviceId,
@@ -95,6 +74,7 @@ export async function transferSpotifyPlaybackHandler(rawBody: unknown) {
     stateTrackUri: state.trackUri,
     stateStatus: state.status,
     statePaused: state.paused,
+    activeDeviceName,
   });
   logSpotifyTransferCurrentDebug("H2", "server spotify transfer state read", {
     requestDeviceId: parsed.data.deviceId,
@@ -103,7 +83,8 @@ export async function transferSpotifyPlaybackHandler(rawBody: unknown) {
     stateTrackUri: state.trackUri,
     stateStatus: state.status,
     statePaused: state.paused,
+    activeDeviceName,
   });
 
-  return { status: 200 as const, body: { ok: true, state } };
+  return { status: 200 as const, body: { ok: true, state, activeDeviceName } };
 }
