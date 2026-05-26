@@ -9,6 +9,7 @@ import { GlassNavItem, MuziksLogo } from "@muziks/ui";
 import { OwnerProfileBlock } from "@/src/components/molecules/owner-profile-block";
 
 import { PlayerBar } from "@/src/components/molecules/player-bar";
+import { getLandingAppUrl } from "@/src/config/app-urls";
 import {
   getPlayerNavItems,
   type PlayerNavSection,
@@ -50,6 +51,7 @@ export function PlayerSidebar({
   className,
 }: PlayerSidebarProps) {
   const navItems = getPlayerNavItems(slug, activeNav);
+  const landingUrl = getLandingAppUrl();
 
   return (
     <aside
@@ -59,7 +61,15 @@ export function PlayerSidebar({
       )}
     >
       <div className="shrink-0 border-b border-outline/40 px-5 py-5">
-        <MuziksLogo variant="light" className="mb-4 h-4 w-auto opacity-90" />
+        <Link
+          href={landingUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Abrir muziks.com.br em nova aba"
+          className="mb-4 block w-fit"
+        >
+          <MuziksLogo variant="light" className="!h-5 !w-auto opacity-90" />
+        </Link>
         <OwnerProfileBlock profile={profile} />
       </div>
 

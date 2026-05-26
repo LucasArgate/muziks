@@ -8,6 +8,31 @@ import type {
 } from "@muziks/types";
 import { eq } from "drizzle-orm";
 
+function logPlaybackRepositoryCurrentDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  // #region agent log
+  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "f48c1c",
+    },
+    body: JSON.stringify({
+      sessionId: "f48c1c",
+      runId: "initial",
+      hypothesisId,
+      location: "apps/player/src/lib/playback/playback-session-repository.ts",
+      message,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
+
 function rowToPlaybackSession(
   row: typeof playerSessions.$inferSelect,
 ): PlaybackSession {
@@ -142,6 +167,17 @@ export async function upsertPlaybackSession(
     input.stateVersion !== undefined &&
     input.stateVersion < existing.stateVersion
   ) {
+    logPlaybackRepositoryCurrentDebug("H4", "playback session rejected as stale", {
+      playerId,
+      inputStateVersion: input.stateVersion,
+      existingStateVersion: existing.stateVersion,
+      inputDeviceId: input.deviceId,
+      existingActiveDeviceId: existing.activeDeviceId,
+      inputPreferredDeviceId: input.preferredDeviceId ?? null,
+      existingPreferredDeviceId: existing.preferredDeviceId,
+      inputActiveDeviceName: input.activeDeviceName ?? null,
+      existingActiveDeviceName: existing.activeDeviceName,
+    });
     return { session: existing, accepted: false };
   }
 
@@ -231,5 +267,21 @@ export async function upsertPlaybackSession(
   if (!session) {
     throw new Error("Failed to persist playback session");
   }
+  logPlaybackRepositoryCurrentDebug("H4", "playback session persisted", {
+    playerId,
+    accepted: true,
+    inputStateVersion: input.stateVersion ?? null,
+    existingStateVersion: existing?.stateVersion ?? null,
+    persistedStateVersion: session.stateVersion,
+    inputDeviceId: input.deviceId,
+    persistedActiveDeviceId: session.activeDeviceId,
+    inputPreferredDeviceId: input.preferredDeviceId ?? null,
+    persistedPreferredDeviceId: session.preferredDeviceId,
+    inputActiveDeviceName: input.activeDeviceName ?? null,
+    persistedActiveDeviceName: session.activeDeviceName,
+    status: session.status,
+    stateSource: session.stateSource,
+    authority: session.authority,
+  });
   return { session, accepted: true };
 }

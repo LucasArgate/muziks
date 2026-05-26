@@ -65,6 +65,31 @@ function logPlaybackSyncDebug(
   // #endregion
 }
 
+function logPlaybackSyncCurrentDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  // #region agent log
+  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "f48c1c",
+    },
+    body: JSON.stringify({
+      sessionId: "f48c1c",
+      runId: "initial",
+      hypothesisId,
+      location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
+      message,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
+
 async function waitForSdkDeviceId(
   instance: SpotifyServiceInstance,
 ): Promise<string> {
@@ -336,6 +361,15 @@ export function usePlaybackSync({
   const selectDevice = useCallback(
     async (deviceId: string, deviceName: string) => {
       setPollError(null);
+      logPlaybackSyncCurrentDebug("H2", "client device transfer requested", {
+        deviceId,
+        deviceName,
+        currentPlaybackDeviceId: playback?.deviceId ?? null,
+        preferredDeviceId,
+        activeDeviceName,
+        syncMode,
+        stateVersion: stateVersionRef.current,
+      });
       const response = await fetch("/api/spotify/playback/transfer", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -352,6 +386,14 @@ export function usePlaybackSync({
       const body = (await response.json()) as {
         state?: NormalizedSpotifyPlayerState;
       };
+      logPlaybackSyncCurrentDebug("H2", "client device transfer response", {
+        requestedDeviceId: deviceId,
+        requestedDeviceName: deviceName,
+        responseStateDeviceId: body.state?.deviceId ?? null,
+        responseTrackUri: body.state?.trackUri ?? null,
+        responseStatus: body.state?.status ?? null,
+        responsePaused: body.state?.paused ?? null,
+      });
 
       const coordinator = coordinatorRef.current;
       if (!coordinator) return;
@@ -369,7 +411,7 @@ export function usePlaybackSync({
         await coordinator.refreshSessionOnce();
       }
     },
-    [],
+    [activeDeviceName, playback?.deviceId, preferredDeviceId, syncMode],
   );
 
   const connectSdk = useCallback(async (contextUri?: string) => {
@@ -489,6 +531,15 @@ export function usePlaybackSync({
       logPlaybackSyncDebug("H6", "client spotify control request", {
         action,
         deviceId: deviceId ?? null,
+        syncMode,
+        preferredDeviceId: preferredDeviceId ?? null,
+        playbackDeviceId: playback?.deviceId ?? null,
+        coordinatorDeviceId: coordinator?.activeControlDeviceId ?? null,
+        hasContextUri: Boolean(options?.contextUri),
+      });
+      logPlaybackSyncCurrentDebug("H6", "client spotify control device resolved", {
+        action,
+        resolvedDeviceId: deviceId ?? null,
         syncMode,
         preferredDeviceId: preferredDeviceId ?? null,
         playbackDeviceId: playback?.deviceId ?? null,

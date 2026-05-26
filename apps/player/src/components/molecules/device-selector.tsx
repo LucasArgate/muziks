@@ -8,6 +8,31 @@ type DeviceSelectorProps = {
   embedded?: boolean;
 };
 
+function logDeviceSelectorDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  // #region agent log
+  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "f48c1c",
+    },
+    body: JSON.stringify({
+      sessionId: "f48c1c",
+      runId: "initial",
+      hypothesisId,
+      location: "apps/player/src/components/molecules/device-selector.tsx",
+      message,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
+
 export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorProps) {
   const [devices, setDevices] = useState<SpotifyApiDevice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +51,17 @@ export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorPro
         throw new Error(body.error ?? "devices_fetch_failed");
       }
       const body = (await response.json()) as { devices: SpotifyApiDevice[] };
-      setDevices(body.devices.filter((device) => device.id));
+      const availableDevices = body.devices.filter((device) => device.id);
+      logDeviceSelectorDebug("H1", "spotify devices loaded in selector", {
+        count: availableDevices.length,
+        devices: availableDevices.map((device) => ({
+          id: device.id,
+          name: device.name,
+          type: device.type,
+          isActive: device.is_active,
+        })),
+      });
+      setDevices(availableDevices);
     } catch (err) {
       setError(err instanceof Error ? err.message : "devices_error");
     } finally {
@@ -40,6 +75,12 @@ export function DeviceSelector({ onSelect, embedded = false }: DeviceSelectorPro
 
   const handleSelect = async (device: SpotifyApiDevice) => {
     if (!device.id) return;
+    logDeviceSelectorDebug("H1", "spotify device selected in selector", {
+      deviceId: device.id,
+      deviceName: device.name,
+      isActive: device.is_active,
+      type: device.type,
+    });
     setSelectingId(device.id);
     setError(null);
     try {

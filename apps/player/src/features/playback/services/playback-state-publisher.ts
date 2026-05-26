@@ -43,6 +43,32 @@ function logPlaybackPublisherDebug(
   // #endregion
 }
 
+function logPlaybackPublisherCurrentDebug(
+  hypothesisId: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  // #region agent log
+  fetch("http://127.0.0.1:7578/ingest/e8024fdc-5651-46a5-b9c2-1e51cc3e18ef", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "f48c1c",
+    },
+    body: JSON.stringify({
+      sessionId: "f48c1c",
+      runId: "initial",
+      hypothesisId,
+      location:
+        "apps/player/src/features/playback/services/playback-state-publisher.ts",
+      message,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+}
+
 export type PublishRemoteMode = "off" | "minimal" | "full";
 
 export type PlaybackStatePublisherOptions = {
@@ -268,6 +294,16 @@ export class PlaybackStatePublisher {
     }
 
     if (!shouldPublishRemote(this.lastPublished, state, remoteMode)) {
+      logPlaybackPublisherCurrentDebug("H3", "publisher skipped remote publish", {
+        source,
+        remoteMode,
+        stateDeviceId: state.deviceId,
+        lastPublishedDeviceId: this.lastPublished?.deviceId ?? null,
+        preferredDeviceId: this.options?.preferredDeviceId ?? null,
+        activeDeviceName: this.options?.activeDeviceName ?? null,
+        trackUri: state.trackUri,
+        status: status ?? state.status ?? null,
+      });
       return;
     }
 
@@ -313,6 +349,17 @@ export class PlaybackStatePublisher {
     }
 
     if (!shouldPublishRemote(this.lastPublished, display, remoteMode)) {
+      logPlaybackPublisherCurrentDebug("H3", "publisher skipped api remote publish", {
+        source,
+        remoteMode,
+        stateDeviceId: display.deviceId,
+        lastPublishedDeviceId: this.lastPublished?.deviceId ?? null,
+        preferredDeviceId: this.options?.preferredDeviceId ?? null,
+        activeDeviceName: this.options?.activeDeviceName ?? null,
+        trackUri: display.trackUri,
+        status: status ?? display.status ?? null,
+        diverged,
+      });
       return;
     }
 
@@ -400,6 +447,18 @@ export class PlaybackStatePublisher {
     };
 
     try {
+      logPlaybackPublisherCurrentDebug("H3", "publisher posting session state", {
+        source,
+        stateSource,
+        authority,
+        stateVersion: this.stateVersion,
+        deviceId: body.deviceId,
+        preferredDeviceId: body.preferredDeviceId,
+        activeDeviceName: body.activeDeviceName,
+        trackUri: body.trackUri,
+        status: body.status,
+        browserVisibility,
+      });
       const response = await fetch(
         `/api/players/${encodeURIComponent(slug)}/playback/session`,
         {
@@ -415,6 +474,14 @@ export class PlaybackStatePublisher {
         stateVersion: number;
         accepted?: boolean;
       };
+      logPlaybackPublisherCurrentDebug("H3", "publisher session post response", {
+        source,
+        responseStateVersion: session.stateVersion,
+        accepted: session.accepted ?? null,
+        postedDeviceId: body.deviceId,
+        postedPreferredDeviceId: body.preferredDeviceId,
+        postedActiveDeviceName: body.activeDeviceName,
+      });
 
       if (session.stateVersion !== undefined) {
         this.stateVersion = session.stateVersion;

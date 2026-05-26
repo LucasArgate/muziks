@@ -15,6 +15,12 @@ export function getWebAppUrl(): string {
   return url;
 }
 
+/** Landing institucional — prod: https://muziks.com.br */
+export function getLandingAppUrl(): string {
+  const url = process.env.NEXT_PUBLIC_LANDING_APP_URL?.trim();
+  return (url || "https://muziks.com.br").replace(/\/$/, "");
+}
+
 /** Link público da fila (QR, compartilhar) — muziks.app/{slug} */
 export function tryGetParticipantPlayerUrl(slug: string): string | null {
   const base = tryGetWebAppUrl();
