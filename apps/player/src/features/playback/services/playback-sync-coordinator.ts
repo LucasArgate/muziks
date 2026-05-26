@@ -126,7 +126,31 @@ export class PlaybackSyncCoordinator {
     });
     this.apiPoller.start({
       fetchState: () => this.fetchApiState(),
-      onState: (state) => this.applyApiState(state),
+      onState: (state) => {
+        // #region agent log
+        fetch("/api/debug/realtime", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: "cc732b",
+            runId: "initial",
+            hypothesisId: "H7",
+            location:
+              "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
+            message: "coordinator api playback state accepted",
+            data: {
+              syncMode: this.syncMode,
+              trackUri: state.trackUri,
+              status: state.status,
+              paused: state.paused,
+              deviceId: state.deviceId,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+        this.applyApiState(state);
+      },
       onError: (message) => this.options?.onPollError?.(message),
     });
   }
@@ -252,29 +276,6 @@ export class PlaybackSyncCoordinator {
     if (!body.state) {
       return null;
     }
-
-    // #region agent log
-    fetch("/api/debug/realtime", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: "cc732b",
-        runId: "initial",
-        hypothesisId: "H7",
-        location:
-          "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
-        message: "coordinator api playback state fetched",
-        data: {
-          syncMode: this.syncMode,
-          trackUri: body.state.trackUri,
-          status: body.state.status,
-          paused: body.state.paused,
-          deviceId: body.state.deviceId,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
 
     return body.state;
   }

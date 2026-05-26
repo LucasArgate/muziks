@@ -1,6 +1,5 @@
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
 
-import { fingerprintPlaybackState } from "../domain/playback-state";
 import {
   PLAYBACK_CLIENT_IDLE_POLL_MS,
   PLAYBACK_CLIENT_MAX_BACKOFF_MULTIPLIER,
@@ -13,6 +12,17 @@ export type PlaybackStatePollerOptions = {
   onState: (state: NormalizedSpotifyPlayerState) => void;
   onError?: (message: string) => void;
 };
+
+function fingerprintClientPlaybackState(
+  state: NormalizedSpotifyPlayerState,
+): string {
+  return [
+    state.trackUri ?? "",
+    state.paused ? "1" : "0",
+    state.status ?? "",
+    state.deviceId ?? "",
+  ].join("|");
+}
 
 export class PlaybackStatePoller {
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -86,7 +96,7 @@ export class PlaybackStatePoller {
       const state = await options.fetchState();
       if (!this.running || this.options !== options || !state) return;
 
-      const fingerprint = fingerprintPlaybackState(state);
+      const fingerprint = fingerprintClientPlaybackState(state);
       if (fingerprint === this.lastFingerprint) {
         this.backoffMultiplier = Math.min(
           this.backoffMultiplier * 2,
