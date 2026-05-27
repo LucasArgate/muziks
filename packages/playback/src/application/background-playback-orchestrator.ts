@@ -1,4 +1,8 @@
-import type { NormalizedSpotifyPlayerState } from "@muziks/types";
+import type {
+  NormalizedSpotifyPlaybackQueue,
+  NormalizedSpotifyPlayerState,
+  SpotifyQueueSnapshotSource,
+} from "@muziks/types";
 
 import {
   hasSemanticPlaybackChange,
@@ -7,6 +11,7 @@ import {
 } from "../domain/playback-state";
 
 export type BackgroundPlaybackSession = PlaybackSessionProjection & {
+  playerId: string;
   spotifyUserId: string | null;
   syncMode: string;
   preferredDeviceId: string | null;
@@ -52,6 +57,28 @@ export type PlaybackSessionSnapshotPublisher = (input: {
   session: BackgroundPlaybackSession;
 }) => Promise<void>;
 
+export type SpotifyQueueSnapshotPublisher = (input: {
+  playerId: string;
+  queue: NormalizedSpotifyPlaybackQueue;
+  queueVersion: number;
+  stateVersion?: number;
+  source: SpotifyQueueSnapshotSource;
+}) => Promise<void>;
+
+export type BackgroundTickSampleContext = {
+  playerId: string;
+  state: NormalizedSpotifyPlayerState;
+  previousState: NormalizedSpotifyPlayerState | null;
+  session: BackgroundPlaybackSession;
+  sessionUpdated: boolean;
+  activeDeviceName?: string | null;
+};
+
+/** Lifecycle, fila e mirror — implementado no player; worker pode omitir. */
+export type BackgroundTickSampleHook = (
+  context: BackgroundTickSampleContext,
+) => Promise<{ eventsEmitted: number }>;
+
 export type BackgroundPlaybackOrchestratorPorts = {
   listPlayerIdsForTick: () => Promise<string[]>;
   getAccessToken: PlaybackAccessTokenProvider;
@@ -67,6 +94,11 @@ export type BackgroundPlaybackOrchestratorPorts = {
   }) => Promise<BackgroundPlaybackSession>;
   savePollCursor: (result: TickPlayerResult) => Promise<void>;
   publishSessionSnapshot?: PlaybackSessionSnapshotPublisher;
+  fetchSpotifyQueue?: (
+    accessToken: string,
+  ) => Promise<NormalizedSpotifyPlaybackQueue>;
+  publishSpotifyQueueSnapshot?: SpotifyQueueSnapshotPublisher;
+  afterSample?: BackgroundTickSampleHook;
 };
 
 export async function tickBackgroundPlayer(
@@ -114,7 +146,24 @@ export async function tickBackgroundPlayer(
   });
 
   const previousState = existing ? playbackSessionToNormalized(existing) : null;
-  if (hasSemanticPlaybackChange(previousState, sample.state) && ports.publishSessionSnapshot) {
+  const sessionUpdated = true;
+
+  let eventsEmitted = 0;
+  if (ports.afterSample) {
+    const hookResult = await ports.afterSample({
+      playerId,
+      state: sample.state,
+      previousState,
+      session: nextSession,
+      sessionUpdated,
+      activeDeviceName: sample.activeDeviceName ?? null,
+    }).catch(() => ({ eventsEmitted: 0 }));
+    eventsEmitted = hookResult.eventsEmitted;
+  }
+
+  const semanticChanged = hasSemanticPlaybackChange(previousState, sample.state);
+
+  if (semanticChanged && ports.publishSessionSnapshot) {
     await ports.publishSessionSnapshot({
       playerId,
       session: nextSession,
@@ -123,11 +172,26 @@ export async function tickBackgroundPlayer(
     });
   }
 
+  if (semanticChanged && ports.fetchSpotifyQueue && ports.publishSpotifyQueueSnapshot) {
+    try {
+      const queue = await ports.fetchSpotifyQueue(accessToken);
+      await ports.publishSpotifyQueueSnapshot({
+        playerId,
+        queue,
+        queueVersion: nextSession.stateVersion,
+        stateVersion: nextSession.stateVersion,
+        source: "worker_api",
+      });
+    } catch {
+      // Spotify queue fan-out is best-effort.
+    }
+  }
+
   return {
     playerId,
     ok: true,
-    eventsEmitted: 0,
-    sessionUpdated: true,
+    eventsEmitted,
+    sessionUpdated,
     paused: sample.state.paused,
     trackName: sample.state.trackName,
   };

@@ -4,8 +4,11 @@ export {
   type BackgroundPlaybackOrchestratorPorts,
   type BackgroundPlaybackSession,
   type CurrentPlaybackSample,
+  type BackgroundTickSampleContext,
+  type BackgroundTickSampleHook,
   type PlaybackAccessTokenProvider,
   type PlaybackSessionSnapshotPublisher,
+  type SpotifyQueueSnapshotPublisher,
   type RunPlaybackOrchestratorResult,
   type TickPlayerResult,
 } from "./application/background-playback-orchestrator";
@@ -14,7 +17,9 @@ export {
   type PlaybackStatePollerOptions,
 } from "./application/playback-state-poller";
 export {
+  claimPlayersForBackgroundTick,
   createDrizzleSpotifyBackgroundPlaybackPorts,
+  isPlayerEligibleForBackgroundTick,
   type DrizzleSpotifyBackgroundPlaybackOptions,
   type PlaybackSessionRow,
 } from "./infrastructure/drizzle-spotify-background-playback";
@@ -26,6 +31,7 @@ export {
   resolvePlaybackSessionStatus,
   type PlaybackSessionProjection,
 } from "./domain/playback-state";
+export { fingerprintSpotifyQueue } from "./domain/spotify-queue";
 export {
   PLAYBACK_ACTIVE_WINDOW_MS,
   PLAYBACK_BROWSER_HEALTH_WINDOW_MS,

@@ -4,6 +4,7 @@ import { getDb } from "../client";
 import { playerSessions } from "../schema/player-sessions";
 
 export type PublicPlaybackSessionRow = {
+  currentTrackUri: string | null;
   trackName: string | null;
   artistName: string | null;
   albumImageUrl: string | null;
@@ -12,6 +13,7 @@ export type PublicPlaybackSessionRow = {
   paused: boolean;
   status: string;
   stateVersion: number;
+  progressUpdatedAt: Date | null;
   updatedAt: Date;
 };
 
@@ -21,6 +23,7 @@ export async function getPublicPlaybackSession(
   const db = getDb();
   const rows = await db
     .select({
+      currentTrackUri: playerSessions.currentTrackUri,
       trackName: playerSessions.trackName,
       artistName: playerSessions.artistName,
       albumImageUrl: playerSessions.albumImageUrl,
@@ -29,6 +32,7 @@ export async function getPublicPlaybackSession(
       paused: playerSessions.paused,
       status: playerSessions.status,
       stateVersion: playerSessions.stateVersion,
+      progressUpdatedAt: playerSessions.sourceUpdatedAt,
       updatedAt: playerSessions.updatedAt,
     })
     .from(playerSessions)

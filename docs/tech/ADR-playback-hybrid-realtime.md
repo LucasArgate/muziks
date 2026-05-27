@@ -28,7 +28,21 @@ O Player Master sincronizava playback com poll HTTP via Vercel (`GET /api/spotif
 - `broadcast.self: false` — Master não recebe eco do próprio envio.
 - **Não** usar `postgres_changes` por tick de progresso.
 
-### 3. Fila Muziks (snapshot + Broadcast)
+### 3. Fila Spotify nativa (snapshot + Broadcast)
+
+| Camada | Escolha |
+|--------|---------|
+| Fonte de verdade | Spotify Web API (`GET /me/player/queue`) ou SDK `track_window` no Master |
+| Distribuição | **Realtime Broadcast** `spotify.queue.snapshot` no canal `player:{playerId}` |
+| Payload | `NormalizedSpotifyPlaybackQueue` + `queueVersion` + `source` (`sdk_browser` \| `worker_api` \| `browser_api`) |
+| Clientes | Player Master, participantes (`apps/web`) |
+
+- Master publica via `SpotifyQueuePublisher` (SDK ou reconciliação pontual da API no browser).
+- `playback-worker` publica após mudança semântica de faixa ao supervisionar `api_device`.
+- **Sem** coluna Postgres na fase 1; poll HTTP (`GET .../playback/spotify-queue`) só como fallback degradado no web.
+- Master em `api_device` com `authority = worker`: **sem** poll contínuo de state/queue no browser; reconciliação pontual quando a aba está visível (híbrido).
+
+### 4. Fila Muziks (snapshot + Broadcast)
 
 | Camada | Escolha |
 |--------|---------|

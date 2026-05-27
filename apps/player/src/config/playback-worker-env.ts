@@ -13,9 +13,11 @@ export function isPlaybackWorkerAuthorized(
     return false;
   }
   const token = authorizationHeader.slice("Bearer ".length).trim();
+  const allowed = new Set<string>();
   try {
-    return token === getPlaybackWorkerSecret();
+    allowed.add(getPlaybackWorkerSecret());
   } catch {
-    return false;
+    // PLAYBACK_WORKER_SECRET unset — no Bearer auth for internal tick.
   }
+  return allowed.has(token);
 }

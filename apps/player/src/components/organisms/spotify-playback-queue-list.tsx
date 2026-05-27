@@ -5,13 +5,13 @@ import type {
   PlaybackSyncMode,
 } from "@muziks/types";
 import { QueueListShell, QueueTrackRow } from "@muziks/ui";
-import { sendAgentDebugLog } from "@muziks/utils";
 import { useEffect } from "react";
 
-import { useSpotifyPlaybackQueue } from "@/src/features/queue/hooks/useSpotifyPlaybackQueue";
+import { useSpotifyPlaybackQueueRealtime } from "@/src/features/queue/hooks/useSpotifyPlaybackQueueRealtime";
 
 type SpotifyPlaybackQueueListProps = {
   enabled: boolean;
+  playerId: string | null | undefined;
   syncMode: PlaybackSyncMode;
   sdkQueue: NormalizedSpotifyPlaybackQueue | null;
   trackUri: string | null | undefined;
@@ -20,6 +20,7 @@ type SpotifyPlaybackQueueListProps = {
 
 export function SpotifyPlaybackQueueList({
   enabled,
+  playerId,
   syncMode,
   sdkQueue,
   trackUri,
@@ -32,13 +33,15 @@ export function SpotifyPlaybackQueueList({
     Boolean(trackUri) &&
     sdkQueue?.currentlyPlaying?.uri === trackUri;
 
-  const { queue: polledQueue, loading, error, refresh } = useSpotifyPlaybackQueue({
-    enabled,
-    pollEnabled: !hasSdkQueueSource || !sdkQueueAligned,
-    trackUri,
-    pollPlayingMs: 8000,
-    pollPausedMs: 20000,
-  });
+  const { queue: polledQueue, loading, error, refresh } =
+    useSpotifyPlaybackQueueRealtime({
+      enabled,
+      playerId,
+      pollEnabled: !hasSdkQueueSource || !sdkQueueAligned,
+      trackUri,
+      pollPlayingMs: 8000,
+      pollPausedMs: 20000,
+    });
 
   const queue: NormalizedSpotifyPlaybackQueue | null = sdkQueueAligned
     ? sdkQueue
@@ -65,21 +68,6 @@ export function SpotifyPlaybackQueueList({
       return;
     }
     if (trackUri !== listCurrentUri) {
-      sendAgentDebugLog({
-        hypothesisId: "H8",
-        location: "apps/player/src/components/organisms/spotify-playback-queue-list.tsx",
-        message: "spotify queue out of sync refresh requested",
-        data: {
-          syncMode,
-          trackUri,
-          listCurrentUri,
-          hasSdkQueueSource,
-          sdkQueueAligned,
-          hasPolledQueue,
-          loading,
-          error,
-        },
-      });
       void refresh();
     }
   }, [

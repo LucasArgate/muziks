@@ -93,6 +93,13 @@ export {
 } from "./playback/spotify-state";
 
 export {
+  mirrorNextToSpotifyQueueInputSchema,
+  mirrorNextToSpotifyQueueResultSchema,
+  type MirrorNextToSpotifyQueueInput,
+  type MirrorNextToSpotifyQueueResult,
+} from "./playback/mirror-next";
+
+export {
   PLAYER_SESSION_BROADCAST_EVENT,
   sessionSnapshotBroadcastSchema,
   type SessionSnapshotBroadcast,
@@ -147,6 +154,15 @@ export {
   type QueueSnapshotSource,
   type QueueSnapshotBroadcast,
 } from "./queue/queue-broadcast";
+
+export {
+  spotifyQueueSnapshotSources,
+  spotifyQueueSnapshotSourceSchema,
+  spotifyQueueSnapshotBroadcastSchema,
+  SPOTIFY_QUEUE_SNAPSHOT_BROADCAST_EVENT,
+  type SpotifyQueueSnapshotSource,
+  type SpotifyQueueSnapshotBroadcast,
+} from "./queue/spotify-queue-broadcast";
 
 export {
   playlistProviderSchema,

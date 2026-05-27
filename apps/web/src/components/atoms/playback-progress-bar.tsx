@@ -1,9 +1,12 @@
-import { cn } from "@muziks/utils";
+"use client";
+
+import { computeProgressPercent, cn } from "@muziks/utils";
 
 type PlaybackProgressBarProps = {
   progressMs: number;
   durationMs: number;
   paused?: boolean;
+  progressUpdatedAt?: number;
   className?: string;
 };
 
@@ -11,10 +14,16 @@ export function PlaybackProgressBar({
   progressMs,
   durationMs,
   paused = false,
+  progressUpdatedAt,
   className,
 }: PlaybackProgressBarProps) {
-  const progress =
-    durationMs > 0 ? Math.min(100, (progressMs / durationMs) * 100) : 0;
+  const snapshot = {
+    positionMs: progressMs,
+    durationMs,
+    paused,
+    positionUpdatedAt: progressUpdatedAt ?? Date.now(),
+  };
+  const progress = computeProgressPercent(snapshot);
 
   return (
     <div

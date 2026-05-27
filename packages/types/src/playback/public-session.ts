@@ -3,6 +3,7 @@ import { z } from "zod";
 import { playbackSessionStatusSchema } from "./session";
 
 export const publicPlaybackSessionSchema = z.object({
+  trackUri: z.string().nullable().optional(),
   trackName: z.string().nullable(),
   artistName: z.string().nullable(),
   albumImageUrl: z.string().nullable(),
@@ -11,6 +12,8 @@ export const publicPlaybackSessionSchema = z.object({
   paused: z.boolean(),
   status: playbackSessionStatusSchema,
   stateVersion: z.number().int().nonnegative(),
+  /** Epoch ms when `progressMs` was sampled (for live interpolation). */
+  progressUpdatedAt: z.number().int().nonnegative().optional(),
   updatedAt: z.string().datetime(),
 });
 

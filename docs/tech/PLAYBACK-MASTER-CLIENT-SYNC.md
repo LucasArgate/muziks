@@ -78,7 +78,9 @@ flowchart TB
 |------|-----|----------|-----|
 | **`hybrid`** (compat) | Sim | Pontual | Browser SDK como autoridade, com reconciliação em eventos |
 | **`sdk`** (default ativo) | Sim | Não contínuo | Áudio no navegador Master |
-| **`api_device`** | Não | Sim (perfil `default`) | Device Connect escolhido (`DeviceSelector`) |
+| **`api_device`** | Não | Pontual no browser; contínuo no worker | Device Connect escolhido (`DeviceSelector`) |
+
+Em `api_device` com `authority = worker` e snapshot fresco, o Master **não** inicia `PlaybackStatePoller` contínuo; consome `session.snapshot` + `spotify.queue.snapshot` e reconcilia com `refreshApiOnce` (visibilidade, transfer, control).
 
 O coordinator expõe `startHybrid`, `startSdk`, `setPreferredDevice` + `api_device`. Quando o usuário ativa o player neste navegador, o Master transfere o playback para o device do SDK e passa a publicar `stateSource = sdk_browser`.
 
@@ -142,14 +144,15 @@ Não depende de Zustand: `usePlaybackSync` → `setPlayback` → props.
 
 ## 4. Lista **Próximas no Spotify**
 
-Componente: `SpotifyPlaybackQueueList` + `useSpotifyPlaybackQueue`.
+Componente: `SpotifyPlaybackQueueList` + `useSpotifyPlaybackQueueRealtime`.
 
 ### 4.1 Duas fontes de fila
 
 | Fonte | Origem | Quando usar |
 |-------|--------|-------------|
-| **SDK** | `track_window` em `player_state_changed` → `sync.spotifyQueue` | Browser é o device ativo e alinhado |
-| **API** | `GET /api/spotify/playback/queue` | Connect externo ou fila SDK defasada |
+| **SDK** | `track_window` → `SpotifyQueuePublisher` → `spotify.queue.snapshot` | Browser é o device ativo e alinhado |
+| **API / worker** | Worker ou reconciliação pontual no Master → broadcast | Connect externo; participantes (`apps/web`) via Realtime |
+| **Fallback HTTP** | `GET /api/spotify/playback/queue` (master) ou `GET .../playback/spotify-queue` (web) | Realtime indisponível ou snapshot stale (~45s) |
 
 ### 4.2 Alinhamento (`sdkQueueAligned`)
 

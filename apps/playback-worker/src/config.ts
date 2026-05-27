@@ -1,37 +1,29 @@
-const DEFAULT_PLAYBACK_TICK_CRON = "* * * * *";
-
-function readRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name}_missing`);
-  }
-  return value;
-}
-
-function stripTrailingSlash(value: string): string {
-  return value.replace(/\/+$/, "");
-}
-
-function readSupabaseUrl(): string {
-  return stripTrailingSlash(
-    process.env.SUPABASE_URL ??
-      process.env.NEXT_PUBLIC_SUPABASE_URL ??
-      readRequiredEnv("SUPABASE_URL"),
-  );
-}
+const DEFAULT_PLAYBACK_SUPERVISOR_CRON = "*/15 * * * *";
+const DEFAULT_PLAYBACK_REALTIME_WATCHER_CRON = "*/5 * * * *";
+const DEFAULT_PLAYBACK_TICK_CRON = "0 0 1 1 *";
 
 export function getPlaybackWorkerConfig() {
-  const supabaseServiceRoleKey = readRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const legacyBatchTickEnabled =
+    process.env.PLAYBACK_WORKER_LEGACY_TICK === "1";
 
   return {
-    supabaseUrl: readSupabaseUrl(),
-    supabaseServiceRoleKey,
-    spotifyClientId: readRequiredEnv("SPOTIFY_CLIENT_ID"),
-    spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET?.trim(),
-    spotifyTokenEncryptionKey:
-      process.env.SPOTIFY_TOKEN_ENCRYPTION_KEY?.trim() ??
-      supabaseServiceRoleKey,
-    playbackTickCron:
-      process.env.PLAYBACK_WORKER_CRON ?? DEFAULT_PLAYBACK_TICK_CRON,
+    legacyBatchTickEnabled,
+    playbackTickCron: legacyBatchTickEnabled
+      ? (process.env.PLAYBACK_WORKER_CRON ?? "* * * * *")
+      : (process.env.PLAYBACK_WORKER_CRON ?? DEFAULT_PLAYBACK_TICK_CRON),
+    playbackSupervisorCron:
+      process.env.PLAYBACK_WORKER_SUPERVISOR_CRON ??
+      DEFAULT_PLAYBACK_SUPERVISOR_CRON,
+    playbackRealtimeWatcherCron:
+      process.env.PLAYBACK_WORKER_REALTIME_WATCHER_CRON ??
+      DEFAULT_PLAYBACK_REALTIME_WATCHER_CRON,
+    realtimeWatcher: {
+      durationMs: Number(
+        process.env.PLAYBACK_REALTIME_WATCHER_DURATION_MS ?? "50000",
+      ),
+      chainDelayMs: Number(
+        process.env.PLAYBACK_REALTIME_WATCHER_CHAIN_DELAY_MS ?? "10000",
+      ),
+    },
   };
 }

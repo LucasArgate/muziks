@@ -25,6 +25,7 @@ export default async function PlayerSlugPage({ params }: PlayerPageProps) {
   const playbackRow = await getPublicPlaybackSession(player.id);
   const initialPlayback = playbackRow
     ? publicPlaybackSessionSchema.parse({
+        trackUri: playbackRow.currentTrackUri,
         trackName: playbackRow.trackName,
         artistName: playbackRow.artistName,
         albumImageUrl: playbackRow.albumImageUrl,
@@ -33,6 +34,7 @@ export default async function PlayerSlugPage({ params }: PlayerPageProps) {
         paused: playbackRow.paused,
         status: playbackRow.status,
         stateVersion: playbackRow.stateVersion,
+        progressUpdatedAt: playbackRow.progressUpdatedAt?.getTime(),
         updatedAt: playbackRow.updatedAt.toISOString(),
       })
     : null;

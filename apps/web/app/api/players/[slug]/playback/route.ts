@@ -21,6 +21,7 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const session = publicPlaybackSessionSchema.parse({
+      trackUri: row.currentTrackUri,
       trackName: row.trackName,
       artistName: row.artistName,
       albumImageUrl: row.albumImageUrl,
@@ -29,6 +30,7 @@ export async function GET(_request: Request, context: RouteContext) {
       paused: row.paused,
       status: row.status,
       stateVersion: row.stateVersion,
+      progressUpdatedAt: row.progressUpdatedAt?.getTime(),
       updatedAt: row.updatedAt.toISOString(),
     });
 

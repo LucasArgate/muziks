@@ -45,6 +45,12 @@ flowchart TD
 - Inventar `src/slices/` até a spec prever extração para `apps/api`.
 - Playback master / SDK Spotify — isso é `apps/player`.
 
+## Playback e fila (espelho do master)
+
+- Realtime no canal `player:{playerId}`: `session.snapshot` (hero), `queue.snapshot` (fila Muziks), `spotify.queue.snapshot` (Próximas no Spotify).
+- `usePublicSpotifyQueue` — transport `realtime` com fallback HTTP ~30s; `ParticipantPlayerPage` passa `playerId` e `queueTransport`.
+- Poll HTTP degradado quando `DISABLE_PUBLIC_REALTIME=1` ou snapshot stale.
+
 ## Qualidade
 
 - `pnpm lint` no escopo `@muziks/web`.

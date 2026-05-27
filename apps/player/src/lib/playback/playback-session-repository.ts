@@ -6,21 +6,7 @@ import type {
   PlaybackSyncMode,
   PublishPlaybackSessionInput,
 } from "@muziks/types";
-import { sendAgentDebugLog } from "@muziks/utils";
 import { eq } from "drizzle-orm";
-
-function logPlaybackRepositoryCurrentDebug(
-  hypothesisId: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  sendAgentDebugLog({
-    hypothesisId,
-    location: "apps/player/src/lib/playback/playback-session-repository.ts",
-    message,
-    data,
-  });
-}
 
 function rowToPlaybackSession(
   row: typeof playerSessions.$inferSelect,
@@ -89,33 +75,46 @@ function isNewerSemanticPlaybackInput(
   );
 }
 
-function resolvePersistedProgressMs(
-  input: PublishPlaybackSessionInput,
-  persistedAt: Date,
-): number {
+function resolvePersistedProgressMs(input: PublishPlaybackSessionInput): number {
   const durationMs = Math.max(0, input.durationMs);
-  const basePositionMs = durationMs > 0
-    ? Math.min(input.positionMs, durationMs)
-    : Math.max(0, input.positionMs);
-
-  if (input.paused || !input.positionUpdatedAt || durationMs <= 0) {
-    return basePositionMs;
+  if (durationMs <= 0) {
+    return Math.max(0, input.positionMs);
   }
+  return Math.min(Math.max(0, input.positionMs), durationMs);
+}
 
-  const elapsedMs = Math.max(0, persistedAt.getTime() - input.positionUpdatedAt);
-  return Math.min(basePositionMs + elapsedMs, durationMs);
+function resolveProgressAnchorIso(
+  input: PublishPlaybackSessionInput,
+  fallback: Date,
+): Date {
+  if (input.positionUpdatedAt !== undefined) {
+    return new Date(input.positionUpdatedAt);
+  }
+  if (input.sourceUpdatedAt) {
+    const parsed = Date.parse(input.sourceUpdatedAt);
+    if (Number.isFinite(parsed)) {
+      return new Date(parsed);
+    }
+  }
+  return fallback;
 }
 
 export function playbackSessionToNormalized(
   session: PlaybackSession,
 ): NormalizedSpotifyPlayerState {
+  const progressUpdatedAt = session.sourceUpdatedAt
+    ? Date.parse(session.sourceUpdatedAt)
+    : Date.parse(session.updatedAt);
+
   return {
     trackUri: session.currentTrackUri,
     trackName: session.trackName,
     artistName: session.artistName,
     albumImageUrl: session.albumImageUrl,
     positionMs: session.progressMs,
-    positionUpdatedAt: Date.parse(session.updatedAt),
+    positionUpdatedAt: Number.isFinite(progressUpdatedAt)
+      ? progressUpdatedAt
+      : Date.parse(session.updatedAt),
     durationMs: session.durationMs,
     paused: session.paused,
     deviceId: session.activeDeviceId,
@@ -191,23 +190,13 @@ export async function upsertPlaybackSession(
     isNewerSemanticPlaybackInput(existing!, input);
 
   if (staleVersion && !allowStaleVersionForNewerSemanticState) {
-    logPlaybackRepositoryCurrentDebug("H4", "playback session rejected as stale", {
-      playerId,
-      inputStateVersion: input.stateVersion,
-      existingStateVersion: existing.stateVersion,
-      inputDeviceId: input.deviceId,
-      existingActiveDeviceId: existing.activeDeviceId,
-      inputPreferredDeviceId: input.preferredDeviceId ?? null,
-      existingPreferredDeviceId: existing.preferredDeviceId,
-      inputActiveDeviceName: input.activeDeviceName ?? null,
-      existingActiveDeviceName: existing.activeDeviceName,
-    });
     return { session: existing, accepted: false };
   }
 
   const now = new Date();
   const nextVersion = (existing?.stateVersion ?? 0) + 1;
-  const progressMs = resolvePersistedProgressMs(input, now);
+  const progressMs = resolvePersistedProgressMs(input);
+  const progressAnchor = resolveProgressAnchorIso(input, now);
 
   const values = {
     playerId,
@@ -251,7 +240,7 @@ export async function upsertPlaybackSession(
     sourceUpdatedAt:
       input.sourceUpdatedAt !== undefined
         ? optionalIsoToDate(input.sourceUpdatedAt)
-        : (optionalIsoToDate(existing?.sourceUpdatedAt ?? null) ?? now),
+        : progressAnchor,
     updatedAt: now,
   };
 
@@ -291,21 +280,5 @@ export async function upsertPlaybackSession(
   if (!session) {
     throw new Error("Failed to persist playback session");
   }
-  logPlaybackRepositoryCurrentDebug("H4", "playback session persisted", {
-    playerId,
-    accepted: true,
-    inputStateVersion: input.stateVersion ?? null,
-    existingStateVersion: existing?.stateVersion ?? null,
-    persistedStateVersion: session.stateVersion,
-    inputDeviceId: input.deviceId,
-    persistedActiveDeviceId: session.activeDeviceId,
-    inputPreferredDeviceId: input.preferredDeviceId ?? null,
-    persistedPreferredDeviceId: session.preferredDeviceId,
-    inputActiveDeviceName: input.activeDeviceName ?? null,
-    persistedActiveDeviceName: session.activeDeviceName,
-    status: session.status,
-    stateSource: session.stateSource,
-    authority: session.authority,
-  });
   return { session, accepted: true };
 }

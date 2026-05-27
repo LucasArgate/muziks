@@ -21,3 +21,6 @@ dev-dist
 pnpm-debug.log*
 *.tsbuildinfo
 *.local
+
+# Trigger.dev (dev lock + bundled task builds under tmp/)
+.trigger/

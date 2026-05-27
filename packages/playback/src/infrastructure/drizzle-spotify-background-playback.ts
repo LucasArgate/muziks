@@ -6,7 +6,13 @@ import {
   players,
   spotifyConnections,
 } from "@muziks/db";
-import { getCurrentPlayback, normalizeApiPlaybackState } from "@muziks/spotify";
+import {
+  getCurrentPlayback,
+  getPlaybackQueue,
+  normalizeApiPlaybackState,
+  normalizeSpotifyPlaybackQueue,
+} from "@muziks/spotify";
+import { normalizedSpotifyPlaybackQueueSchema } from "@muziks/types";
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
 import {
   and,
@@ -26,8 +32,10 @@ import {
 import type {
   BackgroundPlaybackSession,
   BackgroundPlaybackOrchestratorPorts,
+  BackgroundTickSampleHook,
   PlaybackAccessTokenProvider,
   PlaybackSessionSnapshotPublisher,
+  SpotifyQueueSnapshotPublisher,
   TickPlayerResult,
 } from "../application/background-playback-orchestrator";
 import {
@@ -45,10 +53,104 @@ import {
 
 export type PlaybackSessionRow = typeof playerSessions.$inferSelect;
 
+function rowToBackgroundSession(row: PlaybackSessionRow): BackgroundPlaybackSession {
+  return {
+    playerId: row.playerId,
+    currentTrackUri: row.currentTrackUri,
+    trackName: row.trackName,
+    artistName: row.artistName,
+    albumImageUrl: row.albumImageUrl,
+    progressMs: row.progressMs,
+    durationMs: row.durationMs,
+    paused: row.paused,
+    activeDeviceId: row.activeDeviceId,
+    status: row.status,
+    lastError: row.lastError,
+    updatedAt: row.updatedAt,
+    spotifyUserId: row.spotifyUserId,
+    syncMode: row.syncMode ?? "api_device",
+    preferredDeviceId: row.preferredDeviceId,
+    activeDeviceName: row.activeDeviceName,
+    sdkDeviceId: row.sdkDeviceId,
+    browserInstanceId: row.browserInstanceId,
+    browserVisibility: row.browserVisibility ?? "unknown",
+    browserLastSeenAt: row.browserLastSeenAt,
+    stateVersion: row.stateVersion ?? 0,
+    stateSource: row.stateSource ?? "worker_api",
+    authority: row.authority ?? "worker",
+    sourceUpdatedAt: row.sourceUpdatedAt,
+  };
+}
+
 export type DrizzleSpotifyBackgroundPlaybackOptions = {
   getAccessToken: PlaybackAccessTokenProvider;
   publishSessionSnapshot?: PlaybackSessionSnapshotPublisher;
+  publishSpotifyQueueSnapshot?: SpotifyQueueSnapshotPublisher;
+  afterSample?: BackgroundTickSampleHook;
 };
+
+/** Claim per-player tick lock; returns playerIds that were locked for this worker. */
+export async function claimPlayersForBackgroundTick(
+  playerIds: string[],
+  now = new Date(),
+): Promise<string[]> {
+  return lockPlayerIdsForBackgroundTick(playerIds, now);
+}
+
+export async function isPlayerEligibleForBackgroundTick(
+  playerId: string,
+  now = new Date(),
+): Promise<boolean> {
+  const db = getDb();
+  const since = new Date(now.getTime() - PLAYBACK_ACTIVE_WINDOW_MS);
+  const healthySince = new Date(
+    now.getTime() - PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
+  );
+
+  const rows = await db
+    .select({ playerId: playerSessions.playerId })
+    .from(playerSessions)
+    .innerJoin(players, eq(players.id, playerSessions.playerId))
+    .innerJoin(
+      spotifyConnections,
+      eq(spotifyConnections.userId, players.ownerId),
+    )
+    .leftJoin(
+      playbackPollCursors,
+      eq(playbackPollCursors.playerId, playerSessions.playerId),
+    )
+    .where(
+      and(
+        eq(playerSessions.playerId, playerId),
+        gt(playerSessions.updatedAt, since),
+        inArray(playerSessions.status, [
+          "playing",
+          "paused",
+          "connected",
+          "ready",
+        ]),
+        isNotNull(spotifyConnections.refreshTokenEnc),
+        workerShouldSuperviseSessionCondition(healthySince),
+        or(
+          isNull(playbackPollCursors.retryAfterUntil),
+          lte(playbackPollCursors.retryAfterUntil, now),
+        ),
+      ),
+    )
+    .limit(1);
+
+  return rows.length > 0;
+}
+
+function workerShouldSuperviseSessionCondition(healthySince: Date) {
+  return or(
+    ne(playerSessions.syncMode, "sdk"),
+    ne(playerSessions.stateSource, "sdk_browser"),
+    ne(playerSessions.browserVisibility, "visible"),
+    isNull(playerSessions.browserLastSeenAt),
+    lte(playerSessions.browserLastSeenAt, healthySince),
+  );
+}
 
 async function lockPlayerIdsForBackgroundTick(
   playerIds: string[],
@@ -90,7 +192,7 @@ async function lockPlayerIdsForBackgroundTick(
     .where(
       and(
         inArray(playbackPollCursors.playerId, playerIds),
-        eq(playbackPollCursors.lockedUntil, lockedUntil),
+        gt(playbackPollCursors.lockedUntil, now),
       ),
     );
 
@@ -104,7 +206,9 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
   const healthySince = new Date(
     now.getTime() - PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
   );
-  const endingSoon = new Date(now.getTime() + PLAYBACK_ENDING_SOON_MS);
+  const endingSoonIso = new Date(
+    now.getTime() + PLAYBACK_ENDING_SOON_MS,
+  ).toISOString();
 
   const rows = await db
     .select({ playerId: playerSessions.playerId })
@@ -132,12 +236,7 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
           "ready",
         ]),
         isNotNull(spotifyConnections.refreshTokenEnc),
-        or(
-          ne(playerSessions.stateSource, "sdk_browser"),
-          ne(playerSessions.browserVisibility, "visible"),
-          isNull(playerSessions.browserLastSeenAt),
-          lte(playerSessions.browserLastSeenAt, healthySince),
-        ),
+        workerShouldSuperviseSessionCondition(healthySince),
         or(
           isNull(playbackPollCursors.nextTickAt),
           lte(playbackPollCursors.nextTickAt, now),
@@ -154,7 +253,7 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
     )
     .orderBy(
       sql`CASE
-        WHEN ${playbackTrackLifecycle.expectedEndAt} IS NOT NULL AND ${playbackTrackLifecycle.expectedEndAt} <= ${endingSoon} THEN 0
+        WHEN ${playbackTrackLifecycle.expectedEndAt} IS NOT NULL AND ${playbackTrackLifecycle.expectedEndAt} <= ${endingSoonIso}::timestamptz THEN 0
         WHEN ${playbackTrackLifecycle.phase} = 'paused' THEN 2
         ELSE 1
       END`,
@@ -201,7 +300,10 @@ async function upsertWorkerPlaybackSession(input: {
     trackName: state.trackName,
     artistName: state.artistName,
     albumImageUrl: state.albumImageUrl ?? null,
-    progressMs: resolvePersistedProgressMs(state, now),
+    progressMs: resolvePersistedProgressMs(state),
+    sourceUpdatedAt: state.positionUpdatedAt
+      ? new Date(state.positionUpdatedAt)
+      : now,
     durationMs: state.durationMs,
     paused: state.paused,
     status: resolvePlaybackSessionStatus(state),
@@ -215,7 +317,6 @@ async function upsertWorkerPlaybackSession(input: {
     browserInstanceId: existing?.browserInstanceId ?? null,
     browserVisibility: existing?.browserVisibility ?? "unknown",
     browserLastSeenAt: existing?.browserLastSeenAt ?? null,
-    sourceUpdatedAt: now,
     stateVersion: nextVersion,
     updatedAt: now,
   };
@@ -256,7 +357,7 @@ async function upsertWorkerPlaybackSession(input: {
   if (!row) {
     throw new Error("playback_session_persist_failed");
   }
-  return row;
+  return rowToBackgroundSession(row);
 }
 
 async function savePlaybackPollCursor(result: TickPlayerResult): Promise<void> {
@@ -299,7 +400,10 @@ export function createDrizzleSpotifyBackgroundPlaybackPorts(
     getAccessToken: options.getAccessToken,
     publishSessionSnapshot: options.publishSessionSnapshot,
     listPlayerIdsForTick: listPlayerIdsForBackgroundTick,
-    getPlaybackSession: getPlaybackSessionRow,
+    getPlaybackSession: async (playerId) => {
+      const row = await getPlaybackSessionRow(playerId);
+      return row ? rowToBackgroundSession(row) : null;
+    },
     upsertWorkerPlaybackSession,
     savePollCursor: savePlaybackPollCursor,
     fetchCurrentPlayback: async (accessToken) => {
@@ -309,5 +413,13 @@ export function createDrizzleSpotifyBackgroundPlaybackPorts(
         activeDeviceName: raw?.device?.name ?? null,
       };
     },
+    fetchSpotifyQueue: async (accessToken) => {
+      const raw = await getPlaybackQueue({ accessToken });
+      return normalizedSpotifyPlaybackQueueSchema.parse(
+        normalizeSpotifyPlaybackQueue(raw),
+      );
+    },
+    publishSpotifyQueueSnapshot: options.publishSpotifyQueueSnapshot,
+    afterSample: options.afterSample,
   };
 }

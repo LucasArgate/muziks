@@ -43,9 +43,23 @@ Quando `staging` for criada para o app participante, **novas** features de `apps
 | GitHub Actions §5 (`ci.yml`, deploy, Docker) | **Depois** — quando houver app a buildar; opcional no bootstrap |
 | Branch `staging` + deploy automático | Quando `apps/web` tiver ambiente staging (§4) |
 
+### 0.4 Fase de entrega acelerada (solo, pré-piloto)
+
+Enquanto o time for essencialmente **uma pessoa**, sem piloto externo em prod, e a meta for **versão estável para teste profundo** (ex.: marco interno **30/05/2026**), aplica-se o ciclo em **[`docs/tasks/CICLO-ENTREGA-E-FOCO.md`](../tasks/CICLO-ENTREGA-E-FOCO.md)**:
+
+| Norma §0–§1 (futuro) | Exceção temporária |
+|----------------------|-------------------|
+| PR de código **deve** referenciar Linear `MUZ-n` | **Opcional** — backlog em `docs/tasks/backlog/` + comentários na PR |
+| `feature/MUZ-<n>-slug` | `feature/<slug>` aceitável |
+| Triagem Linear | Triagem no backlog git + PR |
+
+**Não relaxado:** proteção de `main`, specs normativas, segredos fora do git. **Retomar** §1 integral quando houver 2+ contribuidores ou piloto em 1–2 espaços reais (ver §6 do doc de ciclo).
+
 ---
 
 ## 1. Gestão de trabalho — Linear
+
+> **Fase solo (§0.4):** Linear permanece a direção de longo prazo; o backlog em git (`docs/tasks/backlog/`) é a fila operacional até o piloto.
 
 ### 1.1 Projeto
 

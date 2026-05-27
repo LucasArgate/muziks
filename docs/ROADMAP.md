@@ -4,7 +4,7 @@
 
 Este é o **mapa da jornada** do Muziks: onde estamos, para onde vamos em etapas **viáveis**, como **aprender** com uso real e como **operar** em modo **IA-first** (humano e máquina em parceria explícita). Ele **não** substitui o [Manifesto](MANIFESTO.md) nem as [especificações](specs/README.md); organiza **tempo, ritos e entregas** em torno da promessa central: **conectar pessoas** no som, com **acordo explícito** e política clara.
 
-**Estado hoje (repositório):** specs e stack **fechadas** na documentação; **implementação iniciada** — monorepo Turborepo, GitFlow (`develop` + `feature/*`) e processo em [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) §0. O produto ainda **não** está publicado em produção; o foco passa ao **primeiro incremento de código** (Fase 2).
+**Estado hoje (repositório):** specs e stack **fechadas** na documentação; **implementação em andamento** — monorepo, ambientes **dev / staging / prod**, ciclo operacional em [CICLO-ENTREGA-E-FOCO.md](tasks/CICLO-ENTREGA-E-FOCO.md) (meta: **versão estável MVP-B até 30/05/2026**). Processo normativo: [PROCESSO-DESENVOLVIMENTO.md](tech/PROCESSO-DESENVOLVIMENTO.md) §0.4 (exceção solo). Piloto em espaços reais: após marco interno.
 
 ---
 
@@ -43,7 +43,7 @@ Cada fase tem **critério de saída** objetivo. **Datas** de início/fim e de **
 | [MONOREPO-TURBOREPO.md](tech/MONOREPO-TURBOREPO.md) | `apps/web`, `apps/blog`, packages, domínios |
 | [11-backend-and-integrations-open.md](specs/11-backend-and-integrations-open.md) | §1 e §10 fechados; demais integrações em aberto |
 
-**Em curso:** scaffold do monorepo e features em `feature/MUZ-*` → `develop` ([AGENTS.md](../AGENTS.md)).
+**Em curso:** features `feature/*` → PR `develop` → teste staging → backlog [docs/tasks/backlog/](tasks/backlog/) ([AGENTS.md](../AGENTS.md), [CICLO-ENTREGA-E-FOCO.md](tasks/CICLO-ENTREGA-E-FOCO.md)).
 
 ### Fase 2 — Primeiro software tocável *(MVP interno)* — **iniciada**
 

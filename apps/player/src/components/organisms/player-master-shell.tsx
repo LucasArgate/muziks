@@ -100,6 +100,9 @@ export function PlayerMasterShell({
               <>
                 <SpotifyPlaybackQueueList
                   enabled={hasSpotify}
+                  playerId={viewState.muziks.status === "authenticated"
+                    ? viewState.muziks.player.id
+                    : null}
                   syncMode={sync.syncMode}
                   sdkQueue={sync.spotifyQueue}
                   trackUri={sync.playback?.trackUri}

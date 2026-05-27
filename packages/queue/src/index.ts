@@ -1,4 +1,5 @@
 export { sortQueueItemsForDisplay } from "./domain/sort-queue-items";
+export { pickMuziksLookaheadUris } from "./domain/pick-muziks-lookahead";
 export {
   buildMuziksQueueSnapshot,
   pickQueueHead,

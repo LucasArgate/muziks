@@ -137,7 +137,7 @@ export function ParticipantPlayerPage({
             setGateOpen(true);
           } else {
             setVoteNotice(
-              "Na PoC, vote nas faixas que já estão na fila abaixo.",
+              "Para votar, toque em + em uma música que já está na fila abaixo.",
             );
           }
         }}
@@ -157,7 +157,12 @@ export function ParticipantPlayerPage({
         votingItemId={votingItemId}
       />
 
-      <SpotifyUpcomingQueueList slug={slug} />
+      <SpotifyUpcomingQueueList
+        slug={slug}
+        playerId={playerId}
+        transport={queueTransport}
+        trackUri={playback?.trackUri ?? null}
+      />
 
       <IdentityGateDialog
         open={gateOpen}

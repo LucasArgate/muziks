@@ -8,6 +8,8 @@
     "dev:web": "turbo run dev --filter=@muziks/web",
     "dev:player": "turbo run dev --filter=@muziks/player",
     "dev:spotify-bridge": "turbo run dev --filter=@muziks/spotify-bridge",
+    "dev:playback-worker": "pnpm --filter @muziks/playback-worker dev",
+    "deploy:playback-worker": "pnpm --filter @muziks/playback-worker run trigger:deploy",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "db:generate": "pnpm --filter @muziks/db db:generate",

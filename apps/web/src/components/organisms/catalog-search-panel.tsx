@@ -314,8 +314,8 @@ export function CatalogSearchPanel({
           </div>
 
           <p className="mt-3 text-xs text-on-surface-variant">
-            Na PoC você pode explorar o catálogo; para votar, escolha uma faixa
-            já na fila abaixo.
+            Aqui você só explora o catálogo. Para votar, use o + nas músicas que
+            já estão na fila do espaço.
           </p>
         </GlassPanel>
       </DialogContent>

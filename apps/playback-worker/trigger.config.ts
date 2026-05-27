@@ -1,7 +1,7 @@
 import { defineConfig } from "@trigger.dev/sdk";
 
 export default defineConfig({
-  project: process.env.TRIGGER_PROJECT_REF ?? "proj_muziks_playback_worker",
+  project: process.env.TRIGGER_PROJECT_REF ?? "proj_bhvoyepszbvxvbginzgh",
   dirs: ["./src/tasks"],
   runtime: "node",
   retries: {
@@ -14,5 +14,5 @@ export default defineConfig({
       randomize: true,
     },
   },
-  maxDuration: 60,
+  maxDuration: 120,
 });

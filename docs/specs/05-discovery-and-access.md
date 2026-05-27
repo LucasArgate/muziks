@@ -10,6 +10,17 @@ O participante deve poder encontrar ou entrar no player por:
 
 Cada modo pode coexistir; o dono escolhe o que **habilita** por player.
 
+## Contexto de adoção do QR Code
+
+QR Code é tratado como canal principal de acesso explícito porque a barreira comportamental observada na primeira geração do produto diminuiu: leitura pela câmera tornou-se comum, especialmente após cardápios digitais, pagamentos e check-ins em ambientes físicos. Ainda assim, o produto **não deve depender exclusivamente** de familiaridade com QR.
+
+Requisitos práticos para QR:
+
+- O QR deve codificar uma URL legível e compartilhável; a mesma entrada deve funcionar como **link profundo**.
+- Materiais públicos devem mostrar também **slug, nome ou URL curta** quando o contexto permitir, para quem prefere digitar ou não consegue escanear.
+- A copy deve explicar o benefício imediato do gesto (“entrar na fila”, “votar”, “ver o que toca”), não apenas exibir um código.
+- O fluxo não deve exigir instalação de app nativo para a ação básica do participante.
+
 ## Requisitos funcionais
 
 - **R1:** Com link válido, o participante acessa o contexto do player sem passos desnecessários.

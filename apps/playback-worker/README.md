@@ -1,108 +1,114 @@
 # Muziks Playback Worker
 
-Worker Node/Trigger.dev responsável por executar o `playback-tick` de sessões em background. Ele usa `@muziks/playback` para a regra de negócio compartilhada, resolve o token do dono pelo vault e publica `session.snapshot` no Supabase Realtime.
+Worker Trigger.dev que agenda `playback-tick` e executa o orquestrador **no próprio processo** (`@muziks/playback` + `@muziks/db`), sem request HTTP ao player.
 
-## Arquivos principais
+## Fluxo
 
-- [`trigger.config.ts`](./trigger.config.ts): projeto Trigger.dev, diretório de tasks, runtime e retries.
-- [`src/tasks/playback-tick.ts`](./src/tasks/playback-tick.ts): task agendada `playback-tick`.
-- [`src/config.ts`](./src/config.ts): leitura das envs obrigatórias do worker.
-- [`src/playback-orchestrator.ts`](./src/playback-orchestrator.ts): adapter do worker para config, token vault e Supabase Broadcast.
-- [`../../packages/playback/src/application/background-playback-orchestrator.ts`](../../packages/playback/src/application/background-playback-orchestrator.ts): caso de uso compartilhado, escrito contra portas de aplicação.
-- [`../../packages/playback/src/infrastructure/drizzle-spotify-background-playback.ts`](../../packages/playback/src/infrastructure/drizzle-spotify-background-playback.ts): adapter Drizzle/Spotify para seleção de players, budget/backoff, consulta Spotify e persistência.
-- [`../../packages/playback/src/domain`](../../packages/playback/src/domain): regras puras de domínio de playback usadas por worker e futuros adapters.
-- [`../../packages/db/src/schema/player-sessions.ts`](../../packages/db/src/schema/player-sessions.ts): estado persistido de playback.
-- [`../../packages/db/src/schema/playback-poll-cursors.ts`](../../packages/db/src/schema/playback-poll-cursors.ts): orçamento de tick por player.
-- [`../../packages/db/src/repositories/spotify-token-vault.ts`](../../packages/db/src/repositories/spotify-token-vault.ts): leitura/refresh de token do dono.
-- [`../../docs/tech/TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md`](../../docs/tech/TRIGGER-DEV-PLAYBACK-ORCHESTRATION.md): decisão técnica do worker.
+```mermaid
+flowchart LR
+  trigger[Trigger.dev] --> worker[playback-worker]
+  worker --> playback["@muziks/playback"]
+  playback --> db[(Postgres)]
+  playback --> spotify[Spotify API]
+  worker --> realtime[Supabase Realtime]
+```
 
-## Env Vars
+## Env vars
 
-Essas variáveis precisam existir no ambiente onde a task roda:
+Copie de [`apps/player/.env`](../player/.env) — o worker usa as **mesmas** credenciais:
 
 ```bash
 TRIGGER_SECRET_KEY=tr_dev_xxx
-TRIGGER_PROJECT_REF=proj_xxx
-DATABASE_URL=postgres://...
-SUPABASE_URL=https://<project>.supabase.co
+TRIGGER_PROJECT_REF=proj_bhvoyepszbvxvbginzgh
+DATABASE_URL=...
+SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
-SPOTIFY_CLIENT_ID=...
-SPOTIFY_CLIENT_SECRET=...
 SPOTIFY_TOKEN_ENCRYPTION_KEY=...
-PLAYBACK_WORKER_CRON=* * * * *
+NEXT_PUBLIC_SPOTIFY_CLIENT_ID=...
+SPOTIFY_CLIENT_SECRET=...
 ```
 
-- `TRIGGER_SECRET_KEY`: secret key do ambiente Trigger.dev. Use a key certa para cada ambiente (`tr_dev_...`, `tr_stg_...`, `tr_prod_...`). Não commitar.
-- `TRIGGER_PROJECT_REF`: project ref do Trigger.dev usado por [`trigger.config.ts`](./trigger.config.ts). O fallback local é apenas placeholder.
-- `DATABASE_URL`: conexão Postgres usada por `@muziks/db`.
-- `SUPABASE_URL`: URL do projeto Supabase. Também aceita `NEXT_PUBLIC_SUPABASE_URL` como fallback local.
-- `SUPABASE_SERVICE_ROLE_KEY`: usado somente no worker/server para publicar Broadcast e, se necessário, como fallback de chave de criptografia.
-- `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET`: credenciais do app Spotify para refresh server-side do token do dono.
-- `SPOTIFY_TOKEN_ENCRYPTION_KEY`: chave para descriptografar tokens salvos no vault. Se ausente, o worker usa `SUPABASE_SERVICE_ROLE_KEY`, mantendo compatibilidade com o padrão atual.
-- `PLAYBACK_WORKER_CRON`: cron da task. Opcional; default atual é `* * * * *`.
+Ver [`.env.example`](./.env.example).
 
-## Ambientes
-
-### Dev
-
-Use a secret key DEV do Trigger.dev:
+## Dev
 
 ```bash
-TRIGGER_SECRET_KEY=tr_dev_xxx
-TRIGGER_PROJECT_REF=proj_xxx
-DATABASE_URL=postgres://...
-SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_SERVICE_ROLE_KEY=<service-role local>
-SPOTIFY_CLIENT_ID=<spotify dev app>
-SPOTIFY_CLIENT_SECRET=<spotify dev secret>
-SPOTIFY_TOKEN_ENCRYPTION_KEY=<mesma chave usada para gravar o vault local>
-PLAYBACK_WORKER_CRON=* * * * *
+pnpm dev:playback-worker
 ```
 
-Para rodar a task localmente, use a CLI do Trigger.dev a partir desta pasta, carregando o `.env` local. Não use tokens de staging/prod em dev.
+## Deploy (Trigger.dev **Production** apenas)
 
-### Staging
+Staging do Trigger.dev é pago. **Muziks staging e prod** usam o mesmo ambiente **Production** no Trigger; a separação é pelas **env vars** (Supabase/Spotify do projeto certo), não por ambiente Trigger.
 
-Use a secret key STAGING e o banco/Supabase do staging:
+### 1. Dashboard — GitHub
+
+Em [trigger.dev](https://cloud.trigger.dev) → projeto `proj_bhvoyepszbvxvbginzgh` → **Deploy** / Git:
+
+| Campo | Valor |
+|--------|--------|
+| **Production** (branch) | `develop` enquanto o worker só estiver em `develop`/features; depois `main` |
+| **Staging** (branch) | `none` — não usar |
+| **Preview PRs** | off (opcional; preview também consome cota) |
+| **Trigger config file** | `apps/playback-worker/trigger.config.ts` |
+| **Install command** | `pnpm install --frozen-lockfile` |
+| **Pre-build command** | *(vazio ou)* `pnpm --filter @muziks/playback-worker lint` |
+
+> **Bloqueio comum:** com Production em `main` e o worker ainda só em `develop`, a tela fica em “Waiting for tasks to deploy” — não há `trigger.config.ts` em `main` hoje. Use branch `develop` no tracking **ou** faça merge do worker para `main` antes do deploy automático.
+
+### 2. Env vars — ambiente **Production** (Trigger)
+
+Copiar do Supabase/Spotify do **ambiente Muziks que o worker deve atender** (staging *ou* prod):
+
+| Variável | Uso |
+|----------|-----|
+| `DATABASE_URL` | Postgres (pooler) do projeto Supabase |
+| `SUPABASE_URL` | URL do projeto |
+| `SUPABASE_SERVICE_ROLE_KEY` | Realtime broadcast + admin |
+| `NEXT_PUBLIC_SUPABASE_URL` | Igual ao `SUPABASE_URL` se o worker precisar |
+| `SPOTIFY_TOKEN_ENCRYPTION_KEY` | Mesmo valor do `apps/player` |
+| `NEXT_PUBLIC_SPOTIFY_CLIENT_ID` | App Spotify |
+| `SPOTIFY_CLIENT_SECRET` | App Spotify |
+
+Opcionais: `PLAYBACK_WORKER_SUPERVISOR_CRON`, `PLAYBACK_WORKER_REALTIME_WATCHER_CRON`, `PLAYBACK_REALTIME_WATCHER_*`.
+
+**Trocar staging ↔ prod:** alterar essas vars no ambiente **Production** do Trigger e fazer **Redeploy** (não é preciso ambiente Staging do Trigger).
+
+O player (Vercel) continua com `PLAYBACK_WORKER_SECRET` só para rotas internas/bridge; o worker fala direto com DB/Spotify.
+
+### 3. Disparar deploy
+
+**Automático:** push na branch de Production configurada (`develop` ou `main`).
+
+**Manual (mesmo ambiente Production):**
 
 ```bash
-TRIGGER_SECRET_KEY=tr_stg_xxx
-TRIGGER_PROJECT_REF=proj_xxx
-DATABASE_URL=<postgres staging>
-SUPABASE_URL=https://<staging-ref>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<service-role staging>
-SPOTIFY_CLIENT_ID=<spotify staging/prod app>
-SPOTIFY_CLIENT_SECRET=<spotify staging/prod secret>
-SPOTIFY_TOKEN_ENCRYPTION_KEY=<mesma chave do vault staging>
-PLAYBACK_WORKER_CRON=* * * * *
+# na raiz do monorepo
+pnpm deploy:playback-worker
+
+# ou dentro do app
+cd apps/playback-worker && pnpm run trigger:deploy
 ```
 
-Use um projeto/banco staging separado do prod. O worker vai escrever diretamente em `player_sessions`, então `DATABASE_URL`, `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` precisam apontar para o mesmo ambiente.
+Antes: `pnpm exec trigger login` (uma vez por máquina).
 
-### Prod
+Use `TRIGGER_ACCESS_TOKEN` (Personal Access Token no dashboard) em CI, se preferir GitHub Actions depois.
 
-Use a secret key PROD e o banco/Supabase de produção:
+### 4. Validar
 
-```bash
-TRIGGER_SECRET_KEY=tr_prod_xxx
-TRIGGER_PROJECT_REF=proj_xxx
-DATABASE_URL=<postgres prod>
-SUPABASE_URL=https://<prod-ref>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<service-role prod>
-SPOTIFY_CLIENT_ID=<spotify prod app>
-SPOTIFY_CLIENT_SECRET=<spotify prod secret>
-SPOTIFY_TOKEN_ENCRYPTION_KEY=<mesma chave do vault prod>
-PLAYBACK_WORKER_CRON=* * * * *
-```
+No dashboard: **Runs** → disparar ou aguardar `playback-supervisor` / `playback-realtime-watcher`. Logs devem mostrar conexão ao Postgres sem `DATABASE_URL` missing.
 
-Em produção, mantenha `TRIGGER_SECRET_KEY`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SPOTIFY_CLIENT_SECRET` e `SPOTIFY_TOKEN_ENCRYPTION_KEY` somente no provedor de deploy/Trigger.dev, nunca em arquivos versionados.
+### Troubleshooting — `docker-credential-desktop` not found
 
-## Validação
+O script `trigger:deploy` usa **`--native-build-server`** (build na nuvem do Trigger, sem Docker local).
 
-Este app não tem testes automatizados. Para validar tipos/lint:
+Se ainda falhar com credencial Docker, remova `"credsStore": "desktop"` de `%USERPROFILE%\.docker\config.json`, ou use deploy via **GitHub** no dashboard (build nos servidores deles).
 
-```bash
-pnpm --filter @muziks/playback-worker lint
-```
+## Paridade com o player
 
-O worker compartilha contrato de banco com `packages/db` e regra de negócio com `packages/playback`. Mudanças em `player_sessions`, `playback_poll_cursors` ou no payload `session.snapshot` devem ser refletidas em [`../../packages/playback`](../../packages/playback), [`../../packages/db/src/schema/player-sessions.ts`](../../packages/db/src/schema/player-sessions.ts) e [`../../packages/types/src/playback/session-broadcast.ts`](../../packages/types/src/playback/session-broadcast.ts).
+| Camada | Onde |
+|--------|------|
+| Listar players, poll cursors, upsert sessão, Spotify sample | `@muziks/playback` |
+| Broadcast `session.snapshot` | `apps/playback-worker/src/lib/realtime` |
+| Lifecycle, dequeue, mirror near-end | `apps/player` (`afterSample` hook) — **ainda não no worker** |
+
+A rota `POST /api/internal/playback-tick` no player usa o **mesmo** `@muziks/playback` + hook do player — só para bridge/Edge/manual; agendamento é **Trigger.dev**.

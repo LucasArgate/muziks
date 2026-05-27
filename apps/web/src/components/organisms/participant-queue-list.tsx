@@ -32,7 +32,7 @@ export function ParticipantQueueList({
       emptyMessage={
         error
           ? "Não foi possível carregar a fila."
-          : "Nenhum pedido na fila ainda."
+          : "Ainda não há músicas na fila. Quando alguém sugerir, elas aparecem aqui para você votar."
       }
     >
       {visible.map((item, index) => (

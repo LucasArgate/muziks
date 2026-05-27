@@ -5,6 +5,7 @@ import type {
 } from "@muziks/types";
 
 import { logPlaybackLifecycle } from "@/src/lib/playback/playback-lifecycle-log";
+import { getPlaybackTrackLifecycle } from "@/src/lib/playback/playback-track-lifecycle-repository";
 import {
   getPlaybackSessionByPlayerId,
   playbackSessionToNormalized,
@@ -13,6 +14,8 @@ import {
 import { broadcastSessionSnapshotFromServer } from "@/src/lib/realtime/player-session-broadcast-server";
 import { getAccessTokenForPlayer } from "@/src/lib/spotify/spotify-token-vault";
 
+import { handleConfirmedTrackTransition } from "./playback-queue-transition";
+import { PRELOAD_MS } from "./near-end-scheduler";
 import { applyLifecycleFromSample } from "./playback-track-lifecycle";
 
 function fingerprint(state: NormalizedSpotifyPlayerState): string {
@@ -106,6 +109,39 @@ export async function tickPlayer(playerId: string): Promise<TickPlayerResult> {
   const sessionUpdated = accepted;
 
   const lifecycle = await applyLifecycleFromSample(playerId, state);
+
+  if (
+    prevNormalized?.trackUri &&
+    state.trackUri &&
+    prevNormalized.trackUri !== state.trackUri
+  ) {
+    await handleConfirmedTrackTransition({
+      playerId,
+      previousTrackUri: prevNormalized.trackUri,
+      nextState: state,
+    }).catch(() => {
+      // queue transition is best-effort during background tick
+    });
+  }
+
+  const activeLifecycle = await getPlaybackTrackLifecycle(playerId);
+  if (
+    activeLifecycle?.expectedEndAt &&
+    !state.paused &&
+    state.trackUri &&
+    activeLifecycle.expectedEndAt.getTime() - Date.now() <= PRELOAD_MS
+  ) {
+    const { mirrorNextToSpotifyQueueHandler } = await import(
+      "@/src/slices/playback/mirror-next-to-spotify-queue/handler"
+    );
+    await mirrorNextToSpotifyQueueHandler(playerId, {
+      deviceId: state.deviceId ?? undefined,
+      currentTrackUri: state.trackUri,
+      lookahead: 3,
+    }).catch(() => {
+      // near-end mirror is best-effort on tick
+    });
+  }
 
   const nextFp = fingerprint(state);
   const prevFp = prevNormalized ? fingerprint(prevNormalized) : null;
