@@ -1,7 +1,10 @@
 import {
   PLAYER_SESSION_BROADCAST_EVENT,
+  SPOTIFY_QUEUE_SNAPSHOT_BROADCAST_EVENT,
   sessionSnapshotBroadcastSchema,
+  spotifyQueueSnapshotBroadcastSchema,
   type SessionSnapshotBroadcast,
+  type SpotifyQueueSnapshotBroadcast,
 } from "@muziks/types";
 import { sendAgentDebugLog } from "@muziks/utils";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -135,5 +138,54 @@ export function subscribeSessionSnapshots(
   return () => {
     channel.unsubscribe();
     channels.delete(playerSessionChannelName(playerId));
+  };
+}
+
+export async function broadcastSpotifyQueueSnapshot(
+  playerId: string,
+  payload: SpotifyQueueSnapshotBroadcast,
+): Promise<void> {
+  const parsed = spotifyQueueSnapshotBroadcastSchema.safeParse(payload);
+  if (!parsed.success) {
+    return;
+  }
+
+  try {
+    const channel = await ensurePlayerSessionChannel(playerId);
+    await channel.send({
+      type: "broadcast",
+      event: SPOTIFY_QUEUE_SNAPSHOT_BROADCAST_EVENT,
+      payload: parsed.data,
+    });
+  } catch {
+    // best-effort fan-out
+  }
+}
+
+export function subscribeSpotifyQueueSnapshots(
+  playerId: string,
+  onSnapshot: (payload: SpotifyQueueSnapshotBroadcast) => void,
+): () => void {
+  const channel = getOrCreatePlayerChannel(playerId);
+
+  channel.on(
+    "broadcast",
+    { event: SPOTIFY_QUEUE_SNAPSHOT_BROADCAST_EVENT },
+    (message) => {
+      const parsed = spotifyQueueSnapshotBroadcastSchema.safeParse(
+        message.payload,
+      );
+      if (parsed.success) {
+        onSnapshot(parsed.data);
+      }
+    },
+  );
+
+  void ensurePlayerSessionChannel(playerId).catch(() => {
+    // subscribe best-effort
+  });
+
+  return () => {
+    // Channel lifecycle is shared with session snapshots on the master.
   };
 }

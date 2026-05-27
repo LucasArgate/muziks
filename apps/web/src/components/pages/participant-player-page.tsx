@@ -157,7 +157,12 @@ export function ParticipantPlayerPage({
         votingItemId={votingItemId}
       />
 
-      <SpotifyUpcomingQueueList slug={slug} />
+      <SpotifyUpcomingQueueList
+        slug={slug}
+        playerId={playerId}
+        transport={queueTransport}
+        trackUri={playback?.trackUri ?? null}
+      />
 
       <IdentityGateDialog
         open={gateOpen}

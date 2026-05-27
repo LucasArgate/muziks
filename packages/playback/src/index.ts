@@ -8,6 +8,7 @@ export {
   type BackgroundTickSampleHook,
   type PlaybackAccessTokenProvider,
   type PlaybackSessionSnapshotPublisher,
+  type SpotifyQueueSnapshotPublisher,
   type RunPlaybackOrchestratorResult,
   type TickPlayerResult,
 } from "./application/background-playback-orchestrator";
@@ -30,6 +31,7 @@ export {
   resolvePlaybackSessionStatus,
   type PlaybackSessionProjection,
 } from "./domain/playback-state";
+export { fingerprintSpotifyQueue } from "./domain/spotify-queue";
 export {
   PLAYBACK_ACTIVE_WINDOW_MS,
   PLAYBACK_BROWSER_HEALTH_WINDOW_MS,

@@ -156,6 +156,15 @@ export {
 } from "./queue/queue-broadcast";
 
 export {
+  spotifyQueueSnapshotSources,
+  spotifyQueueSnapshotSourceSchema,
+  spotifyQueueSnapshotBroadcastSchema,
+  SPOTIFY_QUEUE_SNAPSHOT_BROADCAST_EVENT,
+  type SpotifyQueueSnapshotSource,
+  type SpotifyQueueSnapshotBroadcast,
+} from "./queue/spotify-queue-broadcast";
+
+export {
   playlistProviderSchema,
   providerPlaylistSummarySchema,
   savedProviderPlaylistItemSchema,

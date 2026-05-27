@@ -8,6 +8,7 @@ import {
 } from "@muziks/playback";
 
 import { publishWorkerSessionSnapshot } from "../realtime/session-broadcast.js";
+import { publishWorkerSpotifyQueueSnapshot } from "../realtime/spotify-queue-broadcast.js";
 import { getAccessTokenForPlayer } from "../spotify/token-vault.js";
 
 export type SupervisePlayerSource = "schedule" | "realtime" | "supervisor";
@@ -24,6 +25,15 @@ function createSupervisePorts() {
   return createDrizzleSpotifyBackgroundPlaybackPorts({
     getAccessToken: getAccessTokenForPlayer,
     publishSessionSnapshot: publishWorkerSessionSnapshot,
+    publishSpotifyQueueSnapshot: async (input) => {
+      await publishWorkerSpotifyQueueSnapshot({
+        playerId: input.playerId,
+        queue: input.queue,
+        queueVersion: input.queueVersion,
+        stateVersion: input.stateVersion,
+        source: input.source,
+      });
+    },
   });
 }
 

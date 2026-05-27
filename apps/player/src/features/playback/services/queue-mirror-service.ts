@@ -28,9 +28,15 @@ export async function mirrorNextOnSpotifyQueue(
     | { error?: string }
     | null;
 
-  if (!response.ok || !body || "error" in body) {
+  if (
+    !response.ok ||
+    !body ||
+    typeof body !== "object" ||
+    !("reason" in body) ||
+    !("mirrored" in body)
+  ) {
     return null;
   }
 
-  return body;
+  return body as MirrorNextToSpotifyQueueResult;
 }

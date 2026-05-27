@@ -6,13 +6,34 @@ import { usePublicSpotifyQueue } from "@/src/features/queue/hooks/usePublicSpoti
 
 type SpotifyUpcomingQueueListProps = {
   slug: string;
+  playerId: string;
+  transport: "poll" | "realtime";
+  trackUri?: string | null;
 };
 
 export function SpotifyUpcomingQueueList({
   slug,
+  playerId,
+  transport,
+  trackUri,
 }: SpotifyUpcomingQueueListProps) {
-  const { queue, loading, error } = usePublicSpotifyQueue({ slug });
-  const tracks = queue?.upcoming.slice(0, 3) ?? [];
+  const { queue, loading, error } = usePublicSpotifyQueue({
+    slug,
+    playerId,
+    transport,
+    trackUri,
+  });
+
+  const upcoming = queue?.upcoming ?? [];
+  const currentMatchesHero =
+    Boolean(trackUri) &&
+    queue?.currentlyPlaying?.uri === trackUri;
+  const showCurrentAsFallback =
+    upcoming.length === 0 && currentMatchesHero && queue?.currentlyPlaying;
+
+  const tracks = showCurrentAsFallback
+    ? [{ ...queue.currentlyPlaying!, isCurrent: true }]
+    : upcoming.slice(0, 3).map((track) => ({ ...track, isCurrent: false }));
 
   return (
     <QueueListShell
@@ -23,6 +44,8 @@ export function SpotifyUpcomingQueueList({
       emptyMessage={
         error
           ? "Não foi possível carregar as próximas do Spotify."
+          : trackUri && !currentMatchesHero
+            ? "Atualizando próximas faixas do Spotify..."
           : "O Spotify ainda não informou próximas faixas."
       }
     >
@@ -32,7 +55,8 @@ export function SpotifyUpcomingQueueList({
           title={track.name}
           artist={track.artistName}
           albumImageUrl={track.albumImageUrl}
-          positionLabel={String(index + 1)}
+          positionLabel={track.isCurrent ? "▶" : String(index + 1)}
+          highlight={track.isCurrent}
           className="transition hover:bg-white/[0.06]"
         />
       ))}

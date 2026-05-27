@@ -8,10 +8,11 @@ import { QueueListShell, QueueTrackRow } from "@muziks/ui";
 import { sendAgentDebugLog } from "@muziks/utils";
 import { useEffect } from "react";
 
-import { useSpotifyPlaybackQueue } from "@/src/features/queue/hooks/useSpotifyPlaybackQueue";
+import { useSpotifyPlaybackQueueRealtime } from "@/src/features/queue/hooks/useSpotifyPlaybackQueueRealtime";
 
 type SpotifyPlaybackQueueListProps = {
   enabled: boolean;
+  playerId: string | null | undefined;
   syncMode: PlaybackSyncMode;
   sdkQueue: NormalizedSpotifyPlaybackQueue | null;
   trackUri: string | null | undefined;
@@ -20,6 +21,7 @@ type SpotifyPlaybackQueueListProps = {
 
 export function SpotifyPlaybackQueueList({
   enabled,
+  playerId,
   syncMode,
   sdkQueue,
   trackUri,
@@ -32,13 +34,15 @@ export function SpotifyPlaybackQueueList({
     Boolean(trackUri) &&
     sdkQueue?.currentlyPlaying?.uri === trackUri;
 
-  const { queue: polledQueue, loading, error, refresh } = useSpotifyPlaybackQueue({
-    enabled,
-    pollEnabled: !hasSdkQueueSource || !sdkQueueAligned,
-    trackUri,
-    pollPlayingMs: 8000,
-    pollPausedMs: 20000,
-  });
+  const { queue: polledQueue, loading, error, refresh } =
+    useSpotifyPlaybackQueueRealtime({
+      enabled,
+      playerId,
+      pollEnabled: !hasSdkQueueSource || !sdkQueueAligned,
+      trackUri,
+      pollPlayingMs: 8000,
+      pollPausedMs: 20000,
+    });
 
   const queue: NormalizedSpotifyPlaybackQueue | null = sdkQueueAligned
     ? sdkQueue

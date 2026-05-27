@@ -3,6 +3,7 @@ import { z } from "zod";
 import { playbackSessionStatusSchema } from "./session";
 
 export const publicPlaybackSessionSchema = z.object({
+  trackUri: z.string().nullable().optional(),
   trackName: z.string().nullable(),
   artistName: z.string().nullable(),
   albumImageUrl: z.string().nullable(),

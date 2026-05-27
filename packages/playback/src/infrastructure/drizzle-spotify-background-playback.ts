@@ -6,7 +6,13 @@ import {
   players,
   spotifyConnections,
 } from "@muziks/db";
-import { getCurrentPlayback, normalizeApiPlaybackState } from "@muziks/spotify";
+import {
+  getCurrentPlayback,
+  getPlaybackQueue,
+  normalizeApiPlaybackState,
+  normalizeSpotifyPlaybackQueue,
+} from "@muziks/spotify";
+import { normalizedSpotifyPlaybackQueueSchema } from "@muziks/types";
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
 import {
   and,
@@ -26,8 +32,10 @@ import {
 import type {
   BackgroundPlaybackSession,
   BackgroundPlaybackOrchestratorPorts,
+  BackgroundTickSampleHook,
   PlaybackAccessTokenProvider,
   PlaybackSessionSnapshotPublisher,
+  SpotifyQueueSnapshotPublisher,
   TickPlayerResult,
 } from "../application/background-playback-orchestrator";
 import {
@@ -77,6 +85,8 @@ function rowToBackgroundSession(row: PlaybackSessionRow): BackgroundPlaybackSess
 export type DrizzleSpotifyBackgroundPlaybackOptions = {
   getAccessToken: PlaybackAccessTokenProvider;
   publishSessionSnapshot?: PlaybackSessionSnapshotPublisher;
+  publishSpotifyQueueSnapshot?: SpotifyQueueSnapshotPublisher;
+  afterSample?: BackgroundTickSampleHook;
 };
 
 /** Claim per-player tick lock; returns playerIds that were locked for this worker. */
@@ -403,5 +413,13 @@ export function createDrizzleSpotifyBackgroundPlaybackPorts(
         activeDeviceName: raw?.device?.name ?? null,
       };
     },
+    fetchSpotifyQueue: async (accessToken) => {
+      const raw = await getPlaybackQueue({ accessToken });
+      return normalizedSpotifyPlaybackQueueSchema.parse(
+        normalizeSpotifyPlaybackQueue(raw),
+      );
+    },
+    publishSpotifyQueueSnapshot: options.publishSpotifyQueueSnapshot,
+    afterSample: options.afterSample,
   };
 }

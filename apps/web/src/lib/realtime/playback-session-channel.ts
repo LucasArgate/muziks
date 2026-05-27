@@ -35,6 +35,7 @@ function mapBroadcastToPublicSession(
     (sourceUpdatedAt ? Date.parse(sourceUpdatedAt) : Date.now());
 
   return {
+    trackUri: playback.trackUri ?? null,
     trackName: playback.trackName,
     artistName: playback.artistName,
     albumImageUrl: playback.albumImageUrl ?? null,

@@ -1,10 +1,14 @@
 import type {
   NormalizedSpotifyPlaybackQueue,
   NormalizedSpotifyPlayerState,
+  PlaybackAuthority,
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
-import { PlaybackStatePoller } from "@muziks/playback/client";
+import {
+  PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
+  PlaybackStatePoller,
+} from "@muziks/playback/client";
 import { sendAgentDebugLog } from "@muziks/utils";
 
 import { playbackDebug } from "../lib/playback-debug";
@@ -17,6 +21,7 @@ import { NearEndScheduler } from "./near-end-scheduler";
 import { SdkPlaybackSource } from "./sdk-playback-source";
 import type { SpotifyServiceInstance } from "./SpotifyService";
 import { dequeueAfterTrackChange } from "./playback-queue-transition-client";
+import { SpotifyQueuePublisher } from "./spotify-queue-publisher";
 
 function normalizeRuntimeSyncMode(mode: PlaybackSyncMode | null | undefined): PlaybackSyncMode {
   return mode === "sdk" ? "sdk" : "api_device";
@@ -55,6 +60,9 @@ export class PlaybackSyncCoordinator {
   private sdkService: SpotifyServiceInstance | null = null;
   private apiPolling = false;
   private latestApiActiveDeviceName: string | null = null;
+  private remoteAuthority: PlaybackAuthority | null = null;
+  private remoteSourceUpdatedAtMs: number | null = null;
+  private readonly queuePublisher = new SpotifyQueuePublisher();
 
   configure(options: PlaybackSyncCoordinatorOptions): void {
     this.options = options;
@@ -63,6 +71,13 @@ export class PlaybackSyncCoordinator {
       this.preferredDeviceId = options.sessionMeta.preferredDeviceId;
       this.activeDeviceName = options.sessionMeta.activeDeviceName;
       this.publisher.setStateVersion(options.sessionMeta.stateVersion);
+      this.remoteAuthority = options.sessionMeta.authority ?? null;
+      this.remoteSourceUpdatedAtMs = options.sessionMeta.sourceUpdatedAt
+        ? Date.parse(options.sessionMeta.sourceUpdatedAt)
+        : null;
+      if (!Number.isFinite(this.remoteSourceUpdatedAtMs)) {
+        this.remoteSourceUpdatedAtMs = null;
+      }
     }
     playbackDebug("coordinator", "configure", {
       syncMode: this.syncMode,
@@ -108,6 +123,36 @@ export class PlaybackSyncCoordinator {
     this.publisher.setBridgeActive(active);
   }
 
+  setRemoteSessionAuthority(
+    authority?: PlaybackAuthority | null,
+    sourceUpdatedAt?: string | null,
+  ): void {
+    this.remoteAuthority = authority ?? null;
+    this.remoteSourceUpdatedAtMs = sourceUpdatedAt
+      ? Date.parse(sourceUpdatedAt)
+      : null;
+    if (!Number.isFinite(this.remoteSourceUpdatedAtMs)) {
+      this.remoteSourceUpdatedAtMs = null;
+    }
+    this.reconcileSources();
+  }
+
+  private shouldDeferContinuousApiPolling(): boolean {
+    if (this.syncMode !== "api_device") {
+      return false;
+    }
+    if (this.remoteAuthority !== "worker") {
+      return false;
+    }
+    if (this.remoteSourceUpdatedAtMs === null) {
+      return true;
+    }
+    return (
+      Date.now() - this.remoteSourceUpdatedAtMs <
+      PLAYBACK_BROWSER_HEALTH_WINDOW_MS
+    );
+  }
+
   private async onPlaybackState(
     state: NormalizedSpotifyPlayerState,
     deviceId?: string | null,
@@ -144,6 +189,7 @@ export class PlaybackSyncCoordinator {
     const status = state.status ?? (state.paused ? "paused" : "playing");
     this.publisher.ingest(state, status, "api");
     void this.onPlaybackState(state, state.deviceId);
+    void this.fetchAndPublishApiQueue();
   }
 
   applySyncedSessionState(state: NormalizedSpotifyPlayerState): void {
@@ -227,6 +273,7 @@ export class PlaybackSyncCoordinator {
     this.stopApiPolling();
     this.stopSdk();
     this.publisher.dispose();
+    this.queuePublisher.dispose();
     this.nearEndScheduler.reset();
     this.lastTrackUri = null;
     this.options = null;
@@ -238,9 +285,14 @@ export class PlaybackSyncCoordinator {
     if (this.syncMode === "api_device") {
       playbackDebug("coordinator", "reconcile:api-device", {
         preferredDeviceId: this.preferredDeviceId,
+        deferApiPoll: this.shouldDeferContinuousApiPolling(),
       });
       this.stopSdk();
-      this.startApiPolling();
+      if (this.shouldDeferContinuousApiPolling()) {
+        this.stopApiPolling();
+      } else {
+        this.startApiPolling();
+      }
       return;
     }
 
@@ -273,7 +325,12 @@ export class PlaybackSyncCoordinator {
         this.publisher.ingest(state, status, "sdk");
         void this.onPlaybackState(state, state.deviceId);
       },
-      onQueue: (queue) => this.options?.onSdkQueue?.(queue),
+      onQueue: (queue) => {
+        this.options?.onSdkQueue?.(queue ?? null);
+        if (queue) {
+          this.queuePublisher.ingest(queue);
+        }
+      },
       onEvent: (event) => this.options?.onSdkEvent?.(event),
     };
   }
@@ -315,5 +372,29 @@ export class PlaybackSyncCoordinator {
       onStateVersion: this.options.onStateVersion,
       onTrackChanged: this.options.onTrackChanged,
     });
+
+    this.queuePublisher.configure({
+      playerId: this.options.playerId,
+      source: this.syncMode === "sdk" ? "sdk_browser" : "browser_api",
+      getStateVersion: () => this.publisher.currentStateVersion,
+    });
+  }
+
+  private async fetchAndPublishApiQueue(): Promise<void> {
+    try {
+      const response = await fetch("/api/spotify/playback/queue", {
+        cache: "no-store",
+      });
+      const body = (await response.json()) as {
+        queue?: NormalizedSpotifyPlaybackQueue;
+      };
+      if (!response.ok || !body.queue) {
+        return;
+      }
+      this.options?.onSdkQueue?.(body.queue);
+      this.queuePublisher.ingest(body.queue);
+    } catch {
+      // best-effort queue mirror for pontual API reconciliation
+    }
   }
 }

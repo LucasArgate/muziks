@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { ownerAuthStateSchema } from "../auth/owner-session";
 import { spotifyConnectionStateSchema } from "../auth/session-view";
+import {
+  playbackAuthoritySchema,
+  playbackStateSourceSchema,
+} from "../playback/session";
 import { playbackSyncModeSchema } from "../playback/sync-mode";
 import { normalizedSpotifyPlayerStateSchema } from "../playback/spotify-state";
 import { savedProviderPlaylistSchema } from "../playlists/provider-playlist";
@@ -11,6 +15,9 @@ export const playerMasterSessionMetaSchema = z.object({
   preferredDeviceId: z.string().nullable(),
   activeDeviceName: z.string().nullable(),
   stateVersion: z.number().int().nonnegative(),
+  authority: playbackAuthoritySchema.optional(),
+  stateSource: playbackStateSourceSchema.optional(),
+  sourceUpdatedAt: z.string().datetime().nullable().optional(),
 });
 
 export type PlayerMasterSessionMeta = z.infer<

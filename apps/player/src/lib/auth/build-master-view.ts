@@ -26,6 +26,9 @@ export async function buildPlayerMasterViewState(): Promise<PlayerMasterViewStat
         preferredDeviceId: session.preferredDeviceId,
         activeDeviceName: session.activeDeviceName,
         stateVersion: session.stateVersion,
+        authority: session.authority,
+        stateSource: session.stateSource,
+        sourceUpdatedAt: session.sourceUpdatedAt,
       };
     }
   }

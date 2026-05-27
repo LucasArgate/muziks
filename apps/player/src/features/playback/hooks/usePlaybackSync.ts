@@ -9,7 +9,10 @@ import type {
 import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { subscribeSessionSnapshots } from "@/src/lib/realtime/player-session-channel";
+import {
+  subscribeSessionSnapshots,
+  subscribeSpotifyQueueSnapshots,
+} from "@/src/lib/realtime/player-session-channel";
 
 import {
   shouldControlViaSdk,
@@ -207,6 +210,9 @@ export function usePlaybackSync({
             preferredDeviceId: sessionMeta.preferredDeviceId,
             activeDeviceName: sessionMeta.activeDeviceName,
             stateVersion: sessionMeta.stateVersion,
+            authority: sessionMeta.authority,
+            stateSource: sessionMeta.stateSource,
+            sourceUpdatedAt: sessionMeta.sourceUpdatedAt,
           }
         : {
             syncMode: "api_device",
@@ -269,7 +275,7 @@ export function usePlaybackSync({
 
     return subscribeSessionSnapshots(
       playerId,
-      ({ playback: next, stateVersion }) => {
+      ({ playback: next, stateVersion, authority, sourceUpdatedAt }) => {
         logPlaybackSyncDebug("H3", "master realtime snapshot received", {
           playerId,
           currentVersion: stateVersionRef.current,
@@ -278,8 +284,15 @@ export function usePlaybackSync({
           status: next.status,
           paused: next.paused,
           deviceId: next.deviceId,
+          authority: authority ?? null,
           accepted: stateVersion > stateVersionRef.current,
         });
+
+        coordinatorRef.current?.setRemoteSessionAuthority(
+          authority,
+          sourceUpdatedAt,
+        );
+
         if (stateVersion <= stateVersionRef.current) {
           return;
         }
@@ -289,6 +302,16 @@ export function usePlaybackSync({
         coordinatorRef.current?.applySyncedSessionState(next);
       },
     );
+  }, [enabled, playerId]);
+
+  useEffect(() => {
+    if (!enabled || !playerId) {
+      return;
+    }
+
+    return subscribeSpotifyQueueSnapshots(playerId, ({ queue }) => {
+      setSpotifyQueue(queue);
+    });
   }, [enabled, playerId]);
 
   useEffect(() => {
