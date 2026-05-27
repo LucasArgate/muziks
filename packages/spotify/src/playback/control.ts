@@ -1,4 +1,5 @@
 import { sdkForAccessToken } from "../client";
+import { playerVoidRequest } from "./raw-player-control";
 
 export type PlaybackControlParams = {
   accessToken: string;
@@ -26,15 +27,17 @@ export async function startPlayback(
 export async function pausePlayback(
   params: PlaybackControlParams,
 ): Promise<void> {
-  const sdk = sdkForAccessToken(params.accessToken);
-  await sdk.player.pausePlayback(deviceArg(params.deviceId));
+  await playerVoidRequest(params.accessToken, "PUT", "me/player/pause", {
+    deviceId: params.deviceId,
+  });
 }
 
 export async function skipToNext(
   params: PlaybackControlParams,
 ): Promise<void> {
-  const sdk = sdkForAccessToken(params.accessToken);
-  await sdk.player.skipToNext(deviceArg(params.deviceId));
+  await playerVoidRequest(params.accessToken, "POST", "me/player/next", {
+    deviceId: params.deviceId,
+  });
 }
 
 export async function addToQueue(
