@@ -4,6 +4,8 @@ export {
   type BackgroundPlaybackOrchestratorPorts,
   type BackgroundPlaybackSession,
   type CurrentPlaybackSample,
+  type BackgroundTickSampleContext,
+  type BackgroundTickSampleHook,
   type PlaybackAccessTokenProvider,
   type PlaybackSessionSnapshotPublisher,
   type RunPlaybackOrchestratorResult,

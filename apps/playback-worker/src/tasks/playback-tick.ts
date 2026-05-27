@@ -1,13 +1,12 @@
 import { schedules } from "@trigger.dev/sdk";
 
-import { getPlaybackWorkerConfig } from "../config.js";
 import { runPlaybackOrchestrator } from "../playback-orchestrator.js";
 
-const config = getPlaybackWorkerConfig();
+const DEFAULT_PLAYBACK_TICK_CRON = "* * * * *";
 
 export const playbackTick = schedules.task({
   id: "playback-tick",
-  cron: config.playbackTickCron,
+  cron: process.env.PLAYBACK_WORKER_CRON ?? DEFAULT_PLAYBACK_TICK_CRON,
   run: async (payload) => {
     const result = await runPlaybackOrchestrator();
     return {

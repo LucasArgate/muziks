@@ -8,11 +8,11 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createSupabaseBrowserClient } from "@/src/lib/supabase/client";
 
+import { playerSessionChannelName } from "./player-session-channel-name";
+
 const channels = new Map<string, RealtimeChannel>();
 
-export function playerSessionChannelName(playerId: string): string {
-  return `player:${playerId}`;
-}
+export { playerSessionChannelName } from "./player-session-channel-name";
 
 export function getOrCreatePlayerChannel(playerId: string): RealtimeChannel {
   const name = playerSessionChannelName(playerId);

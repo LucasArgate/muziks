@@ -10,11 +10,17 @@
     "deploy": "trigger deploy"
   },
   "dependencies": {
-    "@trigger.dev/sdk": "^4.4.6"
+    "@muziks/db": "workspace:*",
+    "@muziks/playback": "workspace:*",
+    "@muziks/spotify": "workspace:*",
+    "@muziks/types": "workspace:*",
+    "@supabase/supabase-js": "^2.47.10",
+    "@trigger.dev/sdk": "4.4.6"
   },
   "devDependencies": {
     "@muziks/config": "workspace:*",
-    "@trigger.dev/build": "^4.4.6",
+    "@trigger.dev/build": "4.4.6",
+    "trigger.dev": "^4.4.6",
     "@types/node": "^22.10.5",
     "typescript": "^5.7.3"
   }

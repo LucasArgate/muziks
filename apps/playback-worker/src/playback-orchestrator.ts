@@ -1,8 +1,19 @@
-import { postPlaybackTick, type PlaybackTickResult } from "./muziks-api-client.js";
+import {
+  createDrizzleSpotifyBackgroundPlaybackPorts,
+  runBackgroundPlaybackOrchestrator,
+  type RunPlaybackOrchestratorResult,
+} from "@muziks/playback";
 
-export type RunPlaybackOrchestratorResult = PlaybackTickResult;
+import { publishWorkerSessionSnapshot } from "./lib/realtime/session-broadcast.js";
+import { getAccessTokenForPlayer } from "./lib/spotify/token-vault.js";
 
-/** Delegates to the player internal tick (full lifecycle + queue transitions). */
+export type { RunPlaybackOrchestratorResult };
+
 export async function runPlaybackOrchestrator(): Promise<RunPlaybackOrchestratorResult> {
-  return postPlaybackTick();
+  const ports = createDrizzleSpotifyBackgroundPlaybackPorts({
+    getAccessToken: getAccessTokenForPlayer,
+    publishSessionSnapshot: publishWorkerSessionSnapshot,
+  });
+
+  return runBackgroundPlaybackOrchestrator(ports);
 }

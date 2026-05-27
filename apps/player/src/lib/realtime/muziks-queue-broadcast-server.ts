@@ -6,9 +6,7 @@ import {
 
 import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
 
-function playerSessionChannelName(playerId: string): string {
-  return `player:${playerId}`;
-}
+import { playerSessionChannelName } from "./player-session-channel-name";
 
 async function withBroadcastChannel<T>(
   playerId: string,

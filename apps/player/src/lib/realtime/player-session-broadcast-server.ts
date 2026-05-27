@@ -9,7 +9,7 @@ import {
 
 import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
 
-import { playerSessionChannelName } from "./player-session-channel";
+import { playerSessionChannelName } from "./player-session-channel-name";
 
 async function withBroadcastChannel<T>(
   playerId: string,

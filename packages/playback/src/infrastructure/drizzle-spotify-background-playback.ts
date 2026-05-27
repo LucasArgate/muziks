@@ -45,6 +45,35 @@ import {
 
 export type PlaybackSessionRow = typeof playerSessions.$inferSelect;
 
+function rowToBackgroundSession(row: PlaybackSessionRow): BackgroundPlaybackSession {
+  return {
+    playerId: row.playerId,
+    currentTrackUri: row.currentTrackUri,
+    trackName: row.trackName,
+    artistName: row.artistName,
+    albumImageUrl: row.albumImageUrl,
+    progressMs: row.progressMs,
+    durationMs: row.durationMs,
+    paused: row.paused,
+    activeDeviceId: row.activeDeviceId,
+    status: row.status,
+    lastError: row.lastError,
+    updatedAt: row.updatedAt,
+    spotifyUserId: row.spotifyUserId,
+    syncMode: row.syncMode ?? "api_device",
+    preferredDeviceId: row.preferredDeviceId,
+    activeDeviceName: row.activeDeviceName,
+    sdkDeviceId: row.sdkDeviceId,
+    browserInstanceId: row.browserInstanceId,
+    browserVisibility: row.browserVisibility ?? "unknown",
+    browserLastSeenAt: row.browserLastSeenAt,
+    stateVersion: row.stateVersion ?? 0,
+    stateSource: row.stateSource ?? "worker_api",
+    authority: row.authority ?? "worker",
+    sourceUpdatedAt: row.sourceUpdatedAt,
+  };
+}
+
 export type DrizzleSpotifyBackgroundPlaybackOptions = {
   getAccessToken: PlaybackAccessTokenProvider;
   publishSessionSnapshot?: PlaybackSessionSnapshotPublisher;
@@ -90,7 +119,7 @@ async function lockPlayerIdsForBackgroundTick(
     .where(
       and(
         inArray(playbackPollCursors.playerId, playerIds),
-        eq(playbackPollCursors.lockedUntil, lockedUntil),
+        gt(playbackPollCursors.lockedUntil, now),
       ),
     );
 
@@ -104,7 +133,9 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
   const healthySince = new Date(
     now.getTime() - PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
   );
-  const endingSoon = new Date(now.getTime() + PLAYBACK_ENDING_SOON_MS);
+  const endingSoonIso = new Date(
+    now.getTime() + PLAYBACK_ENDING_SOON_MS,
+  ).toISOString();
 
   const rows = await db
     .select({ playerId: playerSessions.playerId })
@@ -133,6 +164,7 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
         ]),
         isNotNull(spotifyConnections.refreshTokenEnc),
         or(
+          ne(playerSessions.syncMode, "sdk"),
           ne(playerSessions.stateSource, "sdk_browser"),
           ne(playerSessions.browserVisibility, "visible"),
           isNull(playerSessions.browserLastSeenAt),
@@ -154,7 +186,7 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
     )
     .orderBy(
       sql`CASE
-        WHEN ${playbackTrackLifecycle.expectedEndAt} IS NOT NULL AND ${playbackTrackLifecycle.expectedEndAt} <= ${endingSoon} THEN 0
+        WHEN ${playbackTrackLifecycle.expectedEndAt} IS NOT NULL AND ${playbackTrackLifecycle.expectedEndAt} <= ${endingSoonIso}::timestamptz THEN 0
         WHEN ${playbackTrackLifecycle.phase} = 'paused' THEN 2
         ELSE 1
       END`,
@@ -258,7 +290,7 @@ async function upsertWorkerPlaybackSession(input: {
   if (!row) {
     throw new Error("playback_session_persist_failed");
   }
-  return row;
+  return rowToBackgroundSession(row);
 }
 
 async function savePlaybackPollCursor(result: TickPlayerResult): Promise<void> {
@@ -301,7 +333,10 @@ export function createDrizzleSpotifyBackgroundPlaybackPorts(
     getAccessToken: options.getAccessToken,
     publishSessionSnapshot: options.publishSessionSnapshot,
     listPlayerIdsForTick: listPlayerIdsForBackgroundTick,
-    getPlaybackSession: getPlaybackSessionRow,
+    getPlaybackSession: async (playerId) => {
+      const row = await getPlaybackSessionRow(playerId);
+      return row ? rowToBackgroundSession(row) : null;
+    },
     upsertWorkerPlaybackSession,
     savePollCursor: savePlaybackPollCursor,
     fetchCurrentPlayback: async (accessToken) => {
