@@ -6,7 +6,6 @@ import type {
   PlaybackSyncMode,
   PlayerMasterSessionMeta,
 } from "@muziks/types";
-import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -36,34 +35,6 @@ function normalizeRuntimeSyncMode(
   mode: PlaybackSyncMode | null | undefined,
 ): PlaybackSyncMode {
   return mode === "sdk" ? "sdk" : "api_device";
-}
-
-function logPlaybackSyncDebug(
-  hypothesisId: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  sendAgentDebugLog({
-    sessionId: "cc732b",
-    sameOriginPath: "/api/debug/realtime",
-    hypothesisId,
-    location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-    message,
-    data,
-  });
-}
-
-function logPlaybackSyncCurrentDebug(
-  hypothesisId: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  sendAgentDebugLog({
-    hypothesisId,
-    location: "apps/player/src/features/playback/hooks/usePlaybackSync.ts",
-    message,
-    data,
-  });
 }
 
 async function waitForSdkDeviceId(
@@ -141,14 +112,6 @@ export function usePlaybackSync({
   onLocalStateRef.current = onLocalState;
 
   const handleLocalState = useCallback((state: NormalizedSpotifyPlayerState) => {
-    logPlaybackSyncDebug("H1", "master local state accepted", {
-      trackUri: state.trackUri,
-      status: state.status,
-      paused: state.paused,
-      deviceId: state.deviceId,
-      syncMode: coordinatorRef.current?.mode ?? null,
-      preferredDeviceId: coordinatorRef.current?.preferredDevice ?? null,
-    });
     setPlayback(state);
     onLocalStateRef.current(state);
   }, []);
@@ -255,13 +218,6 @@ export function usePlaybackSync({
       if (!shouldApply) {
         return;
       }
-      logPlaybackSyncDebug("H1", "master initial playback applied", {
-        trackUri: initialPlayback.trackUri,
-        status: initialPlayback.status,
-        paused: initialPlayback.paused,
-        deviceId: initialPlayback.deviceId,
-        stateVersion: stateVersionRef.current,
-      });
       stateVersionRef.current = initialVersion;
       playbackRef.current = initialPlayback;
       setPlayback(initialPlayback);
@@ -276,18 +232,6 @@ export function usePlaybackSync({
     return subscribeSessionSnapshots(
       playerId,
       ({ playback: next, stateVersion, authority, sourceUpdatedAt }) => {
-        logPlaybackSyncDebug("H3", "master realtime snapshot received", {
-          playerId,
-          currentVersion: stateVersionRef.current,
-          nextVersion: stateVersion,
-          trackUri: next.trackUri,
-          status: next.status,
-          paused: next.paused,
-          deviceId: next.deviceId,
-          authority: authority ?? null,
-          accepted: stateVersion > stateVersionRef.current,
-        });
-
         coordinatorRef.current?.setRemoteSessionAuthority(
           authority,
           sourceUpdatedAt,
@@ -376,15 +320,6 @@ export function usePlaybackSync({
   const selectDevice = useCallback(
     async (deviceId: string, deviceName: string) => {
       setPollError(null);
-      logPlaybackSyncCurrentDebug("H2", "client device transfer requested", {
-        deviceId,
-        deviceName,
-        currentPlaybackDeviceId: playback?.deviceId ?? null,
-        preferredDeviceId,
-        activeDeviceName,
-        syncMode,
-        stateVersion: stateVersionRef.current,
-      });
       const response = await fetch("/api/spotify/playback/transfer", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -402,16 +337,6 @@ export function usePlaybackSync({
         state?: NormalizedSpotifyPlayerState;
         activeDeviceName?: string | null;
       };
-      logPlaybackSyncCurrentDebug("H2", "client device transfer response", {
-        requestedDeviceId: deviceId,
-        requestedDeviceName: deviceName,
-        responseStateDeviceId: body.state?.deviceId ?? null,
-        responseTrackUri: body.state?.trackUri ?? null,
-        responseStatus: body.state?.status ?? null,
-        responsePaused: body.state?.paused ?? null,
-        activeDeviceName: body.activeDeviceName ?? null,
-      });
-
       const coordinator = coordinatorRef.current;
       if (!coordinator) return;
 
@@ -440,13 +365,6 @@ export function usePlaybackSync({
       await instance.connect();
       const deviceId = await waitForSdkDeviceId(instance);
       setSdkReady(true);
-      logPlaybackSyncDebug("H5", "browser sdk device ready before transfer", {
-        playerName,
-        sdkDeviceId: deviceId,
-        currentPlaybackDeviceId: playback?.deviceId ?? null,
-        currentTrackUri: playback?.trackUri ?? null,
-        currentStatus: playback?.status ?? null,
-      });
 
       const response = await fetch("/api/spotify/playback/transfer", {
         method: "PUT",
@@ -462,24 +380,11 @@ export function usePlaybackSync({
       if (!response.ok) {
         throw new Error(body.error ?? "transfer_failed");
       }
-      logPlaybackSyncDebug("H5", "browser sdk transfer response", {
-        sdkDeviceId: deviceId,
-        requestedDefaultContext: Boolean(contextUri),
-        responseStateDeviceId: body.state?.deviceId ?? null,
-        responseStateTrackUri: body.state?.trackUri ?? null,
-        responseStateStatus: body.state?.status ?? null,
-        responseStatePaused: body.state?.paused ?? null,
-        activeDeviceName: body.activeDeviceName ?? null,
-      });
       if (body.state) {
         coordinatorRef.current?.applyApiState(body.state, body.activeDeviceName);
       }
 
       if (contextUri) {
-        logPlaybackSyncDebug("H5", "browser sdk default context request", {
-          sdkDeviceId: deviceId,
-          hasContextUri: true,
-        });
         const playbackResponse = await fetch("/api/spotify/playback/control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -499,14 +404,6 @@ export function usePlaybackSync({
         if (!playbackResponse.ok) {
           throw new Error(playbackBody.error ?? "control_failed");
         }
-        logPlaybackSyncDebug("H5", "browser sdk default context response", {
-          sdkDeviceId: deviceId,
-          responseStateDeviceId: playbackBody.state?.deviceId ?? null,
-          responseStateTrackUri: playbackBody.state?.trackUri ?? null,
-          responseStateStatus: playbackBody.state?.status ?? null,
-          responseStatePaused: playbackBody.state?.paused ?? null,
-          activeDeviceName: playbackBody.activeDeviceName ?? null,
-        });
         if (playbackBody.state) {
           coordinatorRef.current?.applyApiState(
             playbackBody.state,
@@ -552,24 +449,6 @@ export function usePlaybackSync({
     ) => {
       const coordinator = coordinatorRef.current;
       const deviceId = resolveControlDeviceId();
-      logPlaybackSyncDebug("H6", "client spotify control request", {
-        action,
-        deviceId: deviceId ?? null,
-        syncMode,
-        preferredDeviceId: preferredDeviceId ?? null,
-        playbackDeviceId: playback?.deviceId ?? null,
-        coordinatorDeviceId: coordinator?.activeControlDeviceId ?? null,
-        hasContextUri: Boolean(options?.contextUri),
-      });
-      logPlaybackSyncCurrentDebug("H6", "client spotify control device resolved", {
-        action,
-        resolvedDeviceId: deviceId ?? null,
-        syncMode,
-        preferredDeviceId: preferredDeviceId ?? null,
-        playbackDeviceId: playback?.deviceId ?? null,
-        coordinatorDeviceId: coordinator?.activeControlDeviceId ?? null,
-        hasContextUri: Boolean(options?.contextUri),
-      });
       const response = await fetch("/api/spotify/playback/control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -585,22 +464,8 @@ export function usePlaybackSync({
         error?: string;
       };
       if (!response.ok) {
-        logPlaybackSyncDebug("H6", "client spotify control failed", {
-          action,
-          deviceId: deviceId ?? null,
-          responseStatus: response.status,
-          error: body.error ?? null,
-        });
         throw new Error(body.error ?? "control_failed");
       }
-      logPlaybackSyncDebug("H6", "client spotify control response", {
-        action,
-        deviceId: deviceId ?? null,
-        responseStateDeviceId: body.state?.deviceId ?? null,
-        responseStateTrackUri: body.state?.trackUri ?? null,
-        responseStateStatus: body.state?.status ?? null,
-        activeDeviceName: body.activeDeviceName ?? null,
-      });
       if (body.state) {
         coordinator?.applyApiState(body.state, body.activeDeviceName);
       } else {

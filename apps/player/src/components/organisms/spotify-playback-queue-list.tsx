@@ -5,7 +5,6 @@ import type {
   PlaybackSyncMode,
 } from "@muziks/types";
 import { QueueListShell, QueueTrackRow } from "@muziks/ui";
-import { sendAgentDebugLog } from "@muziks/utils";
 import { useEffect } from "react";
 
 import { useSpotifyPlaybackQueueRealtime } from "@/src/features/queue/hooks/useSpotifyPlaybackQueueRealtime";
@@ -69,21 +68,6 @@ export function SpotifyPlaybackQueueList({
       return;
     }
     if (trackUri !== listCurrentUri) {
-      sendAgentDebugLog({
-        hypothesisId: "H8",
-        location: "apps/player/src/components/organisms/spotify-playback-queue-list.tsx",
-        message: "spotify queue out of sync refresh requested",
-        data: {
-          syncMode,
-          trackUri,
-          listCurrentUri,
-          hasSdkQueueSource,
-          sdkQueueAligned,
-          hasPolledQueue,
-          loading,
-          error,
-        },
-      });
       void refresh();
     }
   }, [

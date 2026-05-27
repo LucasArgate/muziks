@@ -1,7 +1,6 @@
 "use client";
 
 import type { PublicPlaybackSession } from "@muziks/types";
-import { sendAgentDebugLog } from "@muziks/utils";
 import { useCallback, useEffect, useState } from "react";
 
 import { subscribePlaybackSessionSnapshots } from "@/src/lib/realtime/playback-session-channel";
@@ -13,22 +12,6 @@ export type UsePublicPlaybackSessionOptions = {
   pollMs?: number;
   initialSession?: PublicPlaybackSession | null;
 };
-
-function logPlaybackSessionCurrentDebug(
-  hypothesisId: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  sendAgentDebugLog({
-    sameOriginPath: "/api/debug/realtime",
-    runId: "post-fix-web",
-    hypothesisId,
-    location:
-      "apps/web/src/features/participant/hooks/usePublicPlaybackSession.ts",
-    message,
-    data,
-  });
-}
 
 export function usePublicPlaybackSession({
   slug,
@@ -45,39 +28,14 @@ export function usePublicPlaybackSession({
 
   const refresh = useCallback(async () => {
     try {
-      logPlaybackSessionCurrentDebug("H6", "public playback refresh requested", {
-        slug,
-        playerId,
-        transport,
-      });
       const response = await fetch(`/api/players/${slug}/playback`);
       const body = (await response.json()) as {
         session?: PublicPlaybackSession | null;
         error?: string;
       };
-      logPlaybackSessionCurrentDebug("H6", "public playback refresh completed", {
-        slug,
-        playerId,
-        responseStatus: response.status,
-        hasSession: Boolean(body.session),
-        stateVersion: body.session?.stateVersion ?? null,
-        status: body.session?.status ?? null,
-        error: body.error ?? null,
-      });
       if (response.ok) {
         const next = body.session ?? null;
         setSession((current) => {
-          logPlaybackSessionCurrentDebug("H5", "public GET session response", {
-            slug,
-            currentVersion: current?.stateVersion ?? null,
-            nextVersion: next?.stateVersion ?? null,
-            currentStatus: current?.status ?? null,
-            nextStatus: next?.status ?? null,
-            accepted:
-              !current ||
-              !next ||
-              next.stateVersion >= current.stateVersion,
-          });
           if (current && next && next.stateVersion < current.stateVersion) {
             return current;
           }
@@ -87,7 +45,7 @@ export function usePublicPlaybackSession({
     } finally {
       setLoading(false);
     }
-  }, [playerId, slug, transport]);
+  }, [slug]);
 
   useEffect(() => {
     setSession((current) => {
@@ -105,15 +63,8 @@ export function usePublicPlaybackSession({
   }, [initialSession]);
 
   useEffect(() => {
-    logPlaybackSessionCurrentDebug("H6", "public playback hook configured", {
-      slug,
-      playerId,
-      transport,
-      pollMs,
-      initialVersion: initialSession?.stateVersion ?? null,
-    });
     void refresh();
-  }, [initialSession?.stateVersion, playerId, pollMs, refresh, slug, transport]);
+  }, [refresh]);
 
   useEffect(() => {
     setRealtimeFailed(false);
@@ -122,14 +73,6 @@ export function usePublicPlaybackSession({
   useEffect(() => {
     const shouldPoll =
       transport === "poll" || !playerId || realtimeFailed;
-    logPlaybackSessionCurrentDebug("H6", "public playback transport decision", {
-      slug,
-      playerId,
-      transport,
-      realtimeFailed,
-      shouldPoll,
-      pollMs,
-    });
     if (!shouldPoll) {
       return;
     }
@@ -138,7 +81,7 @@ export function usePublicPlaybackSession({
       void refresh();
     }, pollMs);
     return () => window.clearInterval(timer);
-  }, [playerId, pollMs, realtimeFailed, refresh, slug, transport]);
+  }, [playerId, pollMs, realtimeFailed, refresh, transport]);
 
   useEffect(() => {
     if (transport !== "realtime" || !playerId || realtimeFailed) {
@@ -149,15 +92,6 @@ export function usePublicPlaybackSession({
       playerId,
       (next) => {
         setSession((current) => {
-          logPlaybackSessionCurrentDebug("H5", "public realtime session snapshot", {
-            slug,
-            playerId,
-            currentVersion: current?.stateVersion ?? null,
-            nextVersion: next.stateVersion,
-            currentStatus: current?.status ?? null,
-            nextStatus: next.status,
-            accepted: !current || next.stateVersion >= current.stateVersion,
-          });
           if (current && next.stateVersion < current.stateVersion) {
             return current;
           }
@@ -165,18 +99,11 @@ export function usePublicPlaybackSession({
         });
         setLoading(false);
       },
-      (error) => {
-        logPlaybackSessionCurrentDebug("H7", "public playback realtime error", {
-          slug,
-          playerId,
-          error: error instanceof Error
-            ? { name: error.name, message: error.message }
-            : { value: String(error) },
-        });
+      () => {
         setRealtimeFailed(true);
       },
     );
-  }, [playerId, realtimeFailed, slug, transport]);
+  }, [playerId, realtimeFailed, transport]);
 
   return { session, loading };
 }

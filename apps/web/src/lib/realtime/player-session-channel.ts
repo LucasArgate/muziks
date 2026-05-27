@@ -1,4 +1,3 @@
-import { sendAgentDebugLog } from "@muziks/utils";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createSupabaseBrowserClient } from "@/src/lib/supabase/client";
@@ -58,24 +57,6 @@ export async function ensurePlayerSessionChannel(
 
   return new Promise((resolve, reject) => {
     channel.subscribe((status, err) => {
-      sendAgentDebugLog({
-        sessionId: "867515",
-        sameOriginPath: "/api/debug/realtime",
-        hypothesisId: "H2",
-        location: "apps/web/src/lib/realtime/player-session-channel.ts",
-        message: "web realtime subscribe status",
-        data: {
-          playerId,
-          channel: playerSessionChannelName(playerId),
-          status,
-          state: channel.state,
-          error: err instanceof Error
-            ? { name: err.name, message: err.message }
-            : err
-              ? { value: String(err) }
-              : null,
-        },
-      });
       if (status === "SUBSCRIBED") {
         resolve(channel);
         return;
@@ -117,19 +98,6 @@ export function subscribePlayerBroadcastEvent(
   if (!entry.boundEvents.has(event)) {
     entry.boundEvents.add(event);
     entry.channel.on("broadcast", { event }, (message) => {
-      sendAgentDebugLog({
-        sessionId: "867515",
-        sameOriginPath: "/api/debug/realtime",
-        hypothesisId: "H4",
-        location: "apps/web/src/lib/realtime/player-session-channel.ts",
-        message: "web realtime broadcast received",
-        data: {
-          playerId,
-          channel: playerSessionChannelName(playerId),
-          event,
-          hasPayload: Boolean(message.payload),
-        },
-      });
       const current = entry.listeners.get(event);
       if (!current) return;
       for (const listener of current) {
@@ -139,21 +107,6 @@ export function subscribePlayerBroadcastEvent(
   }
 
   void ensurePlayerSessionChannel(playerId).catch((error) => {
-    sendAgentDebugLog({
-      sessionId: "867515",
-      sameOriginPath: "/api/debug/realtime",
-      hypothesisId: "H2",
-      location: "apps/web/src/lib/realtime/player-session-channel.ts",
-      message: "web realtime subscribe failed",
-      data: {
-        playerId,
-        channel: playerSessionChannelName(playerId),
-        event,
-        error: error instanceof Error
-          ? { name: error.name, message: error.message }
-          : { value: String(error) },
-      },
-    });
     onError?.(error);
   });
 

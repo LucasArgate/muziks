@@ -6,7 +6,6 @@ import {
   type SessionSnapshotBroadcast,
   type SpotifyQueueSnapshotBroadcast,
 } from "@muziks/types";
-import { sendAgentDebugLog } from "@muziks/utils";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createSupabaseBrowserClient } from "@/src/lib/supabase/client";
@@ -42,24 +41,6 @@ export async function ensurePlayerSessionChannel(
 
   return new Promise((resolve, reject) => {
     channel.subscribe((status, err) => {
-      sendAgentDebugLog({
-        sessionId: "867515",
-        sameOriginPath: "/api/debug/realtime",
-        hypothesisId: "H3",
-        location: "apps/player/src/lib/realtime/player-session-channel.ts",
-        message: "player browser realtime subscribe status",
-        data: {
-          playerId,
-          channel: playerSessionChannelName(playerId),
-          status,
-          state: channel.state,
-          error: err instanceof Error
-            ? { name: err.name, message: err.message }
-            : err
-              ? { value: String(err) }
-              : null,
-        },
-      });
       if (status === "SUBSCRIBED") {
         resolve(channel);
         return;
@@ -82,34 +63,12 @@ export async function broadcastSessionSnapshot(
 
   try {
     const channel = await ensurePlayerSessionChannel(playerId);
-    const result = await channel.send({
+    await channel.send({
       type: "broadcast",
       event: PLAYER_SESSION_BROADCAST_EVENT,
       payload: parsed.data,
     });
-    sendAgentDebugLog({
-      sessionId: "867515",
-      sameOriginPath: "/api/debug/realtime",
-      hypothesisId: "H3",
-      location: "apps/player/src/lib/realtime/player-session-channel.ts",
-      message: "player browser realtime broadcast sent",
-      data: { playerId, event: PLAYER_SESSION_BROADCAST_EVENT, result: String(result) },
-    });
-  } catch (error) {
-    sendAgentDebugLog({
-      sessionId: "867515",
-      sameOriginPath: "/api/debug/realtime",
-      hypothesisId: "H3",
-      location: "apps/player/src/lib/realtime/player-session-channel.ts",
-      message: "player browser realtime broadcast failed",
-      data: {
-        playerId,
-        event: PLAYER_SESSION_BROADCAST_EVENT,
-        error: error instanceof Error
-          ? { name: error.name, message: error.message }
-          : { value: String(error) },
-      },
-    });
+  } catch {
     // best-effort fan-out
   }
 }

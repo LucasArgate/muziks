@@ -3,8 +3,6 @@ import {
   sessionSnapshotBroadcastSchema,
   type PublicPlaybackSession,
 } from "@muziks/types";
-import { sendAgentDebugLog } from "@muziks/utils";
-
 import { subscribePlayerBroadcastEvent } from "@/src/lib/realtime/player-session-channel";
 
 function mapBroadcastToPublicSession(

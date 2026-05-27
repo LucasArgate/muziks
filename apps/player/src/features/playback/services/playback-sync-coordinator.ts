@@ -9,8 +9,6 @@ import {
   PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
   PlaybackStatePoller,
 } from "@muziks/playback/client";
-import { sendAgentDebugLog } from "@muziks/utils";
-
 import { playbackDebug } from "../lib/playback-debug";
 import type { SdkPlaybackEvent } from "../lib/sdk-events";
 import {
@@ -222,21 +220,6 @@ export class PlaybackSyncCoordinator {
     this.apiPoller.start({
       fetchState: () => this.fetchApiState(),
       onState: (state) => {
-        sendAgentDebugLog({
-          sessionId: "cc732b",
-          sameOriginPath: "/api/debug/realtime",
-          hypothesisId: "H7",
-          location:
-            "apps/player/src/features/playback/services/playback-sync-coordinator.ts",
-          message: "coordinator api playback state accepted",
-          data: {
-            syncMode: this.syncMode,
-            trackUri: state.trackUri,
-            status: state.status,
-            paused: state.paused,
-            deviceId: state.deviceId,
-          },
-        });
         this.applyApiState(state, this.latestApiActiveDeviceName);
       },
       onError: (message) => this.options?.onPollError?.(message),

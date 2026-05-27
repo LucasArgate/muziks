@@ -6,21 +6,7 @@ import type {
   PlaybackSyncMode,
   PublishPlaybackSessionInput,
 } from "@muziks/types";
-import { sendAgentDebugLog } from "@muziks/utils";
 import { eq } from "drizzle-orm";
-
-function logPlaybackRepositoryCurrentDebug(
-  hypothesisId: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  sendAgentDebugLog({
-    hypothesisId,
-    location: "apps/player/src/lib/playback/playback-session-repository.ts",
-    message,
-    data,
-  });
-}
 
 function rowToPlaybackSession(
   row: typeof playerSessions.$inferSelect,
@@ -204,17 +190,6 @@ export async function upsertPlaybackSession(
     isNewerSemanticPlaybackInput(existing!, input);
 
   if (staleVersion && !allowStaleVersionForNewerSemanticState) {
-    logPlaybackRepositoryCurrentDebug("H4", "playback session rejected as stale", {
-      playerId,
-      inputStateVersion: input.stateVersion,
-      existingStateVersion: existing.stateVersion,
-      inputDeviceId: input.deviceId,
-      existingActiveDeviceId: existing.activeDeviceId,
-      inputPreferredDeviceId: input.preferredDeviceId ?? null,
-      existingPreferredDeviceId: existing.preferredDeviceId,
-      inputActiveDeviceName: input.activeDeviceName ?? null,
-      existingActiveDeviceName: existing.activeDeviceName,
-    });
     return { session: existing, accepted: false };
   }
 
