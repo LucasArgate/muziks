@@ -2,7 +2,9 @@
 
 Fonte: comentários do autor em [PR #25 — Feature/queue state player](https://github.com/LucasArgate/muziks/pull/25) (merge em `develop`, maio/2026). Itens abaixo valem para refinamento antes e depois de ir a produção.
 
-Legenda: **bug** | **ux** | **produto** | **arquitetura** | **ops/humano** | **polish**
+Legenda: **bug** | **ux** | **produto** | **arquitetura** | **ops/humano** | **polish** | **ops** — ver [CICLO-ENTREGA-E-FOCO.md](../CICLO-ENTREGA-E-FOCO.md) §4
+
+Prioridade até 30/05: [CICLO-ENTREGA-E-FOCO.md §5](../CICLO-ENTREGA-E-FOCO.md#5-foco-até-30052026--funcionalidade-core) (P0–P3).
 
 ---
 
@@ -70,13 +72,14 @@ Legenda: **bug** | **ux** | **produto** | **arquitetura** | **ops/humano** | **p
 | ID | Tipo | Item |
 |----|------|------|
 | P25-18 | ops | Manter **ingest de logs** do ambiente staging (~1 h), analisar comportamento e estados do player (nota do PR; follow-up “ingested log” indica que material foi coletado). |
-| P25-19 | bug | **“Issue detected”** — comentário só com screenshot no PR; ao reproduzir, descrever em texto e ligar a um ID Linear. |
+| P25-19 | bug | **“Issue detected”** — comentário só com screenshot no PR; ao reproduzir, descrever em texto e atualizar esta linha (ou novo ID `P25-xx`). |
 | P25-20 | — | **“Stable Player staging”** / **“Working fine”** — evidências positivas no PR; podem virar critérios de aceite ou regressão visual. |
 
 ---
 
 ## Próximos passos sugeridos
 
-1. Abrir issues no **Linear** (`MUZ-n`) referenciando IDs **P25-xx** onde fizer sentido.
+1. Trabalhar na ordem **P0 → P1** do [§5 do ciclo](../CICLO-ENTREGA-E-FOCO.md#5-foco-até-30052026--funcionalidade-core); **P3** (polish, busca, artista) depois do marco.
 2. Itens **ops/humano** (P25-10) ficam fora do repo até checklist de deploy.
 3. Itens **arquitetura** (P25-11–P25-13, P25-08) podem virar ADR ou atualização de spec se a decisão mudar.
+4. **Linear** (`MUZ-n`): opcional nesta fase — retomar com 2+ contribuidores ou piloto real ([CICLO §6](../CICLO-ENTREGA-E-FOCO.md#6-quando-voltar-ao-processo-cheio)).
