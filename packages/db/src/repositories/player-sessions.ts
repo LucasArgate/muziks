@@ -12,6 +12,7 @@ export type PublicPlaybackSessionRow = {
   paused: boolean;
   status: string;
   stateVersion: number;
+  progressUpdatedAt: Date | null;
   updatedAt: Date;
 };
 
@@ -29,6 +30,7 @@ export async function getPublicPlaybackSession(
       paused: playerSessions.paused,
       status: playerSessions.status,
       stateVersion: playerSessions.stateVersion,
+      progressUpdatedAt: playerSessions.sourceUpdatedAt,
       updatedAt: playerSessions.updatedAt,
     })
     .from(playerSessions)

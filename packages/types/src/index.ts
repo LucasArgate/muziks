@@ -93,6 +93,13 @@ export {
 } from "./playback/spotify-state";
 
 export {
+  mirrorNextToSpotifyQueueInputSchema,
+  mirrorNextToSpotifyQueueResultSchema,
+  type MirrorNextToSpotifyQueueInput,
+  type MirrorNextToSpotifyQueueResult,
+} from "./playback/mirror-next";
+
+export {
   PLAYER_SESSION_BROADCAST_EVENT,
   sessionSnapshotBroadcastSchema,
   type SessionSnapshotBroadcast,

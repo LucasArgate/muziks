@@ -201,7 +201,10 @@ async function upsertWorkerPlaybackSession(input: {
     trackName: state.trackName,
     artistName: state.artistName,
     albumImageUrl: state.albumImageUrl ?? null,
-    progressMs: resolvePersistedProgressMs(state, now),
+    progressMs: resolvePersistedProgressMs(state),
+    sourceUpdatedAt: state.positionUpdatedAt
+      ? new Date(state.positionUpdatedAt)
+      : now,
     durationMs: state.durationMs,
     paused: state.paused,
     status: resolvePlaybackSessionStatus(state),
@@ -215,7 +218,6 @@ async function upsertWorkerPlaybackSession(input: {
     browserInstanceId: existing?.browserInstanceId ?? null,
     browserVisibility: existing?.browserVisibility ?? "unknown",
     browserLastSeenAt: existing?.browserLastSeenAt ?? null,
-    sourceUpdatedAt: now,
     stateVersion: nextVersion,
     updatedAt: now,
   };

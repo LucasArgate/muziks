@@ -33,6 +33,7 @@ export default async function PlayerSlugPage({ params }: PlayerPageProps) {
         paused: playbackRow.paused,
         status: playbackRow.status,
         stateVersion: playbackRow.stateVersion,
+        progressUpdatedAt: playbackRow.progressUpdatedAt?.getTime(),
         updatedAt: playbackRow.updatedAt.toISOString(),
       })
     : null;

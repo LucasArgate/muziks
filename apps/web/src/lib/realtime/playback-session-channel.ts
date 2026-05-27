@@ -30,6 +30,10 @@ function mapBroadcastToPublicSession(
   }
 
   const { playback, stateVersion, sourceUpdatedAt } = parsed.data;
+  const progressUpdatedAt =
+    playback.positionUpdatedAt ??
+    (sourceUpdatedAt ? Date.parse(sourceUpdatedAt) : Date.now());
+
   return {
     trackName: playback.trackName,
     artistName: playback.artistName,
@@ -39,6 +43,9 @@ function mapBroadcastToPublicSession(
     paused: playback.paused,
     status: playback.status ?? (playback.paused ? "paused" : "playing"),
     stateVersion,
+    progressUpdatedAt: Number.isFinite(progressUpdatedAt)
+      ? progressUpdatedAt
+      : Date.now(),
     updatedAt:
       sourceUpdatedAt ??
       (playback.positionUpdatedAt

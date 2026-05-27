@@ -68,6 +68,7 @@ export function PlayerHeroNowPlaying({
               progressMs={session.progressMs}
               durationMs={session.durationMs}
               paused={session.paused}
+              progressUpdatedAt={session.progressUpdatedAt}
             />
             <p className="text-xs text-on-surface-variant">
               {session.paused ? "Pausado" : "Tocando agora"}

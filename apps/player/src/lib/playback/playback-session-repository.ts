@@ -89,33 +89,46 @@ function isNewerSemanticPlaybackInput(
   );
 }
 
-function resolvePersistedProgressMs(
-  input: PublishPlaybackSessionInput,
-  persistedAt: Date,
-): number {
+function resolvePersistedProgressMs(input: PublishPlaybackSessionInput): number {
   const durationMs = Math.max(0, input.durationMs);
-  const basePositionMs = durationMs > 0
-    ? Math.min(input.positionMs, durationMs)
-    : Math.max(0, input.positionMs);
-
-  if (input.paused || !input.positionUpdatedAt || durationMs <= 0) {
-    return basePositionMs;
+  if (durationMs <= 0) {
+    return Math.max(0, input.positionMs);
   }
+  return Math.min(Math.max(0, input.positionMs), durationMs);
+}
 
-  const elapsedMs = Math.max(0, persistedAt.getTime() - input.positionUpdatedAt);
-  return Math.min(basePositionMs + elapsedMs, durationMs);
+function resolveProgressAnchorIso(
+  input: PublishPlaybackSessionInput,
+  fallback: Date,
+): Date {
+  if (input.positionUpdatedAt !== undefined) {
+    return new Date(input.positionUpdatedAt);
+  }
+  if (input.sourceUpdatedAt) {
+    const parsed = Date.parse(input.sourceUpdatedAt);
+    if (Number.isFinite(parsed)) {
+      return new Date(parsed);
+    }
+  }
+  return fallback;
 }
 
 export function playbackSessionToNormalized(
   session: PlaybackSession,
 ): NormalizedSpotifyPlayerState {
+  const progressUpdatedAt = session.sourceUpdatedAt
+    ? Date.parse(session.sourceUpdatedAt)
+    : Date.parse(session.updatedAt);
+
   return {
     trackUri: session.currentTrackUri,
     trackName: session.trackName,
     artistName: session.artistName,
     albumImageUrl: session.albumImageUrl,
     positionMs: session.progressMs,
-    positionUpdatedAt: Date.parse(session.updatedAt),
+    positionUpdatedAt: Number.isFinite(progressUpdatedAt)
+      ? progressUpdatedAt
+      : Date.parse(session.updatedAt),
     durationMs: session.durationMs,
     paused: session.paused,
     deviceId: session.activeDeviceId,
@@ -207,7 +220,8 @@ export async function upsertPlaybackSession(
 
   const now = new Date();
   const nextVersion = (existing?.stateVersion ?? 0) + 1;
-  const progressMs = resolvePersistedProgressMs(input, now);
+  const progressMs = resolvePersistedProgressMs(input);
+  const progressAnchor = resolveProgressAnchorIso(input, now);
 
   const values = {
     playerId,
@@ -251,7 +265,7 @@ export async function upsertPlaybackSession(
     sourceUpdatedAt:
       input.sourceUpdatedAt !== undefined
         ? optionalIsoToDate(input.sourceUpdatedAt)
-        : (optionalIsoToDate(existing?.sourceUpdatedAt ?? null) ?? now),
+        : progressAnchor,
     updatedAt: now,
   };
 

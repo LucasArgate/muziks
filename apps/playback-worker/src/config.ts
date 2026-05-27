@@ -12,25 +12,12 @@ function stripTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
 }
 
-function readSupabaseUrl(): string {
-  return stripTrailingSlash(
-    process.env.SUPABASE_URL ??
-      process.env.NEXT_PUBLIC_SUPABASE_URL ??
-      readRequiredEnv("SUPABASE_URL"),
-  );
-}
-
 export function getPlaybackWorkerConfig() {
-  const supabaseServiceRoleKey = readRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
-
   return {
-    supabaseUrl: readSupabaseUrl(),
-    supabaseServiceRoleKey,
-    spotifyClientId: readRequiredEnv("SPOTIFY_CLIENT_ID"),
-    spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET?.trim(),
-    spotifyTokenEncryptionKey:
-      process.env.SPOTIFY_TOKEN_ENCRYPTION_KEY?.trim() ??
-      supabaseServiceRoleKey,
+    muziksPlayerApiUrl: stripTrailingSlash(
+      readRequiredEnv("MUZIKS_PLAYER_API_URL"),
+    ),
+    playbackWorkerSecret: readRequiredEnv("PLAYBACK_WORKER_SECRET"),
     playbackTickCron:
       process.env.PLAYBACK_WORKER_CRON ?? DEFAULT_PLAYBACK_TICK_CRON,
   };

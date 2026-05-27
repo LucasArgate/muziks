@@ -11,6 +11,8 @@ export const publicPlaybackSessionSchema = z.object({
   paused: z.boolean(),
   status: playbackSessionStatusSchema,
   stateVersion: z.number().int().nonnegative(),
+  /** Epoch ms when `progressMs` was sampled (for live interpolation). */
+  progressUpdatedAt: z.number().int().nonnegative().optional(),
   updatedAt: z.string().datetime(),
 });
 

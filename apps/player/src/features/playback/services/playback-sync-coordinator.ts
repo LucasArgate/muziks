@@ -13,8 +13,10 @@ import {
   PlaybackStatePublisher,
   type PublishRemoteMode,
 } from "./playback-state-publisher";
+import { NearEndScheduler } from "./near-end-scheduler";
 import { SdkPlaybackSource } from "./sdk-playback-source";
 import type { SpotifyServiceInstance } from "./SpotifyService";
+import { dequeueAfterTrackChange } from "./playback-queue-transition-client";
 
 function normalizeRuntimeSyncMode(mode: PlaybackSyncMode | null | undefined): PlaybackSyncMode {
   return mode === "sdk" ? "sdk" : "api_device";
@@ -46,8 +48,10 @@ export class PlaybackSyncCoordinator {
   private activeDeviceName: string | null = null;
 
   private readonly publisher = new PlaybackStatePublisher();
+  private readonly nearEndScheduler = new NearEndScheduler();
   private readonly sdkSource = new SdkPlaybackSource();
   private readonly apiPoller = new PlaybackStatePoller();
+  private lastTrackUri: string | null = null;
   private sdkService: SpotifyServiceInstance | null = null;
   private apiPolling = false;
   private latestApiActiveDeviceName: string | null = null;
@@ -104,6 +108,30 @@ export class PlaybackSyncCoordinator {
     this.publisher.setBridgeActive(active);
   }
 
+  private async onPlaybackState(
+    state: NormalizedSpotifyPlayerState,
+    deviceId?: string | null,
+  ): Promise<void> {
+    const slug = this.options?.slug;
+    const previousTrackUri = this.lastTrackUri;
+
+    if (state.trackUri && state.trackUri !== previousTrackUri) {
+      this.nearEndScheduler.onTrackChanged(state.trackUri);
+      if (previousTrackUri && slug) {
+        void dequeueAfterTrackChange(slug);
+      }
+      this.lastTrackUri = state.trackUri;
+    }
+
+    if (slug) {
+      void this.nearEndScheduler.maybeMirrorNext({
+        slug,
+        state,
+        deviceId: deviceId ?? state.deviceId,
+      });
+    }
+  }
+
   applyApiState(
     state: NormalizedSpotifyPlayerState,
     activeDeviceName?: string | null,
@@ -115,6 +143,7 @@ export class PlaybackSyncCoordinator {
     }
     const status = state.status ?? (state.paused ? "paused" : "playing");
     this.publisher.ingest(state, status, "api");
+    void this.onPlaybackState(state, state.deviceId);
   }
 
   applySyncedSessionState(state: NormalizedSpotifyPlayerState): void {
@@ -198,6 +227,8 @@ export class PlaybackSyncCoordinator {
     this.stopApiPolling();
     this.stopSdk();
     this.publisher.dispose();
+    this.nearEndScheduler.reset();
+    this.lastTrackUri = null;
     this.options = null;
   }
 
@@ -240,6 +271,7 @@ export class PlaybackSyncCoordinator {
     return {
       onState: (state, status) => {
         this.publisher.ingest(state, status, "sdk");
+        void this.onPlaybackState(state, state.deviceId);
       },
       onQueue: (queue) => this.options?.onSdkQueue?.(queue),
       onEvent: (event) => this.options?.onSdkEvent?.(event),

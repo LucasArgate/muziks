@@ -404,7 +404,8 @@ export class PlaybackStatePublisher {
 
     const resolvedStatus =
       status ?? state.status ?? (state.paused ? "paused" : "playing");
-    const nowIso = new Date().toISOString();
+    const positionUpdatedAt = state.positionUpdatedAt ?? Date.now();
+    const nowIso = new Date(positionUpdatedAt).toISOString();
     const browserVisibility =
       typeof document === "undefined"
         ? "unknown"
@@ -426,6 +427,7 @@ export class PlaybackStatePublisher {
       artistName: state.artistName,
       albumImageUrl: state.albumImageUrl ?? null,
       positionMs: state.positionMs,
+      positionUpdatedAt,
       durationMs: state.durationMs,
       paused: state.paused,
       deviceId: state.deviceId,

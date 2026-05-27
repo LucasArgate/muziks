@@ -17,7 +17,7 @@ src/
 
 ## Regras
 
-- Usar `@muziks/db` para leitura/escrita do estado de playback em background.
-- Publicar `session.snapshot` via Supabase Realtime após persistência aceita.
+- Delegar o tick para `POST /api/internal/playback-tick` no `apps/player` (paridade com lifecycle e fila).
+- Não duplicar regra de negócio em `@muziks/playback` neste app — o player é a autoridade.
 - Rate limit/backoff por player fica em `playback_poll_cursors`.
 - Não criar arquivos de teste automatizados.

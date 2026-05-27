@@ -119,12 +119,14 @@ export function useSpotifyPlaybackQueue({
     previousTrackUriRef.current = trackUri;
     requestSeqRef.current += 1;
     setError(null);
-    setLoading(false);
-    logQueueDebug("spotify queue kept after track change", {
+    logQueueDebug("spotify queue refresh after track change", {
       previousTrackUri: previousTrackUri ?? null,
       requestSeq: requestSeqRef.current,
     });
-  }, [logQueueDebug, trackUri]);
+    if (enabled && pollEnabled) {
+      void refresh();
+    }
+  }, [enabled, logQueueDebug, pollEnabled, refresh, trackUri]);
 
   useEffect(() => {
     if (!enabled || !pollEnabled) {

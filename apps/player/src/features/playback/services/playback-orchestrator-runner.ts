@@ -128,6 +128,7 @@ async function listPlayerIdsForTick(): Promise<string[]> {
         ]),
         isNotNull(spotifyConnections.refreshTokenEnc),
         or(
+          ne(playerSessions.syncMode, "sdk"),
           ne(playerSessions.stateSource, "sdk_browser"),
           ne(playerSessions.browserVisibility, "visible"),
           isNull(playerSessions.browserLastSeenAt),

@@ -67,18 +67,10 @@ export function resolvePlaybackSessionStatus(
 
 export function resolvePersistedProgressMs(
   state: NormalizedSpotifyPlayerState,
-  persistedAt: Date,
 ): number {
   const durationMs = Math.max(0, state.durationMs);
-  const basePositionMs =
-    durationMs > 0
-      ? Math.min(state.positionMs, durationMs)
-      : Math.max(0, state.positionMs);
-
-  if (state.paused || !state.positionUpdatedAt || durationMs <= 0) {
-    return basePositionMs;
+  if (durationMs <= 0) {
+    return Math.max(0, state.positionMs);
   }
-
-  const elapsedMs = Math.max(0, persistedAt.getTime() - state.positionUpdatedAt);
-  return Math.min(basePositionMs + elapsedMs, durationMs);
+  return Math.min(Math.max(0, state.positionMs), durationMs);
 }

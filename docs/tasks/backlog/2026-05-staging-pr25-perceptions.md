@@ -77,6 +77,19 @@ Prioridade até 30/05: [CICLO-ENTREGA-E-FOCO.md §5](../CICLO-ENTREGA-E-FOCO.md#
 
 ---
 
+## Status após implementação core (maio/2026)
+
+| ID | Status | Notas |
+|----|--------|-------|
+| P25-02 | parcial | Skip/control com refresh API; seek na UI ainda não exposto |
+| P25-03 | em validação | `positionUpdatedAt` + `sourceUpdatedAt` na sessão; barra web com interpolação ao vivo |
+| P25-04 / P25-05 | em validação | Mirror + refresh da fila Spotify ao trocar faixa |
+| P25-06 | em validação | Tick server-side também com `syncMode=api_device` |
+| P25-07 | ok no código | Web sem fluxo de device; validar em staging |
+| P25-09 | em validação | Participante: gate só em voto/busca sem sessão |
+
+Checklist de QA: [2026-05-staging-checklist-core.md](./2026-05-staging-checklist-core.md)
+
 ## Próximos passos sugeridos
 
 1. Trabalhar na ordem **P0 → P1** do [§5 do ciclo](../CICLO-ENTREGA-E-FOCO.md#5-foco-até-30052026--funcionalidade-core); **P3** (polish, busca, artista) depois do marco.
