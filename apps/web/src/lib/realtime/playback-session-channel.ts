@@ -10,20 +10,6 @@ function mapBroadcastToPublicSession(
 ): PublicPlaybackSession | null {
   const parsed = sessionSnapshotBroadcastSchema.safeParse(payload);
   if (!parsed.success) {
-    sendAgentDebugLog({
-      sessionId: "867515",
-      sameOriginPath: "/api/debug/realtime",
-      hypothesisId: "H4",
-      location: "apps/web/src/lib/realtime/playback-session-channel.ts",
-      message: "web playback realtime payload parse failed",
-      data: {
-        issues: parsed.error.issues.map((issue) => ({
-          path: issue.path.join("."),
-          code: issue.code,
-          message: issue.message,
-        })),
-      },
-    });
     return null;
   }
 

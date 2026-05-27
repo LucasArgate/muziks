@@ -280,21 +280,5 @@ export async function upsertPlaybackSession(
   if (!session) {
     throw new Error("Failed to persist playback session");
   }
-  logPlaybackRepositoryCurrentDebug("H4", "playback session persisted", {
-    playerId,
-    accepted: true,
-    inputStateVersion: input.stateVersion ?? null,
-    existingStateVersion: existing?.stateVersion ?? null,
-    persistedStateVersion: session.stateVersion,
-    inputDeviceId: input.deviceId,
-    persistedActiveDeviceId: session.activeDeviceId,
-    inputPreferredDeviceId: input.preferredDeviceId ?? null,
-    persistedPreferredDeviceId: session.preferredDeviceId,
-    inputActiveDeviceName: input.activeDeviceName ?? null,
-    persistedActiveDeviceName: session.activeDeviceName,
-    status: session.status,
-    stateSource: session.stateSource,
-    authority: session.authority,
-  });
   return { session, accepted: true };
 }
