@@ -4,7 +4,8 @@ Referência: [CICLO-ENTREGA-E-FOCO.md §5](../CICLO-ENTREGA-E-FOCO.md#5-foco-at�
 
 ## Pré-requisitos
 
-- [ ] `PLAYBACK_WORKER_SECRET` no player (staging) — bridge/rotas internas; credenciais Supabase/Spotify no **Trigger.dev** (staging)
+- [ ] `PLAYBACK_WORKER_SECRET` no player (staging) — bridge/rotas internas
+- [ ] Credenciais Supabase/Spotify no **Trigger.dev → ambiente Production** (não usar Staging do Trigger — pago); vars apontando para o **Supabase de staging** enquanto testar Muziks staging
 - [ ] `MUZIKS_PLAYER_API_URL` no worker apontando para o deploy staging do player
 - [ ] Dono com Spotify conectado e dispositivo escolhido **no player**
 

@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "lint": "tsc --noEmit -p tsconfig.json",
     "dev": "trigger dev",
-    "deploy": "trigger deploy"
+    "trigger:deploy": "trigger deploy --native-build-server"
   },
   "dependencies": {
     "@muziks/db": "workspace:*",
