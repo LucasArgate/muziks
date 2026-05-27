@@ -4,7 +4,7 @@ Referência: [CICLO-ENTREGA-E-FOCO.md §5](../CICLO-ENTREGA-E-FOCO.md#5-foco-at�
 
 ## Pré-requisitos
 
-- [ ] `PLAYBACK_WORKER_SECRET` no player (staging) e no Trigger.dev **ou** `CRON_SECRET` igual no Vercel Cron do player
+- [ ] `PLAYBACK_WORKER_SECRET` no player (staging) — bridge/rotas internas; credenciais Supabase/Spotify no **Trigger.dev** (staging)
 - [ ] `MUZIKS_PLAYER_API_URL` no worker apontando para o deploy staging do player
 - [ ] Dono com Spotify conectado e dispositivo escolhido **no player**
 

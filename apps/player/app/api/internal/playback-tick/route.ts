@@ -22,7 +22,7 @@ async function handlePlaybackTick(request: Request) {
   }
 }
 
-/** Vercel Cron uses GET; Trigger.dev worker uses POST. */
+/** Bridge / Edge backup: GET or POST with Bearer `PLAYBACK_WORKER_SECRET`. Orquestração agendada: Trigger.dev (`apps/playback-worker`). */
 export async function GET(request: Request) {
   return handlePlaybackTick(request);
 }
