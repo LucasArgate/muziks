@@ -5,5 +5,5 @@ export function fingerprintSpotifyQueue(
 ): string {
   const current = queue.currentlyPlaying?.uri ?? "";
   const upcoming = queue.upcoming.map((track) => track.uri).join(",");
-  return `${current}|${upcoming}`;
+  return `${current}|${upcoming}`; 
 }
