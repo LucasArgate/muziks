@@ -79,6 +79,69 @@ export type DrizzleSpotifyBackgroundPlaybackOptions = {
   publishSessionSnapshot?: PlaybackSessionSnapshotPublisher;
 };
 
+/** Claim per-player tick lock; returns playerIds that were locked for this worker. */
+export async function claimPlayersForBackgroundTick(
+  playerIds: string[],
+  now = new Date(),
+): Promise<string[]> {
+  return lockPlayerIdsForBackgroundTick(playerIds, now);
+}
+
+export async function isPlayerEligibleForBackgroundTick(
+  playerId: string,
+  now = new Date(),
+): Promise<boolean> {
+  const db = getDb();
+  const since = new Date(now.getTime() - PLAYBACK_ACTIVE_WINDOW_MS);
+  const healthySince = new Date(
+    now.getTime() - PLAYBACK_BROWSER_HEALTH_WINDOW_MS,
+  );
+
+  const rows = await db
+    .select({ playerId: playerSessions.playerId })
+    .from(playerSessions)
+    .innerJoin(players, eq(players.id, playerSessions.playerId))
+    .innerJoin(
+      spotifyConnections,
+      eq(spotifyConnections.userId, players.ownerId),
+    )
+    .leftJoin(
+      playbackPollCursors,
+      eq(playbackPollCursors.playerId, playerSessions.playerId),
+    )
+    .where(
+      and(
+        eq(playerSessions.playerId, playerId),
+        gt(playerSessions.updatedAt, since),
+        inArray(playerSessions.status, [
+          "playing",
+          "paused",
+          "connected",
+          "ready",
+        ]),
+        isNotNull(spotifyConnections.refreshTokenEnc),
+        workerShouldSuperviseSessionCondition(healthySince),
+        or(
+          isNull(playbackPollCursors.retryAfterUntil),
+          lte(playbackPollCursors.retryAfterUntil, now),
+        ),
+      ),
+    )
+    .limit(1);
+
+  return rows.length > 0;
+}
+
+function workerShouldSuperviseSessionCondition(healthySince: Date) {
+  return or(
+    ne(playerSessions.syncMode, "sdk"),
+    ne(playerSessions.stateSource, "sdk_browser"),
+    ne(playerSessions.browserVisibility, "visible"),
+    isNull(playerSessions.browserLastSeenAt),
+    lte(playerSessions.browserLastSeenAt, healthySince),
+  );
+}
+
 async function lockPlayerIdsForBackgroundTick(
   playerIds: string[],
   now: Date,
@@ -163,13 +226,7 @@ async function listPlayerIdsForBackgroundTick(): Promise<string[]> {
           "ready",
         ]),
         isNotNull(spotifyConnections.refreshTokenEnc),
-        or(
-          ne(playerSessions.syncMode, "sdk"),
-          ne(playerSessions.stateSource, "sdk_browser"),
-          ne(playerSessions.browserVisibility, "visible"),
-          isNull(playerSessions.browserLastSeenAt),
-          lte(playerSessions.browserLastSeenAt, healthySince),
-        ),
+        workerShouldSuperviseSessionCondition(healthySince),
         or(
           isNull(playbackPollCursors.nextTickAt),
           lte(playbackPollCursors.nextTickAt, now),

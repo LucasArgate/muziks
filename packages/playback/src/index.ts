@@ -16,7 +16,9 @@ export {
   type PlaybackStatePollerOptions,
 } from "./application/playback-state-poller";
 export {
+  claimPlayersForBackgroundTick,
   createDrizzleSpotifyBackgroundPlaybackPorts,
+  isPlayerEligibleForBackgroundTick,
   type DrizzleSpotifyBackgroundPlaybackOptions,
   type PlaybackSessionRow,
 } from "./infrastructure/drizzle-spotify-background-playback";

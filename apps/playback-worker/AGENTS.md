@@ -16,12 +16,17 @@ src/
 │   ├── spotify/           # Token vault (refresh server-side)
 │   └── supabase/
 └── tasks/
+    ├── playback-supervise-player.ts
+    ├── playback-supervisor.ts
+    ├── playback-realtime-watcher.ts
     └── playback-tick.ts
 ```
 
 ## Regras
 
-- Orquestração compartilhada em [`@muziks/playback`](../../packages/playback) (`runBackgroundPlaybackOrchestrator` + `createDrizzleSpotifyBackgroundPlaybackPorts`).
+- Orquestração compartilhada em [`@muziks/playback`](../../packages/playback) (`tickBackgroundPlayer` + `createDrizzleSpotifyBackgroundPlaybackPorts`).
+- Agendamento: `playback-supervise-player` (1 player, auto-`delay` + idempotency), `playback-supervisor` (cron segurança), `playback-realtime-listener` (`postgres_changes` em `player_sessions`).
+- Migração `0010_realtime_playback_supervision.sql`: publicar `player_sessions` no Realtime para o listener.
 - **Não** chamar `POST /api/internal/playback-tick` — isso era um atalho temporário; o worker fala direto com DB/Spotify/Realtime.
 - Lifecycle + dequeue + mirror near-end com regras de fila: hook `afterSample` no **player** ([`background-tick-sample-hook.ts`](../player/src/features/playback/services/background-tick-sample-hook.ts)). O worker ainda não registra esse hook (só sessão + broadcast).
 - Rate limit/backoff por player: `playback_poll_cursors` (em `@muziks/playback`).

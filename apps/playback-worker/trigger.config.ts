@@ -14,5 +14,5 @@ export default defineConfig({
       randomize: true,
     },
   },
-  maxDuration: 60,
+  maxDuration: 120,
 });
