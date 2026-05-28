@@ -13,6 +13,30 @@ export {
   type TickPlayerResult,
 } from "./application/background-playback-orchestrator";
 export {
+  PRELOAD_MS,
+  createBackgroundTickSampleHook,
+  runBackgroundTickSampleEffects,
+  type BackgroundTickSampleEffectsDeps,
+} from "./application/background-tick-sample-effects";
+export {
+  handleConfirmedTrackTransition,
+  type ConfirmedTrackTransitionDeps,
+} from "./application/confirmed-track-transition";
+export { mirrorNextToSpotifyQueueForPlayer } from "./application/mirror-next-to-spotify-queue";
+export {
+  applyLifecycleFromSample,
+  computeExpectedEndAt,
+  spotifyTrackIdFromUri,
+  type ApplyLifecycleResult,
+  type PlaybackTrackLifecycleDeps,
+} from "./application/playback-track-lifecycle";
+export {
+  getPlaybackTrackLifecycle,
+  insertPlaybackTrackEvent,
+  upsertPlaybackTrackLifecycle,
+  type PlaybackTrackLifecycleRow,
+} from "./infrastructure/playback-track-lifecycle-repository";
+export {
   PlaybackStatePoller,
   type PlaybackStatePollerOptions,
 } from "./application/playback-state-poller";

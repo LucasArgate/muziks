@@ -109,6 +109,6 @@ Se ainda falhar com credencial Docker, remova `"credsStore": "desktop"` de `%USE
 |--------|------|
 | Listar players, poll cursors, upsert sessão, Spotify sample | `@muziks/playback` |
 | Broadcast `session.snapshot` | `apps/playback-worker/src/lib/realtime` |
-| Lifecycle, dequeue, mirror near-end | `apps/player` (`afterSample` hook) — **ainda não no worker** |
+| Lifecycle, dequeue, mirror near-end | `@muziks/playback` (`afterSample` via `createBackgroundTickSampleHook`) — player e worker |
 
 A rota `POST /api/internal/playback-tick` no player usa o **mesmo** `@muziks/playback` + hook do player — só para bridge/Edge/manual; agendamento é **Trigger.dev**.

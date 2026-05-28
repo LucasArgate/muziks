@@ -1,15 +1,12 @@
 import {
   claimPlayersForBackgroundTick,
-  createDrizzleSpotifyBackgroundPlaybackPorts,
   isPlayerEligibleForBackgroundTick,
   resolveNextPlaybackTickAt,
   tickBackgroundPlayer,
   type TickPlayerResult,
 } from "@muziks/playback";
 
-import { publishWorkerSessionSnapshot } from "../realtime/session-broadcast.js";
-import { publishWorkerSpotifyQueueSnapshot } from "../realtime/spotify-queue-broadcast.js";
-import { getAccessTokenForPlayer } from "../spotify/token-vault.js";
+import { createSupervisePorts } from "./create-supervise-ports.js";
 
 export type SupervisePlayerSource = "schedule" | "realtime" | "supervisor";
 
@@ -20,22 +17,6 @@ export type SupervisePlayerResult = {
   nextTickAt?: string;
   scheduledNext?: boolean;
 };
-
-function createSupervisePorts() {
-  return createDrizzleSpotifyBackgroundPlaybackPorts({
-    getAccessToken: getAccessTokenForPlayer,
-    publishSessionSnapshot: publishWorkerSessionSnapshot,
-    publishSpotifyQueueSnapshot: async (input) => {
-      await publishWorkerSpotifyQueueSnapshot({
-        playerId: input.playerId,
-        queue: input.queue,
-        queueVersion: input.queueVersion,
-        stateVersion: input.stateVersion,
-        source: input.source,
-      });
-    },
-  });
-}
 
 export async function superviseBackgroundPlayer(
   playerId: string,

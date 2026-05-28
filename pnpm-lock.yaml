@@ -78,6 +78,9 @@ importers:
       '@muziks/playback':
         specifier: workspace:*
         version: link:../../packages/playback
+      '@muziks/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@muziks/spotify':
         specifier: workspace:*
         version: link:../../packages/spotify
@@ -349,6 +352,9 @@ importers:
       '@muziks/db':
         specifier: workspace:*
         version: link:../db
+      '@muziks/queue':
+        specifier: workspace:*
+        version: link:../queue
       '@muziks/spotify':
         specifier: workspace:*
         version: link:../spotify

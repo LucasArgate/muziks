@@ -9,6 +9,11 @@ Referência: [CICLO-ENTREGA-E-FOCO.md §5](../CICLO-ENTREGA-E-FOCO.md#5-foco-at�
 - [ ] `MUZIKS_PLAYER_API_URL` no worker apontando para o deploy staging do player
 - [ ] Dono com Spotify conectado e dispositivo escolhido **no player**
 
+## Worker (Trigger.dev)
+
+- [ ] Após deploy: `playback-supervise-player` com `afterSample` (dequeue + mirror em `api_device`)
+- [ ] Troca de faixa com fila Muziks: cabeça vira `played` mesmo com aba do player em background / Echo
+
 ## Player (master)
 
 - [ ] Play / pause refletem na UI e no Postgres (now-playing)

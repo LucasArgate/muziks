@@ -1,3 +1,4 @@
+import { getPlaybackTrackLifecycle, PRELOAD_MS } from "@muziks/playback";
 import { getCurrentPlayback, normalizeApiPlaybackState } from "@muziks/spotify";
 import type {
   NormalizedSpotifyPlayerState,
@@ -5,7 +6,6 @@ import type {
 } from "@muziks/types";
 
 import { logPlaybackLifecycle } from "@/src/lib/playback/playback-lifecycle-log";
-import { getPlaybackTrackLifecycle } from "@/src/lib/playback/playback-track-lifecycle-repository";
 import {
   getPlaybackSessionByPlayerId,
   playbackSessionToNormalized,
@@ -15,8 +15,8 @@ import { broadcastSessionSnapshotFromServer } from "@/src/lib/realtime/player-se
 import { getAccessTokenForPlayer } from "@/src/lib/spotify/spotify-token-vault";
 
 import { handleConfirmedTrackTransition } from "./playback-queue-transition";
-import { PRELOAD_MS } from "./near-end-scheduler";
 import { applyLifecycleFromSample } from "./playback-track-lifecycle";
+import { mirrorNextToSpotifyQueueHandler } from "@/src/slices/playback/mirror-next-to-spotify-queue/handler";
 
 function fingerprint(state: NormalizedSpotifyPlayerState): string {
   return [
@@ -131,9 +131,6 @@ export async function tickPlayer(playerId: string): Promise<TickPlayerResult> {
     state.trackUri &&
     activeLifecycle.expectedEndAt.getTime() - Date.now() <= PRELOAD_MS
   ) {
-    const { mirrorNextToSpotifyQueueHandler } = await import(
-      "@/src/slices/playback/mirror-next-to-spotify-queue/handler"
-    );
     await mirrorNextToSpotifyQueueHandler(playerId, {
       deviceId: state.deviceId ?? undefined,
       currentTrackUri: state.trackUri,

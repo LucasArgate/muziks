@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@muziks/db": "workspace:*",
+    "@muziks/queue": "workspace:*",
     "@muziks/spotify": "workspace:*",
     "@muziks/types": "workspace:*",
     "drizzle-orm": "^0.38.3"

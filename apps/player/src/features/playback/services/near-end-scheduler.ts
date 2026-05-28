@@ -1,8 +1,10 @@
 import type { NormalizedSpotifyPlayerState } from "@muziks/types";
 
+import { PRELOAD_MS } from "@muziks/playback";
+
 import { mirrorNextOnSpotifyQueue } from "./queue-mirror-service";
 
-export const PRELOAD_MS = 10_000;
+export { PRELOAD_MS };
 
 export class NearEndScheduler {
   private scheduledForTrackUri: string | null = null;

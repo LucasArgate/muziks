@@ -83,8 +83,8 @@ Prioridade até 30/05: [CICLO-ENTREGA-E-FOCO.md §5](../CICLO-ENTREGA-E-FOCO.md#
 |----|--------|-------|
 | P25-02 | parcial | Skip/control com refresh API; seek na UI ainda não exposto |
 | P25-03 | em validação | `positionUpdatedAt` + `sourceUpdatedAt` na sessão; barra web com interpolação ao vivo |
-| P25-04 / P25-05 | em validação | Mirror + refresh da fila Spotify ao trocar faixa |
-| P25-06 | em validação | Tick server-side também com `syncMode=api_device` |
+| P25-04 / P25-05 | em validação pós-worker-hook | Mirror + dequeue no Trigger (`afterSample` no worker); validar em staging |
+| P25-06 | em validação pós-worker-hook | Tick server-side + lifecycle/dequeue/mirror no worker para `api_device`/Echo |
 | P25-07 | ok no código | Web sem fluxo de device; validar em staging |
 | P25-09 | em validação | Participante: gate só em voto/busca sem sessão |
 

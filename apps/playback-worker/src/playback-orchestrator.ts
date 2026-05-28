@@ -1,29 +1,13 @@
 import {
-  createDrizzleSpotifyBackgroundPlaybackPorts,
   runBackgroundPlaybackOrchestrator,
   type RunPlaybackOrchestratorResult,
 } from "@muziks/playback";
 
-import { publishWorkerSessionSnapshot } from "./lib/realtime/session-broadcast.js";
-import { publishWorkerSpotifyQueueSnapshot } from "./lib/realtime/spotify-queue-broadcast.js";
-import { getAccessTokenForPlayer } from "./lib/spotify/token-vault.js";
+import { createSupervisePorts } from "./lib/supervise/create-supervise-ports.js";
 
 export type { RunPlaybackOrchestratorResult };
 
 export async function runPlaybackOrchestrator(): Promise<RunPlaybackOrchestratorResult> {
-  const ports = createDrizzleSpotifyBackgroundPlaybackPorts({
-    getAccessToken: getAccessTokenForPlayer,
-    publishSessionSnapshot: publishWorkerSessionSnapshot,
-    publishSpotifyQueueSnapshot: async (input) => {
-      await publishWorkerSpotifyQueueSnapshot({
-        playerId: input.playerId,
-        queue: input.queue,
-        queueVersion: input.queueVersion,
-        stateVersion: input.stateVersion,
-        source: input.source,
-      });
-    },
-  });
-
+  const ports = createSupervisePorts();
   return runBackgroundPlaybackOrchestrator(ports);
 }
